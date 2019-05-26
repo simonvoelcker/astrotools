@@ -8,21 +8,26 @@ from util import load_image, save_image
 
 
 def slice_image(image, x_offset, y_offset, x_size, y_size):
-	return image[y_offset:y_offset+y_size,x_offset:x_offset+x_size]
+	return image[y_offset:y_offset+y_size, x_offset:x_offset+x_size]
 
 
 def get_intersected_images(images, total_offset):
 	height, width = images[0].shape
 	x_offset, y_offset = total_offset
-	intersection_width = width - x_offset
-	intersection_height = height - y_offset
+	intersection_width = width - abs(x_offset)
+	intersection_height = height - abs(y_offset)
 	print(f'intersection dimensions: {intersection_width}, {intersection_height}')
 
 	for index, image in enumerate(images):
+		norm_index = float(index) / float(len(images)-1)
 		# interpolate offset
-		x_offset = int(float(total_offset[0])*float(index)/float(len(images)-1))
-		y_offset = int(float(total_offset[1])*float(index)/float(len(images)-1))
-		
+		x_offset = round(float(total_offset[0]) * (1.0-norm_index))
+		if total_offset[0] < 0:
+			x_offset -= total_offset[0]
+		y_offset = round(float(total_offset[1]) * (1.0-norm_index))
+		if total_offset[1] < 0:
+			y_offset -= total_offset[1]
+
 		offset_image = slice_image(image, x_offset, y_offset, intersection_width, intersection_height)
 		yield offset_image
 
@@ -35,7 +40,6 @@ if __name__ == '__main__':
 	filename_pattern = sys.argv[1]
 	files = glob.glob(filename_pattern)
 	files.sort()
-	# files = list(reversed(files))
 
 	print(f'{len(files)} files')
 

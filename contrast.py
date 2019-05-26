@@ -6,7 +6,8 @@ from util import load_image, save_image
 
 
 def maximize_contrast(image):
-	pass
+	min_value = np.amin(image)
+	return image - min_value
 
 
 if __name__ == '__main__':

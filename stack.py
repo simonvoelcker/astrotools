@@ -7,6 +7,13 @@ from PIL import Image
 from util import load_image, save_image
 
 
+def maximize_contrast(image):
+	min_value = np.amin(image)
+	max_value = np.amax(image)
+	print(f'min: {min_value}, max: {max_value}, spread: {max_value - min_value}')
+	return (image - min_value) * (255.0 / (max_value - min_value))
+
+
 def slice_image(image, x_offset, y_offset, x_size, y_size):
 	return image[y_offset:y_offset+y_size, x_offset:x_offset+x_size]
 
@@ -52,4 +59,5 @@ if __name__ == '__main__':
 	total_offset = int(total_offset[0]), int(total_offset[1])
 
 	stacked = reduce(np.add, get_intersected_images(images, total_offset))
+	stacked = maximize_contrast(stacked)
 	save_image(stacked, 'out.png')

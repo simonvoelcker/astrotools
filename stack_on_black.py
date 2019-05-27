@@ -4,7 +4,7 @@ import numpy as np
 
 from functools import reduce
 from PIL import Image
-from util import load_image, save_image
+from util import load_image, save_image, create_image
 
 
 def maximize_contrast(image):
@@ -17,16 +17,11 @@ def maximize_contrast(image):
 	return (image - min_value) * (255.0 / (max_value - min_value))
 
 
-def slice_image(image, x_offset, y_offset, x_size, y_size):
-	return image[y_offset:y_offset+y_size, x_offset:x_offset+x_size]
-
-
-def get_intersected_images(images, total_offset):
-	height, width = images[0].shape
+def get_offset_padded_images(images, total_offset):
+	image_height, image_width = images[0].shape
 	x_offset, y_offset = total_offset
-	intersection_width = width - abs(x_offset)
-	intersection_height = height - abs(y_offset)
-	print(f'intersection dimensions: {intersection_width}, {intersection_height}')
+	total_width = image_width + abs(x_offset)
+	total_height = image_height + abs(y_offset)
 
 	for index, image in enumerate(images):
 		norm_index = float(index) / float(len(images)-1)
@@ -38,8 +33,9 @@ def get_intersected_images(images, total_offset):
 		if total_offset[1] < 0:
 			y_offset -= total_offset[1]
 
-		offset_image = slice_image(image, x_offset, y_offset, intersection_width, intersection_height)
-		yield offset_image
+		padded_image = create_image(total_width, total_height)
+		padded_image[y_offset:image_height+y_offset, x_offset:image_width+x_offset] = image
+		yield padded_image
 
 
 if __name__ == '__main__':
@@ -61,6 +57,6 @@ if __name__ == '__main__':
 	total_offset = sys.argv[2].split(',')
 	total_offset = int(total_offset[0]), int(total_offset[1])
 
-	stacked = reduce(np.add, get_intersected_images(images, total_offset))
+	stacked = reduce(np.add, get_offset_padded_images(images, total_offset))
 	stacked = maximize_contrast(stacked)
 	save_image(stacked, 'out.png')

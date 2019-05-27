@@ -12,3 +12,8 @@ def save_image(array, filename):
 	array = array.astype(np.int8)
 	image = Image.fromarray(array, mode='L')
 	image.save(filename)
+
+
+def create_image(width, height):
+	image = Image.new(mode='I', size=(width, height))
+	return np.asarray(image, dtype=np.int16)

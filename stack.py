@@ -17,13 +17,17 @@ def maximize_contrast(image):
 	return (image - min_value) * (255.0 / (max_value - min_value))
 
 
-def slice_image(image, x_offset, y_offset, x_size, y_size):
-	return image[y_offset:y_offset+y_size, x_offset:x_offset+x_size]
+def slice_image(image, x_offset, y_offset, width, height):
+	return image[x_offset:x_offset+width, y_offset:y_offset+height]
 
 
-def get_intersected_images(images, total_offset):
-	height, width = images[0].shape
-	x_offset, y_offset = total_offset
+def get_intersected_images(images, x_offset, y_offset):
+	
+	# images are shifted against the offset direction
+	x_offset = -x_offset
+	y_offset = -y_offset
+
+	width, height = images[0].shape
 	intersection_width = width - abs(x_offset)
 	intersection_height = height - abs(y_offset)
 	print(f'intersection dimensions: {intersection_width}, {intersection_height}')
@@ -31,14 +35,14 @@ def get_intersected_images(images, total_offset):
 	for index, image in enumerate(images):
 		norm_index = float(index) / float(len(images)-1)
 		# interpolate offset
-		x_offset = round(float(total_offset[0]) * (1.0-norm_index))
-		if total_offset[0] < 0:
-			x_offset -= total_offset[0]
-		y_offset = round(float(total_offset[1]) * (1.0-norm_index))
-		if total_offset[1] < 0:
-			y_offset -= total_offset[1]
+		x = round(float(x_offset) * (1.0-norm_index))
+		if x_offset < 0:
+			x -= x_offset
+		y = round(float(y_offset) * (1.0-norm_index))
+		if y_offset < 0:
+			y -= y_offset
 
-		offset_image = slice_image(image, x_offset, y_offset, intersection_width, intersection_height)
+		offset_image = slice_image(image, x, y, intersection_width, intersection_height)
 		yield offset_image
 
 
@@ -58,9 +62,10 @@ if __name__ == '__main__':
 		for filename in files
 	]
 
-	total_offset = sys.argv[2].split(',')
-	total_offset = int(total_offset[0]), int(total_offset[1])
+	offsets = sys.argv[2].split(',')
+	x_offset = int(offsets[0])
+	y_offset = int(offsets[1])
 
-	stacked = reduce(np.add, get_intersected_images(images, total_offset))
+	stacked = reduce(np.add, get_intersected_images(images, x_offset, y_offset))
 	stacked = maximize_contrast(stacked)
 	save_image(stacked, 'out.png')

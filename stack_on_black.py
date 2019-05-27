@@ -53,9 +53,9 @@ if __name__ == '__main__':
 		for filename in files
 	]
 
-	x_offset, y_offset = sys.argv[2].split(',')
-	x_offset = int(x_offset)
-	y_offset = int(y_offset)
+	offsets = sys.argv[2].split(',')
+	x_offset = int(offsets[0])
+	y_offset = int(offsets[1])
 
 	stacked = reduce(np.add, get_offset_padded_images(images, x_offset, y_offset))
 	stacked = maximize_contrast(stacked)

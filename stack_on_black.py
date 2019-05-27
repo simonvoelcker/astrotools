@@ -5,6 +5,7 @@ import numpy as np
 from functools import reduce
 from PIL import Image
 from util import load_image, save_image, create_image
+from stack import interpolate_offsets
 
 
 def maximize_contrast(image):
@@ -17,24 +18,21 @@ def maximize_contrast(image):
 	return (image - min_value) * (255.0 / (max_value - min_value))
 
 
-def get_offset_padded_images(images, x_offset, y_offset):
+def stack_images_on_black(images, x_offset, y_offset):
 	image_width, image_height = images[0].shape
 	total_width = image_width + abs(x_offset)
 	total_height = image_height + abs(y_offset)
 
-	for index, image in enumerate(images):
-		norm_index = float(index) / float(len(images)-1)
-		# interpolate offset
-		x = round(float(x_offset) * (1.0-norm_index))
-		if x_offset < 0:
-			x -= x_offset
-		y = round(float(y_offset) * (1.0-norm_index))
-		if y_offset < 0:
-			y -= y_offset
+	image_offsets = interpolate_offsets(len(images), x_offset, y_offset)
 
+	padded_images = []
+	for image, (x,y) in zip(images, image_offsets):
 		padded_image = create_image(total_width, total_height)
 		padded_image[x:x+image_width, y:y+image_height] = image
-		yield padded_image
+		padded_images.append(padded_image)
+
+	stacked_image = reduce(np.add, padded_images)
+	return stacked_image
 
 
 if __name__ == '__main__':
@@ -57,6 +55,6 @@ if __name__ == '__main__':
 	x_offset = int(offsets[0])
 	y_offset = int(offsets[1])
 
-	stacked = reduce(np.add, get_offset_padded_images(images, x_offset, y_offset))
-	stacked = maximize_contrast(stacked)
-	save_image(stacked, 'out.png')
+	stacked_image = stack_images_on_black(images, x_offset, y_offset)
+	stacked_image = maximize_contrast(stacked_image)
+	save_image(stacked_image, 'stacked_on_black.png')

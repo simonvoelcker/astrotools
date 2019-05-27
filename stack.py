@@ -17,10 +17,6 @@ def maximize_contrast(image):
 	return (image - min_value) * (255.0 / (max_value - min_value))
 
 
-def slice_image(image, x, y, width, height):
-	return image[x:x+width, y:y+height]
-
-
 def interpolate_offsets(num_images, x_offset, y_offset):
 	for index in range(num_images):
 		norm_index = float(index) / float(num_images-1)
@@ -48,7 +44,7 @@ def stack_images(images, x_offset, y_offset):
 	image_offsets = interpolate_offsets(len(images), x_offset, y_offset)
 
 	sliced_images = [
-		slice_image(image, x, y, intersection_width, intersection_height)
+		image[x:x+intersection_width, y:y+intersection_height]
 		for image, (x, y) in zip(images, image_offsets)
 	]
 

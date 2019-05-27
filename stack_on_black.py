@@ -33,7 +33,7 @@ def get_offset_padded_images(images, x_offset, y_offset):
 			y -= y_offset
 
 		padded_image = create_image(total_width, total_height)
-		padded_image[x:image_width+x, y:image_height+y] = image
+		padded_image[x:x+image_width, y:y+image_height] = image
 		yield padded_image
 
 

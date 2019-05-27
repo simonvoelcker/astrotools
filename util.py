@@ -4,16 +4,18 @@ from PIL import Image
 
 
 def load_image(filename):
-	image = Image.open(filename).convert('L') # to grayscale
-	return np.asarray(image, dtype=np.int16)
+	pil_image = Image.open(filename).convert('L') # to grayscale
+	yx_image = np.asarray(pil_image, dtype=np.int16)
+	return np.transpose(yx_image)
 
 
-def save_image(array, filename):
-	array = array.astype(np.int8)
-	image = Image.fromarray(array, mode='L')
-	image.save(filename)
+def save_image(image, filename):
+	yx_image = np.transpose(image)
+	yx_image = yx_image.astype(np.int8)
+	pil_image = Image.fromarray(yx_image, mode='L')
+	pil_image.save(filename)
 
 
 def create_image(width, height):
-	image = Image.new(mode='I', size=(width, height))
-	return np.asarray(image, dtype=np.int16)
+	xy_image = Image.new(mode='I', size=(height, width))
+	return np.asarray(xy_image, dtype=np.int16)

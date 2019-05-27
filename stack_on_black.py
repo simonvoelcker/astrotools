@@ -17,24 +17,23 @@ def maximize_contrast(image):
 	return (image - min_value) * (255.0 / (max_value - min_value))
 
 
-def get_offset_padded_images(images, total_offset):
-	image_height, image_width = images[0].shape
-	x_offset, y_offset = total_offset
+def get_offset_padded_images(images, x_offset, y_offset):
+	image_width, image_height = images[0].shape
 	total_width = image_width + abs(x_offset)
 	total_height = image_height + abs(y_offset)
 
 	for index, image in enumerate(images):
 		norm_index = float(index) / float(len(images)-1)
 		# interpolate offset
-		x_offset = round(float(total_offset[0]) * (1.0-norm_index))
-		if total_offset[0] < 0:
-			x_offset -= total_offset[0]
-		y_offset = round(float(total_offset[1]) * (1.0-norm_index))
-		if total_offset[1] < 0:
-			y_offset -= total_offset[1]
+		x = round(float(x_offset) * (1.0-norm_index))
+		if x_offset < 0:
+			x -= x_offset
+		y = round(float(y_offset) * (1.0-norm_index))
+		if y_offset < 0:
+			y -= y_offset
 
 		padded_image = create_image(total_width, total_height)
-		padded_image[y_offset:image_height+y_offset, x_offset:image_width+x_offset] = image
+		padded_image[x:image_width+x, y:image_height+y] = image
 		yield padded_image
 
 
@@ -54,9 +53,10 @@ if __name__ == '__main__':
 		for filename in files
 	]
 
-	total_offset = sys.argv[2].split(',')
-	total_offset = int(total_offset[0]), int(total_offset[1])
+	x_offset, y_offset = sys.argv[2].split(',')
+	x_offset = int(x_offset)
+	y_offset = int(y_offset)
 
-	stacked = reduce(np.add, get_offset_padded_images(images, total_offset))
+	stacked = reduce(np.add, get_offset_padded_images(images, x_offset, y_offset))
 	stacked = maximize_contrast(stacked)
 	save_image(stacked, 'out.png')

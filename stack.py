@@ -36,7 +36,7 @@ def stack_images(images, x_offset, y_offset):
 	x_offset = -x_offset
 	y_offset = -y_offset
 
-	width, height = images[0].shape
+	width, height, channels = images[0].shape
 	intersection_width = width - abs(x_offset)
 	intersection_height = height - abs(y_offset)
 	print(f'intersection dimensions: {intersection_width}, {intersection_height}')
@@ -60,6 +60,8 @@ if __name__ == '__main__':
 	filename_pattern = sys.argv[1]
 	files = glob.glob(filename_pattern)
 	files.sort()
+
+	files = files[:200]
 
 	print(f'{len(files)} files')
 

@@ -19,7 +19,7 @@ def maximize_contrast(image):
 
 
 def stack_images_on_black(images, x_offset, y_offset):
-	image_width, image_height = images[0].shape
+	image_width, image_height, channels = images[0].shape
 	total_width = image_width + abs(x_offset)
 	total_height = image_height + abs(y_offset)
 
@@ -27,8 +27,8 @@ def stack_images_on_black(images, x_offset, y_offset):
 
 	padded_images = []
 	for image, (x,y) in zip(images, image_offsets):
-		padded_image = create_image(total_width, total_height)
-		padded_image[x:x+image_width, y:y+image_height] = image
+		padded_image = create_image(total_width, total_height, channels)
+		padded_image[x:x+image_width, y:y+image_height, :] = image
 		padded_images.append(padded_image)
 
 	stacked_image = reduce(np.add, padded_images)
@@ -43,6 +43,8 @@ if __name__ == '__main__':
 	filename_pattern = sys.argv[1]
 	files = glob.glob(filename_pattern)
 	files.sort()
+
+	files = files[:400]
 
 	print(f'{len(files)} files')
 

@@ -1,39 +1,46 @@
+import sys
 import numpy as np
 
-from util import load_image, save_image
+from PIL import Image
 
 
 class StackedImage:
 
-	def __init__(self, files, x_offset, y_offset, stride):
+	def __init__(self, files, x_offset, y_offset, stride, bits):
 
-		image0 = load_image(files[0])
-		image_width, image_height, channels = image0.shape
+		dtype = np.int16 if bits == 16 else np.int32
+
+		frame_0 = self._load_frame(files[0], dtype)
+		image_width, image_height, channels = frame_0.shape
 
 		total_width = image_width + abs(x_offset)
 		total_height = image_height + abs(y_offset)
 
-		image_offsets = self.interpolate_offsets(len(files), x_offset, y_offset)
+		image_offsets = self._interpolate_offsets(len(files), x_offset, y_offset)
 
-		stacked_image = np.zeros((total_width, total_height, channels), dtype=np.int16)
-		samples = np.zeros((total_width, total_height))
+		self.image = np.zeros((total_width, total_height, channels), dtype=dtype)
+		self.samples = np.zeros((total_width, total_height))
 
-		for index, (x,y) in enumerate(image_offsets):		
+		for index, (x,y) in enumerate(image_offsets):
 			if index % stride != 0:
 				continue
-			image = load_image(files[index])
-			padded_image = np.zeros((total_width, total_height, channels), dtype=np.int16)
-			padded_image[x:x+image_width, y:y+image_height, :] = image		
-			
-			stacked_image = np.add(stacked_image, padded_image)
+			frame = self._load_frame(files[index], dtype)
+			self.image[x:x+image_width, y:y+image_height, :] += frame
+			self.samples[x:x+image_width, y:y+image_height] += 1
 
-			samples[x:x+image_width, y:y+image_height] += 1
-
-		self.image = stacked_image
-		self.samples =samples
+		if np.amin(self.image) < 0:
+			print('An overflow occurred during stacking. Consider using --bits=32')
+			sys.exit(1)
 
 	@staticmethod
-	def interpolate_offsets(num_images, x_offset, y_offset):
+	def _load_frame(filename, dtype):
+		pil_image = Image.open(filename)
+		yxc_image = np.asarray(pil_image, dtype=dtype)
+		xyc_image = np.transpose(yxc_image, (1, 0, 2))
+		return xyc_image
+
+	@staticmethod
+	def _interpolate_offsets(num_images, x_offset, y_offset):
 		for index in range(num_images):
 			norm_index = float(index) / float(num_images-1)
 			# interpolate offset
@@ -92,5 +99,8 @@ class StackedImage:
 		self.image = 1.0 - self.image
 
 	def save(self, filename):
-		image_int = (255.0 * self.image).astype(np.int16)
-		save_image(image_int, filename)
+		out_image = (255.0 * self.image)
+		yxc_image = np.transpose(out_image, (1, 0, 2))
+		yxc_image = yxc_image.astype(np.int8)
+		pil_image = Image.fromarray(yxc_image, mode='RGB')
+		pil_image.save(filename)

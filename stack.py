@@ -12,6 +12,7 @@ parser.add_argument('directory', type=str)
 parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Pattern to use when searching for input images')
 parser.add_argument('--offsets', type=str, default=None, help='Pixel-offset between first and last image. Format: <X>,<Y>')
 parser.add_argument('--stride', type=int, default=1, help='Process only every Nth image')
+parser.add_argument('--bits', type=int, default=16, help='Bits per channel to use while stacking. Use 16 (default) or 32.')
 parser.add_argument('--out', type=str, default='stacked.png', help='Output filename')
 parser.add_argument('--crop', type=str, default=None, help='Crop the image to a square with center X,Y. Format: <X>,<Y>,<Radius>')
 parser.add_argument('--gamma', type=float, default=None, help='Gamma-correction value to apply')
@@ -57,7 +58,7 @@ offsets = params['offsets'].split(',')
 x_offset = int(offsets[0])
 y_offset = int(offsets[1])
 
-image = StackedImage(files, x_offset, y_offset, args.stride)
+image = StackedImage(files, x_offset, y_offset, args.stride, args.bits)
 
 if params['crop'] is not None:
 	cx, cy, r = params['crop'].split(',')

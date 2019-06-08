@@ -85,6 +85,12 @@ class StackedImage:
 		self.image = self.image[cx-r:cx+r, cy-r:cy+r, :]
 		self.samples = self.samples[cx-r:cx+r, cy-r:cy+r]
 
+	def apply_gamma(self, gamma):
+		self.image = np.power(self.image, gamma)
+
+	def invert(self):
+		self.image = 1.0 - self.image
+
 	def save(self, filename):
 		image_int = (255.0 * self.image).astype(np.int16)
 		save_image(image_int, filename)

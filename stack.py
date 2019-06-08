@@ -1,36 +1,40 @@
 import sys
 import glob
+import argparse
 
 from stacked_image import StackedImage
 
 
-if __name__ == '__main__':
-	if len(sys.argv) not in (3,4):
-		print(f'Usage: {sys.argv[0]} <filename_pattern> <total_offset(x,y)> <stride=1>')
-		sys.exit(1)
+parser = argparse.ArgumentParser()
+parser.add_argument('filename_pattern', type=str)
+parser.add_argument('--offsets', type=str, default='0,0')
+parser.add_argument('--stride', type=int, default=1)
+parser.add_argument('--out', type=str, default='stacked.png')
+parser.add_argument('--crop', type=str, default=None, help='Crop the image to a square with center X,Y. Format: <X>,<Y>,<Radius>')
 
-	filename_pattern = sys.argv[1]
-	files = glob.glob(filename_pattern)
-	files.sort()
+args = parser.parse_args()
 
-	if not files:
-		print('No files')
-		sys.exit(1)
 
-	stride = int(sys.argv[3]) if len(sys.argv) == 4 else 1 
-	print(f'{len(files)} files, stride={stride}')
+files = glob.glob(args.filename_pattern)
+files.sort()
 
-	offsets = sys.argv[2].split(',')
-	x_offset = int(offsets[0])
-	y_offset = int(offsets[1])
+if not files:
+	print('No files')
+	sys.exit(1)
 
-	image = StackedImage(files, x_offset, y_offset, stride)
+print(f'{len(files)} files, stride={args.stride}')
 
-	#cx, cy, r = 2583, 934, 400
-	#image = image[cx-r:cx+r, cy-r:cy+r, :]
-	#samples = samples[cx-r:cx+r, cy-r:cy+r]
-	
-	image.normalize()
-	image.substract_pollution()
-	image.normalize()
-	image.save('stacked.png')
+offsets = args.offsets.split(',')
+x_offset = int(offsets[0])
+y_offset = int(offsets[1])
+
+image = StackedImage(files, x_offset, y_offset, args.stride)
+
+if args.crop is not None:
+	cx, cy, r = args.crop.split(',')
+	image.crop(int(cx), int(cy), int(r))
+
+image.normalize()
+image.substract_pollution()
+image.normalize()
+image.save(args.out)

@@ -80,6 +80,11 @@ class StackedImage:
 		result = np.clip(result, 0.0, 1.0)
 		self.image = result
 
+	def crop(self, cx, cy, r):
+		# crop image to a square with center <cx,cy> and radius <>.
+		self.image = self.image[cx-r:cx+r, cy-r:cy+r, :]
+		self.samples = self.samples[cx-r:cx+r, cy-r:cy+r]
+
 	def save(self, filename):
 		image_int = (255.0 * self.image).astype(np.int16)
 		save_image(image_int, filename)

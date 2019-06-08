@@ -16,13 +16,13 @@ args = parser.parse_args()
 
 
 files = glob.glob(args.filename_pattern)
-files.sort()
 
 if not files:
 	print('No files')
 	sys.exit(1)
 
-print(f'{len(files)} files, stride={args.stride}')
+print(f'Found {len(files)} files')
+files.sort()
 
 offsets = args.offsets.split(',')
 x_offset = int(offsets[0])

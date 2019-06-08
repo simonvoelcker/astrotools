@@ -2,10 +2,7 @@ import sys
 import glob
 import numpy as np
 
-from functools import reduce
-from PIL import Image
 from util import load_image, save_image, create_image
-from stack import interpolate_offsets
 
 
 def maximize_contrast(image, max_channel_value=255.0):
@@ -20,6 +17,19 @@ def maximize_contrast(image, max_channel_value=255.0):
 	float_image = image.astype(float)
 	stretched = (float_image - min_value) * (max_channel_value / (max_value - min_value))
 	return stretched.astype(np.int16)
+
+
+def interpolate_offsets(num_images, x_offset, y_offset):
+	for index in range(num_images):
+		norm_index = float(index) / float(num_images-1)
+		# interpolate offset
+		x = round(float(x_offset) * (1.0-norm_index))
+		if x_offset < 0:
+			x -= x_offset
+		y = round(float(y_offset) * (1.0-norm_index))
+		if y_offset < 0:
+			y -= y_offset
+		yield x, y
 
 
 def stack_images_on_black(files, x_offset, y_offset, stride):
@@ -62,9 +72,7 @@ def substract_pollution(image, samples):
 					if min_pollution is None or pollution < min_pollution:
 						min_pollution = pollution 
 
-	min_value = np.amin(image)
-	max_value = np.amax(image)	
-	print(f'min={min_value}, max={max_value}, max samples={max_samples}, pollution={min_pollution}')
+	print(f'max samples={max_samples}, pollution={min_pollution}')
 
 	pollution_image = samples.astype(float) / float(max_samples) * float(min_pollution) 
 	
@@ -114,24 +122,24 @@ if __name__ == '__main__':
 	#image = image[cx-r:cx+r, cy-r:cy+r, :]
 	#samples = samples[cx-r:cx+r, cy-r:cy+r]
 
-	print('stacked', len(np.unique(image)))
+	print('stacked. unique values:', len(np.unique(image)))
 	
 	image = normalize_image(image)
-	print('normalized', len(np.unique(image)))
+	print('normalized. unique values:', len(np.unique(image)))
 	
 	image = substract_pollution(image, samples)
-	print('depolluted', len(np.unique(image)))
+	print('depolluted. unique values:', len(np.unique(image)))
 	
 	image = normalize_image(image)
-	print('normalized', len(np.unique(image)))
+	print('normalized. unique values:', len(np.unique(image)))
 	
 	#image = np.square(image)
 	#image = np.square(image)
 	#image = np.sqrt(image)
-	print('filtered', len(np.unique(image)))
+	print('filtered. unique values:', len(np.unique(image)))
 	
 	image = (255.0 * image).astype(np.int16)
-	print('output', len(np.unique(image)))
+	print('converted to 16bit int. unique values:', len(np.unique(image)))
 
 	# stacked_image = maximize_contrast(stacked_image, max_channel_value=255.0)
 	

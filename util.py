@@ -16,8 +16,3 @@ def save_image(image, filename):
 	yxc_image = yxc_image.astype(np.int8)
 	pil_image = Image.fromarray(yxc_image, mode='RGB')
 	pil_image.save(filename)
-
-
-def create_image(width, height, channels):
-	xyc_image = Image.new(mode='RGB', size=(height, width))
-	return np.asarray(xyc_image, dtype=np.int16)

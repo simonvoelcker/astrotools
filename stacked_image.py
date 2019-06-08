@@ -1,6 +1,6 @@
 import numpy as np
 
-from util import load_image, create_image, save_image
+from util import load_image, save_image
 
 
 class StackedImage:
@@ -15,14 +15,14 @@ class StackedImage:
 
 		image_offsets = self.interpolate_offsets(len(files), x_offset, y_offset)
 
-		stacked_image = create_image(total_width, total_height, channels)
+		stacked_image = np.zeros((total_width, total_height, channels), dtype=np.int16)
 		samples = np.zeros((total_width, total_height))
 
 		for index, (x,y) in enumerate(image_offsets):		
 			if index % stride != 0:
 				continue
 			image = load_image(files[index])
-			padded_image = create_image(total_width, total_height, channels)
+			padded_image = np.zeros((total_width, total_height, channels), dtype=np.int16)
 			padded_image[x:x+image_width, y:y+image_height, :] = image		
 			
 			stacked_image = np.add(stacked_image, padded_image)

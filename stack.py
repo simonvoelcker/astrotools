@@ -7,9 +7,9 @@ from stacked_image import StackedImage
 
 parser = argparse.ArgumentParser()
 parser.add_argument('filename_pattern', type=str)
-parser.add_argument('--offsets', type=str, default='0,0')
-parser.add_argument('--stride', type=int, default=1)
-parser.add_argument('--out', type=str, default='stacked.png')
+parser.add_argument('--offsets', type=str, default='0,0', help='Pixel-offset between first and last image. Format: <X>,<Y>')
+parser.add_argument('--stride', type=int, default=1, help='Process only every Nth image')
+parser.add_argument('--out', type=str, default='stacked.png', help='Output filename')
 parser.add_argument('--crop', type=str, default=None, help='Crop the image to a square with center X,Y. Format: <X>,<Y>,<Radius>')
 
 args = parser.parse_args()

@@ -2,4 +2,8 @@
 
 Python tools for enhancing astronomic photographs
 
-No help text, because why
+Requires Python 3.6+, numpy, Pillow.
+
+Basic usage: `python stack.py <filename_pattern>`
+
+See options: `python stack.py -h`

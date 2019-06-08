@@ -1,6 +1,6 @@
 import numpy as np
 
-from util import load_image, create_image
+from util import load_image, create_image, save_image
 
 
 class StackedImage:
@@ -79,3 +79,7 @@ class StackedImage:
 
 		result = np.clip(result, 0.0, 1.0)
 		self.image = result
+
+	def save(self, filename):
+		image_int = (255.0 * self.image).astype(np.int16)
+		save_image(image_int, filename)

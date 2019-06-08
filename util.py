@@ -11,17 +11,10 @@ def load_image(filename):
 	return xyc_image
 
 
-def save_image(image, filename, rgb_mode=True):
-	if rgb_mode:
-		yxc_image = np.transpose(image, (1, 0, 2))
-		yxc_image = yxc_image.astype(np.int8)
-		pil_image = Image.fromarray(yxc_image, mode='RGB')
-	else:
-		yxc_image = np.transpose(image, (1, 0, 2))
-		yxc_image = yxc_image.astype(np.int32)
-		# just pick R channel
-		yx_image = yxc_image[:,:,0]
-		pil_image = Image.fromarray(yx_image, mode='I')
+def save_image(image, filename):
+	yxc_image = np.transpose(image, (1, 0, 2))
+	yxc_image = yxc_image.astype(np.int8)
+	pil_image = Image.fromarray(yxc_image, mode='RGB')
 	pil_image.save(filename)
 
 

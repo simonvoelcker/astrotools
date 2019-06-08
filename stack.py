@@ -1,8 +1,6 @@
 import sys
 import glob
-import numpy as np
 
-from util import save_image
 from stacked_image import StackedImage
 
 
@@ -35,7 +33,4 @@ if __name__ == '__main__':
 	image.normalize()
 	image.substract_pollution()
 	image.normalize()
-	
-	image_int = (255.0 * image.image).astype(np.int16)
-
-	save_image(image_int, 'stacked.png', rgb_mode=True)
+	image.save('stacked.png')

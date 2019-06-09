@@ -24,7 +24,7 @@ search_pattern = os.path.join(args.directory, args.filename_pattern)
 files = glob.glob(search_pattern)
 
 if not files:
-	print('No files')
+	print('No files. Use --filename-pattern if the images are not .tif')
 	sys.exit(1)
 
 print(f'Found {len(files)} files')

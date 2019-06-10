@@ -14,7 +14,8 @@ parser.add_argument('--offsets', type=str, default=None, help='Pixel-offset betw
 parser.add_argument('--stride', type=int, default=1, help='Process only every Nth image')
 parser.add_argument('--bits', type=int, default=16, help='Bits per channel to use while stacking. Use 16 (default) or 32.')
 parser.add_argument('--out', type=str, default='stacked.png', help='Output filename')
-parser.add_argument('--crop', type=str, default=None, help='Crop the image to a square with center X,Y. Format: <X>,<Y>,<Radius>')
+parser.add_argument('--crop', type=str, default=None, help='Crop the output image to a square with center X,Y. Format: <X>,<Y>,<Radius>')
+parser.add_argument('--crop-input', type=str, default=None, help='Crop the input images to a square with center X,Y. Format: <X>,<Y>,<Radius>')
 parser.add_argument('--gamma', type=float, default=None, help='Gamma-correction value to apply')
 parser.add_argument('--invert', action='store_true')
 
@@ -35,6 +36,7 @@ params = {
 	'offsets': '0,0',
 	'crop': None,
 	'gamma': 1.0,
+	'crop-input': None,
 }
 
 # params from file override defaults
@@ -51,6 +53,14 @@ if args.crop is not None:
 	params.update({'crop': args.crop})
 if args.gamma is not None:
 	params.update({'gamma': args.gamma})
+if args.crop_input is not None:
+	params.update({'crop-input': args.crop_input})
+
+# nasty way to reset these
+if params['crop'] == 'None':
+	params['crop'] = None
+if params['crop-input'] == 'None':
+	params['crop-input'] = None
 
 print(f'Using params: {params}')
 
@@ -58,7 +68,7 @@ offsets = params['offsets'].split(',')
 x_offset = int(offsets[0])
 y_offset = int(offsets[1])
 
-image = StackedImage(files, x_offset, y_offset, args.stride, args.bits)
+image = StackedImage(files, x_offset, y_offset, args.stride, args.bits, params['crop-input'])
 
 if params['crop'] is not None:
 	cx, cy, r = params['crop'].split(',')

@@ -6,11 +6,11 @@ from PIL import Image
 
 class StackedImage:
 
-	def __init__(self, files, x_offset, y_offset, stride, bits):
+	def __init__(self, files, x_offset, y_offset, stride, bits, crop_input):
 
 		dtype = np.int16 if bits == 16 else np.int32
 
-		frame_0 = self._load_frame(files[0], dtype)
+		frame_0 = self._load_frame(files[0], dtype, crop_input)
 		image_width, image_height, channels = frame_0.shape
 
 		total_width = image_width + abs(x_offset)
@@ -24,7 +24,18 @@ class StackedImage:
 		for index, (x,y) in enumerate(image_offsets):
 			if index % stride != 0:
 				continue
-			frame = self._load_frame(files[index], dtype)
+			frame = self._load_frame(files[index], dtype, crop_input)
+
+			# average = np.average(frame)
+			# if average < 2.6:
+			#	continue
+			# print(f'Using frame {index} (avg={average})')
+
+			# x_corr, y_corr = self._get_offset_correction(self.image, frame, x, y, 10)
+			# print(f'Frame {index}: Applying offset correction {x_corr}, {y_corr}')
+			# x += x_corr
+			# y += y_corr
+
 			self.image[x:x+image_width, y:y+image_height, :] += frame
 			self.samples[x:x+image_width, y:y+image_height] += 1
 
@@ -33,10 +44,44 @@ class StackedImage:
 			sys.exit(1)
 
 	@staticmethod
-	def _load_frame(filename, dtype):
+	def _get_offset_correction(image, frame, x_ofs, y_ofs, radius):
+		width, height, channels = frame.shape
+		best_sim = 0
+		best_corr = (0, 0)
+
+		frame_lin = frame.flatten().astype(float)
+		frame_norm = np.linalg.norm(frame_lin)
+		
+		for x_corr in range(-radius, radius+1):
+			for y_corr in range(-radius, radius+1):
+				image_slice = image[x_ofs+x_corr:x_ofs+x_corr+width, y_ofs+y_corr:y_ofs+y_corr+height, :]
+				if image_slice.shape != (width, height, channels):
+					continue
+
+				slice_lin = image_slice.flatten().astype(float)
+				num = np.dot(slice_lin, frame_lin)
+				denom = np.linalg.norm(slice_lin) * frame_norm
+				if denom == 0:
+					continue
+
+				sim = num / denom
+				if sim > best_sim:
+					best_sim = sim
+					best_corr = x_corr, y_corr
+
+		return best_corr
+
+	@staticmethod
+	def _load_frame(filename, dtype, crop_input):
 		pil_image = Image.open(filename)
 		yxc_image = np.asarray(pil_image, dtype=dtype)
 		xyc_image = np.transpose(yxc_image, (1, 0, 2))
+
+		if crop_input is not None:
+			cx, cy, r = crop_input.split(',')
+			cx, cy, r = int(cx), int(cy), int(r)
+			return xyc_image[cx-r:cx+r, cy-r:cy+r, :]
+
 		return xyc_image
 
 	@staticmethod
@@ -76,7 +121,7 @@ class StackedImage:
 						if min_pollution is None or pollution < min_pollution:
 							min_pollution = pollution 
 
-		print(f'max samples per pixel: {max_samples}, pollution: {min_pollution:.4}')
+		print(f'max samples per pixel: {max_samples}, pollution: {float(min_pollution):.4}')
 
 		pollution_image = self.samples.astype(float) / float(max_samples) * float(min_pollution) 
 		

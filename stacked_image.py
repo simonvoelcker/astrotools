@@ -10,41 +10,61 @@ class StackedImage:
 
 		dtype = np.int16 if bits == 16 else np.int32
 
-		frame_0 = self._load_frame(files[0], dtype, crop_input)
-		image_width, image_height, channels = frame_0.shape
+		image_0 = self._load_frame(files[0], dtype)
 
-		total_width = image_width + abs(x_offset)
-		total_height = image_height + abs(y_offset)
+		cx, cy, r = crop_input.split(',')
+		cx, cy, r = int(cx), int(cy), int(r)
 
-		image_offsets = self._interpolate_offsets(len(files), x_offset, y_offset)
+		frame_0 = image_0[cx-r:cx+r, cy-r:cy+r, :]
+		frame_width, frame_height, channels = frame_0.shape
 
-		self.image = np.zeros((total_width, total_height, channels), dtype=dtype)
-		self.samples = np.zeros((total_width, total_height))
+		x_offset = -x_offset
+		y_offset = -y_offset
+		image_offsets = list(self._interpolate_offsets(len(files), x_offset, y_offset))
 
+		frames = []
 		for index, (x,y) in enumerate(image_offsets):
 			if index % stride != 0:
 				continue
-			frame = self._load_frame(files[index], dtype, crop_input)
+			full_frame = self._load_frame(files[index], dtype)
 
-			# average = np.average(frame)
-			# if average < 2.6:
-			#	continue
-			# print(f'Using frame {index} (avg={average})')
+			frame = full_frame[cx-r+x : cx+r+x, cy-r+y : cy+r+y, :]
+			corr_x, corr_y = self._get_offset_correction(image_0, frame, cx-r+image_offsets[0][0], cy-r+image_offsets[0][1], 10, index)
 
-			# x_corr, y_corr = self._get_offset_correction(self.image, frame, x, y, 10)
-			# print(f'Frame {index}: Applying offset correction {x_corr}, {y_corr}')
-			# x += x_corr
-			# y += y_corr
+			frame = full_frame[cx-r+x-corr_x : cx+r+x-corr_x, cy-r+y-corr_y : cy+r+y-corr_y, :]
 
-			self.image[x:x+image_width, y:y+image_height, :] += frame
-			self.samples[x:x+image_width, y:y+image_height] += 1
+			if frame.shape != (frame_width, frame_height, channels):
+				print(f'Discarding frame {index} because shape is bad ({frame.shape})')
+				continue
+
+			print(f'frame {index}: corr={(corr_x, corr_y)}, xy={(x,y)}')
+
+			composed_frame = np.zeros((2*frame_width, frame_height, channels), dtype=np.int8)
+			composed_frame[0*frame_width:1*frame_width, :, :] = full_frame[cx+x-r       :cx+x+r       , cy+y-r       :cy+y+r       , :]
+			composed_frame[1*frame_width:2*frame_width, :, :] = full_frame[cx+x-r-corr_x:cx+x+r-corr_x, cy+y-r-corr_y:cy+y+r-corr_y, :]
+
+			yxc_image = np.transpose(composed_frame, (1, 0, 2))
+			yxc_image = yxc_image.astype(np.int8)
+			pil_image = Image.fromarray(yxc_image, mode='RGB')
+			pil_image.save(f'frames_1/{index}.png')
+
+			frames.append(frame)
+
+		print(f'Stacking image from {len(frames)} frames')
+
+		image_stack = np.zeros((frame_width, frame_height, channels, len(frames)), dtype=dtype)
+		for index, frame in enumerate(frames):
+			image_stack[:, :, :, index] = frame
+
+		self.image = np.median(image_stack, axis=3)
+		self.samples = np.ones((frame_width, frame_height), dtype=np.int16)
 
 		if np.amin(self.image) < 0:
 			print('An overflow occurred during stacking. Consider using --bits=32')
 			sys.exit(1)
 
 	@staticmethod
-	def _get_offset_correction(image, frame, x_ofs, y_ofs, radius):
+	def _get_offset_correction(image, frame, x_ofs, y_ofs, radius, index):
 		width, height, channels = frame.shape
 		best_sim = 0
 		best_corr = (0, 0)
@@ -54,14 +74,29 @@ class StackedImage:
 		
 		for x_corr in range(-radius, radius+1):
 			for y_corr in range(-radius, radius+1):
+
 				image_slice = image[x_ofs+x_corr:x_ofs+x_corr+width, y_ofs+y_corr:y_ofs+y_corr+height, :]
+				
+				#composed_frame = np.zeros((2*width, height, channels))
+				#composed_frame[0*width:1*width, :, :] = image_slice
+				#composed_frame[1*width:2*width, :, :] = frame
+#
+#				#yxc_image = np.transpose(composed_frame, (1, 0, 2))
+#				#yxc_image = yxc_image.astype(np.int8)
+#				#pil_image = Image.fromarray(yxc_image, mode='RGB')
+#				#pil_image.save(f'frames_2/{index}.png')
+#
+				#return best_corr
+
 				if image_slice.shape != (width, height, channels):
+					print('WARN 1')
 					continue
 
 				slice_lin = image_slice.flatten().astype(float)
 				num = np.dot(slice_lin, frame_lin)
 				denom = np.linalg.norm(slice_lin) * frame_norm
 				if denom == 0:
+					print('WARN 2')
 					continue
 
 				sim = num / denom
@@ -72,16 +107,10 @@ class StackedImage:
 		return best_corr
 
 	@staticmethod
-	def _load_frame(filename, dtype, crop_input):
+	def _load_frame(filename, dtype):
 		pil_image = Image.open(filename)
 		yxc_image = np.asarray(pil_image, dtype=dtype)
 		xyc_image = np.transpose(yxc_image, (1, 0, 2))
-
-		if crop_input is not None:
-			cx, cy, r = crop_input.split(',')
-			cx, cy, r = int(cx), int(cy), int(r)
-			return xyc_image[cx-r:cx+r, cy-r:cy+r, :]
-
 		return xyc_image
 
 	@staticmethod
@@ -105,7 +134,11 @@ class StackedImage:
 			return
 
 		float_image = self.image.astype(float)
-		normalized = (float_image - min_value) / (max_value - min_value)
+		if max_value > min_value:
+			normalized = (float_image - min_value) / (max_value - min_value)
+		else:
+			normalized = (float_image - min_value)
+
 		self.image = normalized
 
 	def substract_pollution(self):

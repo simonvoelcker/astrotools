@@ -75,8 +75,6 @@ if params['crop'] is not None:
 	image.crop(int(cx), int(cy), int(r))
 
 image.normalize()
-image.substract_pollution()
-image.normalize()
 image.apply_gamma(params['gamma'])
 if args.invert:
 	image.invert()

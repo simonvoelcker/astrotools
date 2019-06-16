@@ -29,7 +29,18 @@ class StackedImage:
 			full_frame = self._load_frame(files[index], dtype)
 
 			frame = full_frame[cx-r+x : cx+r+x, cy-r+y : cy+r+y, :]
-			corr_x, corr_y = self._get_offset_correction(image_0, frame, cx-r+image_offsets[0][0], cy-r+image_offsets[0][1], 10, index)
+
+			sharpness = self._get_sharpness(frame)
+			#if sharpness < 0.465:
+			#	print(f'Discarding frame {index} because its sharpness is low')
+			#	continue
+
+			max_offset = 6
+			corr_x, corr_y = self._get_offset_correction(image_0, frame, cx-r+image_offsets[0][0], cy-r+image_offsets[0][1], max_offset, index)
+
+			if abs(corr_x) == max_offset or abs(corr_y) == max_offset:
+				print(f'Discarding frame {index} because its offset is too high ({corr_x}, {corr_y})')
+				continue
 
 			frame = full_frame[cx-r+x-corr_x : cx+r+x-corr_x, cy-r+y-corr_y : cy+r+y-corr_y, :]
 
@@ -37,16 +48,15 @@ class StackedImage:
 				print(f'Discarding frame {index} because shape is bad ({frame.shape})')
 				continue
 
-			print(f'frame {index}: corr={(corr_x, corr_y)}, xy={(x,y)}')
+			print(f'Using frame {index}: corr={(corr_x, corr_y)}, sharpness={sharpness}')
 
-			composed_frame = np.zeros((2*frame_width, frame_height, channels), dtype=np.int8)
-			composed_frame[0*frame_width:1*frame_width, :, :] = full_frame[cx+x-r       :cx+x+r       , cy+y-r       :cy+y+r       , :]
-			composed_frame[1*frame_width:2*frame_width, :, :] = full_frame[cx+x-r-corr_x:cx+x+r-corr_x, cy+y-r-corr_y:cy+y+r-corr_y, :]
-
-			yxc_image = np.transpose(composed_frame, (1, 0, 2))
-			yxc_image = yxc_image.astype(np.int8)
-			pil_image = Image.fromarray(yxc_image, mode='RGB')
-			pil_image.save(f'frames_1/{index}.png')
+			#composed_frame = np.zeros((2*frame_width, frame_height, channels), dtype=np.int8)
+			#composed_frame[0*frame_width:1*frame_width, :, :] = full_frame[cx+x-r       :cx+x+r       , cy+y-r       :cy+y+r       , :]
+			#composed_frame[1*frame_width:2*frame_width, :, :] = full_frame[cx+x-r-corr_x:cx+x+r-corr_x, cy+y-r-corr_y:cy+y+r-corr_y, :]
+			#yxc_image = np.transpose(composed_frame, (1, 0, 2))
+			#yxc_image = yxc_image.astype(np.int8)
+			#pil_image = Image.fromarray(yxc_image, mode='RGB')
+			#pil_image.save(f'frames_1/{index}.png')
 
 			frames.append(frame)
 
@@ -62,6 +72,13 @@ class StackedImage:
 		if np.amin(self.image) < 0:
 			print('An overflow occurred during stacking. Consider using --bits=32')
 			sys.exit(1)
+
+	@staticmethod
+	def _get_sharpness(xyc_image):
+		xy_image = np.sum(xyc_image, axis=2)
+		gy, gx = np.gradient(xy_image)
+		gnorm = np.sqrt(gx**2 + gy**2)
+		return np.average(gnorm)
 
 	@staticmethod
 	def _get_offset_correction(image, frame, x_ofs, y_ofs, radius, index):

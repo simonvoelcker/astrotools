@@ -31,9 +31,9 @@ class StackedImage:
 			frame = full_frame[cx-r+x : cx+r+x, cy-r+y : cy+r+y, :]
 
 			sharpness = self._get_sharpness(frame)
-			#if sharpness < 0.465:
-			#	print(f'Discarding frame {index} because its sharpness is low')
-			#	continue
+			if sharpness < 1.73:
+				print(f'Discarding frame {index} because its sharpness is low')
+				continue
 
 			max_offset = 6
 			corr_x, corr_y = self._get_offset_correction(image_0, frame, cx-r+image_offsets[0][0], cy-r+image_offsets[0][1], max_offset, index)

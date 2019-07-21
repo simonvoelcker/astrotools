@@ -15,6 +15,30 @@ def load_frame(filename, dtype):
 	xyc_image = np.transpose(yxc_image, (1, 0, 2))
 	return xyc_image
 
+def save_composition(frames, filename, dtype=np.int8):
+	frames_per_axis = 1+int(len(frames)**0.5)
+
+	composed_image = np.zeros((frame_width*frames_per_axis, frame_height*frames_per_axis, channels), dtype=dtype)
+	for index, frame in enumerate(frames):
+		x = index % frames_per_axis
+		y = index // frames_per_axis
+		composed_image[x*frame_width:(x+1)*frame_width, y*frame_height:(y+1)*frame_height, :] = frame
+
+	yxc_image = np.transpose(composed_image, (1, 0, 2))
+	yxc_image = yxc_image.astype(dtype)
+	pil_image = Image.fromarray(yxc_image, mode='RGB')
+	pil_image.save(filename)
+
+def save_animation(frames, filename, dtype=np.int8):
+	# (1) need to pick R channel and store as greyscale
+	pil_images = []
+	for index, frame in enumerate(frames):
+		yxc_image = np.transpose(frame, (1, 0, 2))
+		yxc_image = yxc_image.astype(np.int8)[:,:,0]
+		pil_image = Image.fromarray(yxc_image, mode='L')
+		pil_images.append(pil_image)	
+	pil_images[0].save(filename, save_all=True, append_images=pil_images[1:], duration=100, loop=0)
+
 def interpolate_offsets(num_images, x_offset, y_offset):
 	for index in range(num_images):
 		norm_index = float(index) / float(num_images-1)
@@ -26,6 +50,36 @@ def interpolate_offsets(num_images, x_offset, y_offset):
 		if y_offset < 0:
 			y -= y_offset
 		yield x, y
+
+def get_offset_correction(image, frame, x_ofs, y_ofs, radius, index):
+	width, height, channels = frame.shape
+	best_sim = 0
+	best_corr = (0, 0)
+
+	frame_lin = frame.flatten().astype(float)
+	frame_norm = np.linalg.norm(frame_lin)
+	
+	for x_corr in range(-radius, radius+1):
+		for y_corr in range(-radius, radius+1):
+
+			image_slice = image[x_ofs+x_corr:x_ofs+x_corr+width, y_ofs+y_corr:y_ofs+y_corr+height, :]
+			if image_slice.shape != (width, height, channels):
+				print('WARN 1')
+				continue
+
+			slice_lin = image_slice.flatten().astype(float)
+			num = np.dot(slice_lin, frame_lin)
+			denom = np.linalg.norm(slice_lin) * frame_norm
+			if denom == 0:
+				print('WARN 2')
+				continue
+
+			sim = num / denom
+			if sim > best_sim:
+				best_sim = sim
+				best_corr = x_corr, y_corr
+
+	return best_corr
 
 
 parser = argparse.ArgumentParser()
@@ -101,19 +155,8 @@ for index, (x,y) in enumerate(image_offsets):
 
 print(f'got {len(frames)} frames now')
 
-frames_per_axis = 1+int(len(frames)**0.5)
-
-composed_image = np.zeros((frame_width*frames_per_axis, frame_height*frames_per_axis, channels), dtype=np.int8)
-for index, frame in enumerate(frames):
-	x = index % frames_per_axis
-	y = index // frames_per_axis
-	composed_image[x*frame_width:(x+1)*frame_width, y*frame_height:(y+1)*frame_height, :] = frame
-
-yxc_image = np.transpose(composed_image, (1, 0, 2))
-
-yxc_image = yxc_image.astype(np.int8)
-pil_image = Image.fromarray(yxc_image, mode='RGB')
-pil_image.save('composed.png')
+save_composition(frames, 'composed.png')
+save_animation(frames, 'animated.gif')
 
 # write params back to disk
 #with open(params_file, 'w') as f:

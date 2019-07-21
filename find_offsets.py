@@ -37,7 +37,7 @@ def save_animation(frames, filename, dtype=np.int8):
 		yxc_image = yxc_image.astype(np.int8)[:,:,0]
 		pil_image = Image.fromarray(yxc_image, mode='L')
 		pil_images.append(pil_image)	
-	pil_images[0].save(filename, save_all=True, append_images=pil_images[1:], duration=100, loop=0)
+	pil_images[0].save(filename, save_all=True, append_images=pil_images[1:], duration=50, loop=0)
 
 def interpolate_offsets(num_images, x_offset, y_offset):
 	for index in range(num_images):
@@ -64,14 +64,14 @@ def get_offset_correction(image, frame, x_ofs, y_ofs, radius):
 
 			image_slice = image[x_ofs+x_corr:x_ofs+x_corr+width, y_ofs+y_corr:y_ofs+y_corr+height, :]
 			if image_slice.shape != (width, height, channels):
-				print('WARN 1')
+				print('WARN: Unexpected shape in offset correction computation')
 				continue
 
 			slice_lin = image_slice.flatten().astype(float)
 			num = np.dot(slice_lin, frame_lin)
 			denom = np.linalg.norm(slice_lin) * frame_norm
 			if denom == 0:
-				print('WARN 2')
+				print('WARN: Frame seems to be all black, cannot compute offset correction')
 				continue
 
 			sim = num / denom
@@ -88,7 +88,7 @@ parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Patte
 parser.add_argument('--offsets-hint', type=str, default=None, help='Pixel-offset between first and last image. Format: <X>,<Y>')
 parser.add_argument('--focus-area', type=str, default=None, help='Format: <X>,<Y>,<Radius>, in first-frame coordinates')
 
-parser.add_argument('--out', type=str, default='stacked.png', help='Output filename')
+parser.add_argument('--out', type=str, default='animation.gif', help='Output filename')
 
 args = parser.parse_args()
 
@@ -109,7 +109,8 @@ params = {
 }
 
 # params from file override defaults
-params_file = os.path.join(args.directory, 'offsets_params.json')
+params_file = os.path.join(args.directory, 'offset_params.json')
+
 if os.path.isfile(params_file):
 	with open(params_file, 'r') as f:
 		content = json.load(f)
@@ -131,6 +132,12 @@ offset_hint_y = int(offsets_hint[1])
 focus_x, focus_y, focus_r = params['focus-area'].split(',')
 focus_x, focus_y, focus_r = int(focus_x), int(focus_y), int(focus_r)
 
+# a little hack that is necessary so that the focus area is actually in first-frame coordinates
+if offset_hint_x < 0:
+	focus_x += offset_hint_x
+if offset_hint_y < 0:
+	focus_y += offset_hint_y
+
 image_0 = load_frame(files[0], np.int16)
 
 frame_0 = image_0[focus_x-focus_r:focus_x+focus_r, focus_y-focus_r:focus_y+focus_r, :]
@@ -142,6 +149,8 @@ offset_hint_y = -offset_hint_y
 image_offsets = list(interpolate_offsets(len(files), offset_hint_x, offset_hint_y))
 
 frames = []
+frame_offsets = {}	# map filename to offsets-tuple
+
 for index, (x,y) in enumerate(image_offsets):
 	full_frame = load_frame(files[index], np.int16)
 
@@ -152,7 +161,9 @@ for index, (x,y) in enumerate(image_offsets):
 	max_correction = 6
 	corr_x, corr_y = get_offset_correction(image_0, frame, base_offset_x, base_offset_y, max_correction)
 
-	print(f'frame {index} has offsets {corr_x}, {corr_y}')
+	# save actual frame offset, respecting series offset (--offset-hint) and correction value for frame
+	file_basename = os.path.basename(files[index])
+	frame_offsets[file_basename] = (x-corr_x, y-corr_y)
 
 	frame = full_frame[focus_x-focus_r+x-corr_x:focus_x+focus_r+x-corr_x, focus_y-focus_r+y-corr_y:focus_y+focus_r+y-corr_y, :]
 
@@ -164,9 +175,13 @@ for index, (x,y) in enumerate(image_offsets):
 
 print(f'got {len(frames)} frames now')
 
-save_composition(frames, 'composed.png')
-save_animation(frames, 'animated.gif')
+save_animation(frames, args.out)
+
+# write offsets files
+offsets_file = os.path.join(args.directory, 'offsets.json')
+with open(offsets_file, 'w') as f:
+	json.dump(frame_offsets, f, indent=4, sort_keys=True)
 
 # write params back to disk
-#with open(params_file, 'w') as f:
-#	json.dump(params, f)
+with open(params_file, 'w') as f:
+	json.dump(params, f, indent=4, sort_keys=True)

@@ -51,7 +51,7 @@ def interpolate_offsets(num_images, x_offset, y_offset):
 			y -= y_offset
 		yield x, y
 
-def get_offset_correction(image, frame, x_ofs, y_ofs, radius, index):
+def get_offset_correction(image, frame, x_ofs, y_ofs, radius):
 	width, height, channels = frame.shape
 	best_sim = 0
 	best_corr = (0, 0)
@@ -146,6 +146,15 @@ for index, (x,y) in enumerate(image_offsets):
 	full_frame = load_frame(files[index], np.int16)
 
 	frame = full_frame[focus_x-focus_r+x:focus_x+focus_r+x, focus_y-focus_r+y:focus_y+focus_r+y, :]
+
+	base_offset_x = focus_x-focus_r+image_offsets[0][0]
+	base_offset_y = focus_y-focus_r+image_offsets[0][1]
+	max_correction = 6
+	corr_x, corr_y = get_offset_correction(image_0, frame, base_offset_x, base_offset_y, max_correction)
+
+	print(f'frame {index} has offsets {corr_x}, {corr_y}')
+
+	frame = full_frame[focus_x-focus_r+x-corr_x:focus_x+focus_r+x-corr_x, focus_y-focus_r+y-corr_y:focus_y+focus_r+y-corr_y, :]
 
 	if frame.shape != (frame_width, frame_height, channels):
 		print(f'Discarding frame {index} because shape is bad ({frame.shape})')

@@ -9,6 +9,8 @@ class ImageStack:
 
 	def __init__(self, frames, dtype=np.int16):
 
+		# frames = list(self._prestacked_frames(frames, agg_count=33))
+
 		print(f'Stacking image from {len(frames)} frames')
 
 		width, height, channels = frames[0].shape
@@ -23,6 +25,16 @@ class ImageStack:
 		if np.amin(self.image) < 0:
 			print('An overflow occurred during stacking. Consider using --bits=32')
 			sys.exit(1)
+
+	@staticmethod
+	def _prestacked_frames(frames, agg_count):
+		for index, frame in enumerate(frames):
+			if index % agg_count == 0:
+				agg_frame = np.zeros(frames[0].shape, dtype=np.int16)
+			agg_frame += frame
+			if (index+1) % agg_count == 0:
+				yield agg_frame
+
 
 	@staticmethod
 	def _get_sharpness(xyc_image):

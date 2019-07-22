@@ -168,7 +168,7 @@ for index, (x,y) in enumerate(image_offsets):
 	frame = full_frame[focus_x-focus_r+x-corr_x:focus_x+focus_r+x-corr_x, focus_y-focus_r+y-corr_y:focus_y+focus_r+y-corr_y, :]
 
 	if frame.shape != (frame_width, frame_height, channels):
-		print(f'Discarding frame {index} because shape is bad ({frame.shape})')
+		print(f'Discarding frame {index} because shape is bad (found {frame.shape} expected {(frame_width, frame_height, channels)}))')
 		continue
 
 	frames.append(frame)

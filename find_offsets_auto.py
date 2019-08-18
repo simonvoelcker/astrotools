@@ -3,10 +3,10 @@ import glob
 import argparse
 import os
 import json
+import math
 import numpy as np
 
 from PIL import Image
-from stacked_image import StackedImage
 
 from skimage.feature import register_translation
 
@@ -17,34 +17,10 @@ def load_frame(filename, dtype):
 	xyc_image = np.transpose(yxc_image, (1, 0, 2))
 	return xyc_image
 
-def save_composition(frames, filename, dtype=np.int8):
-	frames_per_axis = 1+int(len(frames)**0.5)
-
-	composed_image = np.zeros((frame_width*frames_per_axis, frame_height*frames_per_axis, channels), dtype=dtype)
-	for index, frame in enumerate(frames):
-		x = index % frames_per_axis
-		y = index // frames_per_axis
-		composed_image[x*frame_width:(x+1)*frame_width, y*frame_height:(y+1)*frame_height, :] = frame
-
-	yxc_image = np.transpose(composed_image, (1, 0, 2))
-	yxc_image = yxc_image.astype(dtype)
-	pil_image = Image.fromarray(yxc_image, mode='RGB')
-	pil_image.save(filename)
-
-def save_animation(frames, filename, dtype=np.int8):
-	# (1) need to pick R channel and store as greyscale
-	pil_images = []
-	for index, frame in enumerate(frames):
-		yxc_image = np.transpose(frame, (1, 0, 2))
-		yxc_image = yxc_image.astype(np.int8)[:,:,0]
-		pil_image = Image.fromarray(yxc_image, mode='L')
-		pil_images.append(pil_image)	
-	pil_images[0].save(filename, save_all=True, append_images=pil_images[1:], duration=50, loop=0)
-
 parser = argparse.ArgumentParser()
 parser.add_argument('directory', type=str)
 parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Pattern to use when searching for input images')
-parser.add_argument('--out', type=str, default='animation.gif', help='Output filename')
+parser.add_argument('--max-frame-distance', type=int, default=480, help='Maximum cartesian distance between frames, in pixels')
 
 args = parser.parse_args()
 
@@ -58,37 +34,54 @@ if not files:
 print(f'Found {len(files)} files')
 files.sort()
 
-frame_0 = load_frame(files[0], np.int16)
-frame_width, frame_height, channels = frame_0.shape
+start_frame = 0
+end_frame = 1000
 
-frames = []
-frame_offsets = {}	# map filename to offsets-tuple
+key_frame = load_frame(files[start_frame], np.int8)
+key_frame_index = 0
+prev_frame = None
 
-for index, file in enumerate(files):
-	frame = load_frame(file, np.int16)
+frame_offsets = {0: (0,0)}	# map frame index to offsets-tuple
 
-	offset, error, diffphase = register_translation(frame_0[:,:,0], frame[:,:,0])
-	offset_x, offset_y = offset
+for frame_index, file in enumerate(files[start_frame:end_frame]):
+	curr_frame = load_frame(file, np.int8)
 
-	print(f'Frame {index}: Got offsets {offset_x}, {offset_y}, error={error}, diffphase={diffphase}')
+	(offset_x, offset_y), error, _ = register_translation(key_frame[:,:,0], curr_frame[:,:,0])
+	cartesian_offset = math.sqrt(offset_x*offset_x + offset_y*offset_y)
+	print(f'Frame {frame_index}: Got offsets x={offset_x}, y={offset_y}, total={cartesian_offset:.2f}, error={error:.2f}')
+	
+	if cartesian_offset > args.max_frame_distance:
+		if key_frame_index == frame_index-1:
+			print('Too big offset between adjacent frames. Aborting.')
+			sys.exit(1)
+
+		print(f'That was too far. Using frame {frame_index-1} as key new frame.')
+		key_frame = prev_frame
+		key_frame_index = frame_index-1
+
+		(offset_x, offset_y), error, _ = register_translation(key_frame[:,:,0], curr_frame[:,:,0])
+		cartesian_offset = math.sqrt(offset_x*offset_x + offset_y*offset_y)
+		print(f'Frame {frame_index}: Got offsets x={offset_x}, y={offset_y}, total={cartesian_offset:.2f}, error={error:.2f}')
+
+	key_frame_offset = frame_offsets[key_frame_index]
+	offset_x += key_frame_offset[0]
+	offset_y += key_frame_offset[1]
+
+	frame_offsets[frame_index] = (offset_x, offset_y)
+	prev_frame = curr_frame
 
 	# roll image, effectively stabilizing the frame_0 situation
-	frame = np.roll(frame, int(offset_x), axis=0)
-	frame = np.roll(frame, int(offset_y), axis=1)
+	# frame = np.roll(frame, int(offset_x), axis=0)
+	# frame = np.roll(frame, int(offset_y), axis=1)
+	# frames.append(frame)
 
-	if frame.shape != (frame_width, frame_height, channels):
-		print(f'Discarding frame {index} because shape is bad (found {frame.shape} expected {(frame_width, frame_height)}))')
-		continue
+import pdb; pdb.set_trace()
 
-	frames.append(frame)
-	file_basename = os.path.basename(file)
-	frame_offsets[file_basename] = (offset_x, offset_y)
-
-print(f'got {len(frames)} frames now')
-
-save_animation(frames, args.out)
+# TODO restore this
+#file_basename = os.path.basename(file)
+#frame_offsets[file_basename] = (offset_x, offset_y)
 
 # write offsets files
-offsets_file = os.path.join(args.directory, 'offsets.json')
-with open(offsets_file, 'w') as f:
-	json.dump(frame_offsets, f, indent=4, sort_keys=True)
+#offsets_file = os.path.join(args.directory, 'offsets.json')
+#with open(offsets_file, 'w') as f:
+#	json.dump(frame_offsets, f, indent=4, sort_keys=True)

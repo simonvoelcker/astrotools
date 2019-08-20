@@ -42,6 +42,7 @@ key_frame_index = 0
 prev_frame = None
 
 frame_offsets = {0: (0,0)}	# map frame index to offsets-tuple
+frame_offsets_by_file = dict()
 
 for frame_index, file in enumerate(files[start_frame:end_frame]):
 	curr_frame = load_frame(file, np.int8)
@@ -68,20 +69,10 @@ for frame_index, file in enumerate(files[start_frame:end_frame]):
 	offset_y += key_frame_offset[1]
 
 	frame_offsets[frame_index] = (offset_x, offset_y)
+	frame_offsets_by_file[file] = (offset_x, offset_y)
 	prev_frame = curr_frame
 
-	# roll image, effectively stabilizing the frame_0 situation
-	# frame = np.roll(frame, int(offset_x), axis=0)
-	# frame = np.roll(frame, int(offset_y), axis=1)
-	# frames.append(frame)
-
-import pdb; pdb.set_trace()
-
-# TODO restore this
-#file_basename = os.path.basename(file)
-#frame_offsets[file_basename] = (offset_x, offset_y)
-
 # write offsets files
-#offsets_file = os.path.join(args.directory, 'offsets.json')
-#with open(offsets_file, 'w') as f:
-#	json.dump(frame_offsets, f, indent=4, sort_keys=True)
+offsets_file = os.path.join(args.directory, 'offsets.json')
+with open(offsets_file, 'w') as f:
+	json.dump(frame_offsets, f, indent=4, sort_keys=True)

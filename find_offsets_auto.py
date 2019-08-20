@@ -69,10 +69,10 @@ for frame_index, file in enumerate(files[start_frame:end_frame]):
 	offset_y += key_frame_offset[1]
 
 	frame_offsets[frame_index] = (offset_x, offset_y)
-	frame_offsets_by_file[file] = (offset_x, offset_y)
+	frame_offsets_by_file[os.path.basename(file)] = (offset_x, offset_y)
 	prev_frame = curr_frame
 
 # write offsets files
 offsets_file = os.path.join(args.directory, 'offsets.json')
 with open(offsets_file, 'w') as f:
-	json.dump(frame_offsets, f, indent=4, sort_keys=True)
+	json.dump(frame_offsets_by_file, f, indent=4, sort_keys=True)

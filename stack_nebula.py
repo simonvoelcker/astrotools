@@ -15,6 +15,7 @@ parser.add_argument('--out', type=str, default='stacked.png', help='Output filen
 parser.add_argument('--auto-crop', action='store_true', help='Crop the output image to fully exposed region')
 parser.add_argument('--gamma', type=float, default=None, help='Gamma-correction value to apply')
 parser.add_argument('--invert', action='store_true')
+parser.add_argument('--range', type=str, default='0,-1', help='Stack only given range of images, not all')
 
 args = parser.parse_args()
 
@@ -27,6 +28,10 @@ if not files:
 
 print(f'Found {len(files)} files')
 files.sort()
+
+image_range = args.range.split(',')
+files = files[int(image_range[0]):int(image_range[1])]
+print(f'Only {len(files)} files selected for stacking')
 
 image = ImageStackNebula(args.directory, files, args.bits)
 

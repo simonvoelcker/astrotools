@@ -24,8 +24,8 @@ if not files:
 print(f'Found {len(files)} files')
 files.sort()
 
-for index, file in enumerate(files):
-	print(f'Serving file {index}')
+for file in files:
+	print(f'Serving file {os.path.basename(file)}')
 	shutil.copy(file, args.out_directory)
 	time.sleep(args.delay)
 

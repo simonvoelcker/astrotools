@@ -25,15 +25,15 @@ shutil.rmtree(args.out_directory, ignore_errors=True)
 os.makedirs(args.out_directory)
 
 
-track_axis = 1
-offset_threshold = 100
+track_axis = 0
+offset_threshold = 50
 
 # these are delays, so speed is inverted
-low_speed = 500
+low_speed = 400
 high_speed = 300
 current_speed = None
 
-ser = serial.Serial('/dev/ttyUSB1', 9600, timeout=1)
+ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
 key_frame = None
 
 
@@ -44,10 +44,11 @@ def set_motor_speed(speed):
 set_motor_speed((low_speed + high_speed)/2)
 
 while True:
-	time.sleep(args.delay)
+	time.sleep(args.delay/2)
 	files = glob.glob(search_pattern)
 	if not files:
 		continue
+	time.sleep(args.delay/2)
 
 	files.sort()
 	print(f'Found {len(files)} file(s), processing {os.path.basename(files[0])}')

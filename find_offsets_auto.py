@@ -10,6 +10,8 @@ from PIL import Image
 
 from skimage.feature import register_translation
 
+import matplotlib.pyplot as plt
+
 
 def load_frame_for_offset_detection(filename):
 	pil_image = Image.open(filename).convert('L')
@@ -94,9 +96,22 @@ for frame_index, file in enumerate(files[start_frame:end_frame]):
 	frame_offsets_by_file[os.path.basename(file)] = (offset_x, offset_y)
 	prev_frame = curr_frame
 
-# offsets_array = np.array([offset for _, offset in frame_offsets.items()])
-
 # write offsets files
 offsets_file = os.path.join(args.directory, 'offsets.json')
 with open(offsets_file, 'w') as f:
 	json.dump(frame_offsets_by_file, f, indent=4, sort_keys=True)
+
+
+
+x_offsets = np.array([x for _, (x,y) in frame_offsets.items()])
+y_offsets = np.array([y for _, (x,y) in frame_offsets.items()])
+
+colors = (0,0,0)
+area = np.pi*3
+
+# Plot
+plt.scatter(x_offsets, y_offsets, s=area, c=colors, alpha=0.5)
+plt.title('Scatter plot')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.savefig('plot.png')

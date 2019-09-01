@@ -67,63 +67,54 @@ class ImageStackNebula:
 		xyc_image = np.transpose(yxc_image, (1, 0, 2))
 		return xyc_image
 
+	def floatify(self):
+		self.image = self.image.astype(float)
+
 	def normalize(self):
 		min_value = np.amin(self.image)
 		max_value = np.amax(self.image)
 		if max_value == 0:
 			print('Not normalizing image: It is all black.')		
 			return
+		print(f'Normalizing brightness, min={min_value}, max={max_value}')
 
-		float_image = self.image.astype(float)
 		if max_value > min_value:
-			normalized = (float_image - min_value) / (max_value - min_value)
+			normalized = (self.image - min_value) / (max_value - min_value)
 		else:
-			normalized = (float_image - min_value)
+			normalized = (self.image - min_value)
 
 		self.image = normalized
 
-	def substract_pollution(self):
+	def normalize_samples(self):
+		min_samples = np.amin(self.samples)
 		max_samples = np.amax(self.samples)
-		min_pollution = None
+		if min_samples == 0:
+			print('Not normalizing image: There are pixels without samples.')
+			return
+		print(f'Normalizing by number of samples, min={min_samples}, max={max_samples}')
 
-		width, height, channels = self.image.shape
-		for x in range(width):
-			for y in range(height):
-				if self.samples[x,y] == max_samples:
-					for c in range(channels):
-						pollution = self.image[x,y,c]
-						if min_pollution is None or pollution < min_pollution:
-							min_pollution = pollution 
-
-		print(f'max samples per pixel: {max_samples}, pollution: {float(min_pollution):.4}')
-
-		pollution_image = self.samples.astype(float) / float(max_samples) * float(min_pollution) 
-		
-		result = np.zeros(self.image.shape, dtype=float)
+		_w, _h, channels = self.image.shape
 		for channel in range(channels):
-			result[:, :, channel] = self.image[:, :, channel] - pollution_image
-
-		result = np.clip(result, 0.0, 1.0)
-		self.image = result
+			self.image[:,:,channel] = self.image[:,:,channel] * max_samples / self.samples
 
 	def crop(self, cx, cy, r):
 		# crop image to a square with center <cx,cy> and radius <>.
 		self.image = self.image[cx-r:cx+r, cy-r:cy+r, :]
 		self.samples = self.samples[cx-r:cx+r, cy-r:cy+r]
 
-	def auto_crop(self):
-		max_samples = np.amax(self.samples)
+	def auto_crop(self, min_samples=None):
 		width, height = self.samples.shape
 		
 		min_x, max_x, min_y, max_y = None, None, None, None
 		for x in range(width):
 			for y in range(height):
-				if self.samples[x, y] == max_samples:
+				if self.samples[x, y] >= min_samples:
 					min_x = min(min_x or x, x)
 					max_x = max(max_x or x, x)
 					min_y = min(min_y or y, y)
 					max_y = max(max_y or y, y)
 
+		print(f'Cropping image to x=[{min_x},{max_x}], y=[{min_y},{max_y}]')
 		self.image = self.image[min_x:max_x+1, min_y:max_y+1, :]
 		self.samples = self.samples[min_x:max_x+1, min_y:max_y+1]
 
@@ -138,4 +129,11 @@ class ImageStackNebula:
 		yxc_image = np.transpose(out_image, (1, 0, 2))
 		yxc_image = yxc_image.astype(np.int8)
 		pil_image = Image.fromarray(yxc_image, mode='RGB')
+		pil_image.save(filename)
+
+	def save_samples_map(self, filename, num_shades=8):
+		out_image = self.samples * (256.0 / num_shades)
+		yx_image = np.transpose(out_image, (1, 0))
+		yx_image = yx_image.astype(np.uint8)
+		pil_image = Image.fromarray(yx_image, mode='L')
 		pil_image.save(filename)

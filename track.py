@@ -29,8 +29,8 @@ track_axis = 0
 offset_threshold = 50
 
 # these are delays, so speed is inverted
-low_speed = 400
-high_speed = 300
+low_speed = 350
+high_speed = 330
 current_speed = None
 
 ser = serial.Serial('/dev/ttyUSB0', 9600, timeout=1)
@@ -40,6 +40,10 @@ key_frame = None
 def set_motor_speed(speed):
 	print(f'Setting motor speed to {speed}')
 	ser.write(f'{speed}'.encode())
+
+#set_motor_speed(350)
+#time.sleep(60)
+#sys.exit(1)
 
 set_motor_speed((low_speed + high_speed)/2)
 

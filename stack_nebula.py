@@ -47,7 +47,10 @@ if args.auto_crop:
 
 image.floatify()
 image.normalize_samples()
-image.normalize()
+
+# image.normalize()
+
+image.normalize_histogram()
 
 if args.gamma:
 	image.apply_gamma(args.gamma)

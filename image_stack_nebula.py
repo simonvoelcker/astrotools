@@ -97,6 +97,37 @@ class ImageStackNebula:
 		for channel in range(channels):
 			self.image[:,:,channel] = self.image[:,:,channel] * max_samples / self.samples
 
+	def normalize_histogram(self):
+		unique = np.unique(self.image)
+		num_unique = len(unique)
+		histogram = np.histogram(self.image, bins=num_unique)
+
+		# histogram = (<bin sizes>, <color value>)
+		num_values = sum(histogram[0])
+		
+		num_out_bins = 256
+		out_bin_size = num_values / num_out_bins
+
+		out_bins = []
+
+		cum_bin_size = 0
+		for bin_size, color_value in zip(*histogram):
+			cum_bin_size += bin_size
+			if cum_bin_size >= out_bin_size:
+				# produce a bin
+				out_bins.append(color_value)
+				cum_bin_size -= out_bin_size
+
+		if len(out_bins) != num_out_bins:
+			print(f'Error. Out bins={len(out_bins)}, expected {num_out_bins}')
+			return
+		if cum_bin_size != 0:
+			print(f'Error. Remaining cumulative bin size is {cum_bin_size} after bin creation')
+			return
+
+		# apply bins -> map color value intervals to their index in out_bins
+		
+
 	def crop(self, cx, cy, r):
 		# crop image to a square with center <cx,cy> and radius <>.
 		self.image = self.image[cx-r:cx+r, cy-r:cy+r, :]

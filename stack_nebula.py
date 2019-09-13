@@ -46,15 +46,21 @@ if args.auto_crop:
 	image.auto_crop(min_samples)
 
 image.floatify()
+image.convert_to_grayscale()
 image.normalize_samples()
 
-# image.normalize()
-
-image.normalize_histogram()
+image.normalize()
 
 if args.gamma:
 	image.apply_gamma(args.gamma)
+
+#	image.clamp_outliers(shades=1)
+
 if args.invert:
 	image.invert()
+
+# image.normalize_histogram(num_bins=4096)
+
+
 image.save(args.out)
 image.save_samples_map('samples.png')

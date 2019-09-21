@@ -19,12 +19,14 @@ void initMotor(Motor m) {
   pinMode(m.enablePin, OUTPUT);
 };
 
-void setMotorState(Motor m, bool enable, bool clockWise, int microsteps) {
+void setMotorState(Motor m, bool enable, bool clockWise) {
   digitalWrite(m.enablePin, enable ? LOW : HIGH); // low is enable
   digitalWrite(m.directionPin, clockWise ? LOW : HIGH); // low is clockwise
-  digitalWrite(m.microstepsPin1, microsteps == 2 || microsteps == 16 ? HIGH : LOW);
-  digitalWrite(m.microstepsPin2, microsteps == 4 || microsteps == 16 ? HIGH : LOW);
+  digitalWrite(m.microstepsPin1, m.microsteps == 2 || m.microsteps == 16 ? HIGH : LOW);
+  digitalWrite(m.microstepsPin2, m.microsteps == 4 || m.microsteps == 16 ? HIGH : LOW);
 };
+
+// TODO actually apply prescale based on configured value
 
 void initTimers(Motor m1, Motor m2) {
   TCCR1A = 0;
@@ -36,23 +38,33 @@ void initTimers(Motor m1, Motor m2) {
   TCCR2A = 0;
   TCCR2B = 0;
   TCNT2 = 256 - m2.waitCycles;
-  TCCR2B |= (1 << CS10) | (1 << CS12);
+  TCCR2B |= (1 << CS10) | (1 << CS12); // 1024
   TIMSK2 |= (1 << TOIE1);
 };
 
-Motor m1 = { 3, 4, 6, 5, 7, LOW, 1024, 16, 255 };
+void setMotorSpeed(Motor& m, float revsPerSec) {
+  
+  const float cpuFrequency = 16000000.0; // arduino constant
+  const float cyclesPerTick = float(m.prescale);
+  const float ticksPerMicrostep = 2.0;   // we toggle high/low in our ISR
+  const float microstepsPerStep = float(m.microsteps);
+  const float stepsPerRev = 200.0;
+
+  const long waitCycles = long(cpuFrequency / (cyclesPerTick * ticksPerMicrostep * microstepsPerStep * stepsPerRev * revsPerSec));
+
+  Serial.print(waitCycles);
+
+  if (waitCycles < 50) {
+    m.waitCycles = 50;
+  } else if (waitCycles < 256) {
+    m.waitCycles = waitCycles;
+  } else {
+    m.waitCycles = 255;
+  }  
+};
+
+Motor m1 = { 3, 4, 6, 5, 7, LOW, 64, 8, 255 };
 Motor m2 = { 8, 9, 11, 10, 12, LOW, 1024, 16, 255 };
-
-const long cpuFrequency = 16000000; // arduino constant
-const long cyclesPerTick = 64;      // prescale
-const long ticksPerMicrostep = 2;   // we toggle high/low in our ISR
-const long microstepsPerStep = 8;   // configured on the motor driver
-const long stepsPerRev = 200;       // motor constant
-
-const long secondsPerRev = 10;       // speed setting
-
-// m1.waitCycles = secondsPerRev * cpuFrequency / (cyclesPerTick * ticksPerMicrostep * microstepsPerStep * stepsPerRev);
-// m2.waitCycles = 200;
 
 void setup() {
 
@@ -62,12 +74,14 @@ void setup() {
   initMotor(m1);
   initMotor(m2);
 
-  setMotorState(m1, true, false, 8);
-  setMotorState(m2, true, false, 16);
+  setMotorState(m1, true, false);
+  setMotorState(m2, true, false);
 
   noInterrupts();
   initTimers(m1, m2);
   interrupts();
+
+  setMotorSpeed(m1, 0.1);
 }
 
 ISR(TIMER1_OVF_vect)        

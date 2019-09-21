@@ -1,20 +1,47 @@
+struct Motor {
+  int directionPin; 
+  int stepPin;
+  int microstepsPin1;
+  int microstepsPin2;
+  int enablePin;
 
-const int dirPin1 = 3; 
-const int stepPin1 = 4; 
+  int stepPinState;
+  int prescale;
+  int microsteps;
+  int waitCycles;
+};
 
-const int microsteps1Pin1 = 6;
-const int microsteps2Pin1 = 5;
-const int enablePin1 = 7;
+void initMotor(Motor m) {
+  pinMode(m.directionPin, OUTPUT);
+  pinMode(m.stepPin, OUTPUT);
+  pinMode(m.microstepsPin1, OUTPUT);
+  pinMode(m.microstepsPin2, OUTPUT);
+  pinMode(m.enablePin, OUTPUT);
+};
 
-const int dirPin2 = 8; 
-const int stepPin2 = 9; 
+void setMotorState(Motor m, bool enable, bool clockWise, int microsteps) {
+  digitalWrite(m.enablePin, enable ? LOW : HIGH); // low is enable
+  digitalWrite(m.directionPin, clockWise ? LOW : HIGH); // low is clockwise
+  digitalWrite(m.microstepsPin1, microsteps == 2 || microsteps == 16 ? HIGH : LOW);
+  digitalWrite(m.microstepsPin2, microsteps == 4 || microsteps == 16 ? HIGH : LOW);
+};
 
-const int microsteps1Pin2 = 11;
-const int microsteps2Pin2 = 10;
-const int enablePin2 = 12;
+void initTimers(Motor m1, Motor m2) {
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCNT1 = 65536 - m1.waitCycles;  // set counter till ISR
+  TCCR1B |= (1 << CS10) | (1 << CS11);  // prescale
+  TIMSK1 |= (1 << TOIE1); // enable timer overflow interrupt
 
-int stepPinState1 = LOW;
-int stepPinState2 = LOW;
+  TCCR2A = 0;
+  TCCR2B = 0;
+  TCNT2 = 256 - m2.waitCycles;
+  TCCR2B |= (1 << CS10) | (1 << CS12);
+  TIMSK2 |= (1 << TOIE1);
+};
+
+Motor m1 = { 3, 4, 6, 5, 7, LOW, 1024, 16, 255 };
+Motor m2 = { 8, 9, 11, 10, 12, LOW, 1024, 16, 255 };
 
 const long cpuFrequency = 16000000; // arduino constant
 const long cyclesPerTick = 64;      // prescale
@@ -24,66 +51,47 @@ const long stepsPerRev = 200;       // motor constant
 
 const long secondsPerRev = 10;       // speed setting
 
-long waitCycles1 = secondsPerRev * cpuFrequency / (cyclesPerTick * ticksPerMicrostep * microstepsPerStep * stepsPerRev);
-long waitCycles2 = waitCycles1;
+// m1.waitCycles = secondsPerRev * cpuFrequency / (cyclesPerTick * ticksPerMicrostep * microstepsPerStep * stepsPerRev);
+// m2.waitCycles = 200;
 
 void setup() {
 
   Serial.begin(9600);  
   Serial.setTimeout(1000);
 
-  pinMode(stepPin1, OUTPUT); 
-  pinMode(stepPin2, OUTPUT); 
-  pinMode(dirPin1, OUTPUT);
-  pinMode(dirPin2, OUTPUT);
+  initMotor(m1);
+  initMotor(m2);
 
-  pinMode(microsteps1Pin1, OUTPUT);
-  pinMode(microsteps1Pin2, OUTPUT);
-  pinMode(microsteps2Pin1, OUTPUT);
-  pinMode(microsteps2Pin2, OUTPUT);
-  pinMode(enablePin1, OUTPUT);
-  pinMode(enablePin2, OUTPUT);
-
-  digitalWrite(enablePin1, LOW); // low is enable
-  digitalWrite(enablePin2, LOW); // low is enable
-
-  // microsteps: 8
-  digitalWrite(microsteps1Pin1, LOW);
-  digitalWrite(microsteps2Pin1, LOW);
-  digitalWrite(microsteps1Pin2, LOW);
-  digitalWrite(microsteps2Pin2, LOW);
-  
-  digitalWrite(dirPin1, HIGH); // low is clockwise
-  digitalWrite(dirPin2, HIGH); // low is clockwise
+  setMotorState(m1, true, false, 8);
+  setMotorState(m2, true, false, 16);
 
   noInterrupts();
-  TCCR1A = 0;
-  TCCR1B = 0;
-  // set counter till ISR
-  TCNT1 = 65536 - waitCycles1;
-  // prescale: 64
-  TCCR1B |= (1 << CS10) | (1 << CS11);
-  // enable timer overflow interrupt
-  TIMSK1 |= (1 << TOIE1);
+  initTimers(m1, m2);
   interrupts();
 }
-
 
 ISR(TIMER1_OVF_vect)        
 {
   // reset counter till next ISR
-  TCNT1 = 65536 - waitCycles1;
+  TCNT1 = 65536 - m1.waitCycles;
   // toggle step pin
-  stepPinState1 = stepPinState1 == LOW ? HIGH : LOW;
-  digitalWrite(stepPin1, stepPinState1);
-  digitalWrite(stepPin2, stepPinState1);
+  m1.stepPinState = m1.stepPinState == LOW ? HIGH : LOW;
+  digitalWrite(m1.stepPin, m1.stepPinState);
 }
 
+ISR(TIMER2_OVF_vect)        
+{
+  // reset counter till next ISR
+  TCNT2 = 256 - m2.waitCycles;
+  // toggle step pin
+  m2.stepPinState = m2.stepPinState == LOW ? HIGH : LOW;
+  digitalWrite(m2.stepPin, m2.stepPinState);
+}
 
 void loop() {
   long num = Serial.parseInt();
   if (num != 0) {
     Serial.print("Setting delay.\n");
-    waitCycles1 = num;
+    m1.waitCycles = num;
   }
 }

@@ -12,17 +12,14 @@ struct Motor {
   int timerIndex;
 };
 
-void initMotor(Motor m) {
+void initMotor(Motor m, bool enable) {
   pinMode(m.directionPin, OUTPUT);
   pinMode(m.stepPin, OUTPUT);
   pinMode(m.microstepsPin1, OUTPUT);
   pinMode(m.microstepsPin2, OUTPUT);
   pinMode(m.enablePin, OUTPUT);
-};
 
-void setMotorState(Motor m, bool enable, bool clockWise) {
   digitalWrite(m.enablePin, enable ? LOW : HIGH); // low is enable
-  digitalWrite(m.directionPin, clockWise ? LOW : HIGH); // low is clockwise
   digitalWrite(m.microstepsPin1, m.microsteps == 2 || m.microsteps == 16 ? HIGH : LOW);
   digitalWrite(m.microstepsPin2, m.microsteps == 4 || m.microsteps == 16 ? HIGH : LOW);
 };
@@ -118,6 +115,9 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
   Serial.print("\nselected motor speed: ");
   Serial.print(revsPerSec);
 
+  digitalWrite(m.directionPin, revsPerSec > 0 ? LOW : HIGH); // low is clockwise
+  revsPerSec = abs(revsPerSec);
+
   const float cpuFrequency = 16000000.0; // arduino constant  
   const float ticksPerMicrostep = 2.0;   // we toggle high/low in our ISR
   const float microstepsPerStep = float(m.microsteps);
@@ -166,18 +166,15 @@ void setup() {
   Serial.begin(9600);  
   Serial.setTimeout(1000);
 
-  initMotor(m1);
-  initMotor(m2);
-
-  setMotorState(m1, true, false);
-  setMotorState(m2, true, false);
+  initMotor(m1, true);
+  initMotor(m2, true);
 
   noInterrupts();
   initTimers(m1, m2);
   interrupts();
 
-  setMotorSpeed(m1, 1.0);
-  setMotorSpeed(m2, 1.0);
+  setMotorSpeed(m1, 0.1);
+  setMotorSpeed(m2, 0.1);
 }
 
 ISR(TIMER1_OVF_vect)        

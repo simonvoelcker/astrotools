@@ -25,6 +25,9 @@ void initMotor(Motor m, bool enable) {
 };
 
 void initTimers(Motor m1, Motor m2) {
+  
+  // TODO these are kinda odd now
+  
   TCCR1A = 0;
   TCCR1B = 0;
   TCNT1 = 65536 - m1.waitCycles;  // set counter till ISR
@@ -40,8 +43,8 @@ void initTimers(Motor m1, Motor m2) {
   TIMSK2 |= (1 << TOIE1);
 };
 
-void applyPrescale(int timerIndex, int prescale) {
-  if (timerIndex == 1) {
+void updateTimerForMotor(Motor& m, int prescale, int waitCycles) {
+  if (m.timerIndex == 1) {
     int setting = 5;
     switch (prescale) {
       case 1: { setting = 1; } break;
@@ -64,6 +67,7 @@ void applyPrescale(int timerIndex, int prescale) {
     }
     TCCR2B = (TCCR2B & 0b11111000) | setting;
   }
+  m.waitCycles = waitCycles;
 };
 
 int getBestPossiblePrescale(int timerIndex, float idealPrescale) {
@@ -112,9 +116,6 @@ int getBestPossiblePrescale(int timerIndex, float idealPrescale) {
 
 void setMotorSpeed(Motor& m, float revsPerSec) {
 
-  Serial.print("\nselected motor speed: ");
-  Serial.print(revsPerSec);
-
   digitalWrite(m.directionPin, revsPerSec > 0 ? LOW : HIGH); // low is clockwise
   revsPerSec = abs(revsPerSec);
 
@@ -130,9 +131,6 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
     Serial.print("\nTOO fast! Limiting speed.");
     ticksPerSec = 6400;
   }
-  Serial.print("\nTicks per sec: ");
-  Serial.print(ticksPerSec);
-
   float clockCyclesPerTick = cpuFrequency / ticksPerSec;
 
   float maxTimerCycles = m.timerIndex == 1 ? 65536 : 256;
@@ -149,13 +147,7 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
     waitCycles = maxTimerCycles;
   }  
 
-  Serial.print("\nwait cycles: ");
-  Serial.print(waitCycles);
-  Serial.print("\nprescale: ");
-  Serial.print(prescale);
-
-  m.waitCycles = waitCycles;
-  applyPrescale(m.timerIndex, prescale);
+  updateTimerForMotor(m, prescale, waitCycles);
 };
 
 Motor m1 = { 3, 4, 6, 5, 7, LOW, 1024, 16, 255, 1 };
@@ -196,9 +188,19 @@ ISR(TIMER2_OVF_vect)
 }
 
 void loop() {
-  long num = Serial.parseInt();
-  if (num != 0) {
-    Serial.print("Setting delay.\n");
-    m1.waitCycles = num;
+  char motor;
+  float newSpeed;
+  
+  if (Serial.available() > 0) {
+    motor = Serial.read();  
+    newSpeed = Serial.parseFloat();
+
+    if (newSpeed != 0.0) {
+      Serial.print("\nMotor: ");
+      Serial.print(motor == 'A' ? "1" : "2");
+      Serial.print(" Speed: ");
+      Serial.print(newSpeed);
+      setMotorSpeed(motor == 'A' ? m1 : m2, newSpeed);
+    }
   }
 }

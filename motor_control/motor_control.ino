@@ -44,6 +44,12 @@ void initTimers(Motor m1, Motor m2) {
 };
 
 void updateTimerForMotor(Motor& m, int prescale, int waitCycles) {
+
+  Serial.print("\nprescale");
+  Serial.print(prescale);
+  Serial.print("\nwaitCycles");
+  Serial.print(waitCycles);
+  
   if (m.timerIndex == 1) {
     int setting = 5;
     switch (prescale) {
@@ -116,6 +122,8 @@ int getBestPossiblePrescale(int timerIndex, float idealPrescale) {
 
 void setMotorSpeed(Motor& m, float revsPerSec) {
 
+  // digitalWrite(m.enablePin, revsPerSec != 0.0 ? LOW : HIGH); // low is enable
+
   digitalWrite(m.directionPin, revsPerSec > 0 ? LOW : HIGH); // low is clockwise
   revsPerSec = abs(revsPerSec);
 
@@ -165,8 +173,8 @@ void setup() {
   initTimers(m1, m2);
   interrupts();
 
-  setMotorSpeed(m1, 0.1);
-  setMotorSpeed(m2, 0.1);
+  setMotorSpeed(m1, 0.01);
+  setMotorSpeed(m2, 0.01);
 }
 
 ISR(TIMER1_OVF_vect)        

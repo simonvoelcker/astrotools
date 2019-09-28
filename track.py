@@ -5,10 +5,12 @@ import argparse
 import os
 import time
 import shutil
+import datetime
 import numpy as np
 
-from PIL import images 
+from PIL import Image
 from skimage.feature import register_translation
+from simple_pid import PID
 
 
 def load_frame_for_offset_detection(filename):
@@ -19,43 +21,52 @@ def load_frame_for_offset_detection(filename):
 	return xy_image
 
 
+def set_motor_speed(serial, motor, speed):
+	print(f'Setting motor {motor} speed to {speed} rev/s')
+	# serial.write(f'{speed}'.encode())
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('directory', type=str)
 parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Pattern to use when searching for input images')
-parser.add_argument('--out-directory', type=str, default='.', help='Output directory to move images to')
-parser.add_argument('--delay', type=int, default=1, help='Delay between images processed')
+parser.add_argument('--clear-input', type=bool, default=True, help='Move any input images found at startup elsewhere')
+parser.add_argument('--delay', type=int, default=1, help='Delay between images processed, in seconds')
 parser.add_argument('--usb-port', type=int, default=0, help='USB port to use for the motor control')
 
 args = parser.parse_args()
 search_pattern = os.path.join(args.directory, args.filename_pattern)
 
-print('Re-creating output directory')
-shutil.rmtree(args.out_directory, ignore_errors=True)
-os.makedirs(args.out_directory)
+files = glob.glob(search_pattern)
+if files:
+	leftovers_directory = datetime.datetime.now().strftime('untracked_%Y%M%d_%H%m%S')
+	print(f'Found {len(files)} files at startup, moving them to {leftovers_directory}')
+	os.makedirs(leftovers_directory)
+	for file in files:
+		shutil.move(file, leftovers_directory)
 
-offset_threshold = 50
-
-# ra is about -0.215 when dec is perfect
-
-ra_low, ra_high, ra_current, ra_invert = -0.2, -0.25, None, False
-dec_low, dec_high, dec_current, dec_invert = 0.01, 0.05, None, False
+out_directory = datetime.datetime.now().strftime('tracked_%Y%M%d_%H%m%S')
+os.makedirs(out_directory)
 
 port = f'/dev/ttyUSB{args.usb_port}'
-serial = serial.Serial(port, 9600, timeout=1)
+# serial = serial.Serial(port, 9600, timeout=1)
 
-key_frame = None
+# experiments suggest that RA output is about -0.215 when DEC is drift-free
+# TODO: read from hint-parameter
 
-def set_motor_speed(motor, speed):
-	print(f'Setting motor {motor} speed to {speed} rev/s')
-	serial.write(f'{speed}'.encode())
+ra_pid = PID(0, 0, 1, setpoint=0)
+ra_pid.output_limits = (-0.3, -0.1)
+ra_pid.sample_time = args.delay
 
-#set_motor_speed(350)
-#time.sleep(60)
-#sys.exit(1)
+dec_pid = PID(0, 0, 1, setpoint=0)
+dec_pid.output_limits = (-0.2, 0.2)
+dec_pid.sample_time = args.delay
 
-set_motor_speed('A', (ra_low + ra_high)/2)
-set_motor_speed('B', (dec_low + dec_high)/2)
+ra_invert, dec_invert = False, False
 
+set_motor_speed(serial, 'A', -0.215)
+set_motor_speed(serial, 'B', 0.0)
+
+reference_frame = None
 while True:
 	time.sleep(args.delay/2)
 	files = glob.glob(search_pattern)
@@ -63,28 +74,21 @@ while True:
 		continue
 	time.sleep(args.delay/2)
 
-	files.sort()
-	print(f'Found {len(files)} file(s), processing {os.path.basename(files[0])}')
+	if len(files) > 1:
+		print(f'WARN: Found {len(files)} files, processing only one at a time')
+		files.sort()
 
 	frame = load_frame_for_offset_detection(files[0])
 
-	if key_frame is None:
-		print('This shall be our reference frame.')
-		key_frame = frame
+	if reference_frame is None:
+		reference_frame = frame
 	else:
-		offset, _, __ = register_translation(key_frame, frame)
-		print(f'Offset: {offset}')
+		(ra_error, dec_error), _, __ = register_translation(reference_frame, frame)
+		print(f'RA error: {ra_error}, DEC error: {dec_error}')
+		ra_speed = ra_pid(-ra_error if ra_invert else ra_error)
+		set_motor_speed(serial, 'A', ra_speed)
+		
+		dec_speed = dec_pid(-dec_error if dec_invert else dec_error)
+		set_motor_speed(serial, 'B', dec_speed)
 
-		if abs(offset[0]) > offset_threshold:
-			desired = ra_high if (offset[0] < 0 == ra_invert) else ra_low
-			if ra_current != desired:
-				set_motor_speed('A', desired)
-				ra_current = desired
-
-		if abs(offset[1]) > offset_threshold:
-			desired = dec_high if (offset[1] < 0 == dec_invert) else dec_low
-			if dec_current != desired:
-				set_motor_speed('B', desired)
-				dec_current = desired
-
-	shutil.move(files[0], args.out_directory)
+	shutil.move(files[0], out_directory)

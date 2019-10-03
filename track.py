@@ -55,6 +55,9 @@ port = f'/dev/ttyUSB{args.usb_port}'
 
 kP, kI, kD = 0.005, 0, 0.01
 
+# timer 1 lowest possible is about 0.00005
+# timer 2 lowest possible is about 0.01 -> too fast for DEC, use for RA?
+
 ra_pid = PID(kP, kI, kD, setpoint=0)
 ra_pid.output_limits = (-0.3, -0.1)
 ra_pid.sample_time = args.delay

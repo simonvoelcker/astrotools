@@ -43,11 +43,11 @@ void initTimers(Motor m1, Motor m2) {
   TIMSK2 |= (1 << TOIE1);
 };
 
-void updateTimerForMotor(Motor& m, int prescale, int waitCycles) {
+void updateTimerForMotor(Motor& m, long prescale, long waitCycles) {
 
-  Serial.print("\nprescale");
+  Serial.print("\n prescale=");
   Serial.print(prescale);
-  Serial.print("\nwaitCycles");
+  Serial.print(" waitCycles=");
   Serial.print(waitCycles);
   
   if (m.timerIndex == 1) {
@@ -76,7 +76,7 @@ void updateTimerForMotor(Motor& m, int prescale, int waitCycles) {
   m.waitCycles = waitCycles;
 };
 
-int getBestPossiblePrescale(int timerIndex, float idealPrescale) {
+long getBestPossiblePrescale(int timerIndex, float idealPrescale) {
   if (timerIndex == 1) {
     if (256 <= idealPrescale) {
       return 1024;
@@ -122,7 +122,8 @@ int getBestPossiblePrescale(int timerIndex, float idealPrescale) {
 
 void setMotorSpeed(Motor& m, float revsPerSec) {
 
-  // digitalWrite(m.enablePin, revsPerSec != 0.0 ? LOW : HIGH); // low is enable
+  digitalWrite(m.enablePin, revsPerSec != 0.0 ? LOW : HIGH); // low is enable
+  if (revsPerSec == 0.0) return;
 
   digitalWrite(m.directionPin, revsPerSec > 0 ? LOW : HIGH); // low is clockwise
   revsPerSec = abs(revsPerSec);
@@ -139,11 +140,14 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
     Serial.print("\nTOO fast! Limiting speed.");
     ticksPerSec = 6400;
   }
+  Serial.print("\nTicks per sec: ");
+  Serial.print(ticksPerSec);
+  
   float clockCyclesPerTick = cpuFrequency / ticksPerSec;
 
   float maxTimerCycles = m.timerIndex == 1 ? 65536 : 256;
   float idealPrescale = clockCyclesPerTick / maxTimerCycles;
-  int prescale = getBestPossiblePrescale(m.timerIndex, idealPrescale);
+  long prescale = getBestPossiblePrescale(m.timerIndex, idealPrescale);
   long waitCycles = long(clockCyclesPerTick / prescale);
 
   if (waitCycles < 16) {
@@ -173,8 +177,8 @@ void setup() {
   initTimers(m1, m2);
   interrupts();
 
-  setMotorSpeed(m1, 0.01);
-  setMotorSpeed(m2, 0.01);
+  setMotorSpeed(m1, 0.0);
+  setMotorSpeed(m2, 0.0);
 }
 
 ISR(TIMER1_OVF_vect)        
@@ -201,14 +205,13 @@ void loop() {
   
   if (Serial.available() > 0) {
     motor = Serial.read();  
-    newSpeed = Serial.parseFloat();
-
-    if (newSpeed != 0.0) {
+    if (motor == 'A' || motor == 'B') {
+      newSpeed = Serial.parseFloat();
       Serial.print("\nMotor: ");
       Serial.print(motor == 'A' ? "1" : "2");
       Serial.print(" Speed: ");
       Serial.print(newSpeed);
-      setMotorSpeed(motor == 'A' ? m1 : m2, newSpeed);
+      setMotorSpeed(motor == 'A' ? m1 : m2, newSpeed);    
     }
   }
 }

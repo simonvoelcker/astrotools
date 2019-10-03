@@ -38,13 +38,13 @@ search_pattern = os.path.join(args.directory, args.filename_pattern)
 
 files = glob.glob(search_pattern)
 if files:
-	leftovers_directory = datetime.datetime.now().strftime('untracked_%Y%M%d_%H%m%S')
+	leftovers_directory = datetime.datetime.now().strftime('untracked_%Y%m%d_%H%M%S')
 	print(f'Found {len(files)} files at startup, moving them to {leftovers_directory}')
 	os.makedirs(leftovers_directory)
 	for file in files:
 		shutil.move(file, leftovers_directory)
 
-out_directory = datetime.datetime.now().strftime('tracked_%Y%M%d_%H%m%S')
+out_directory = datetime.datetime.now().strftime('tracked_%Y%m%d_%H%M%S')
 os.makedirs(out_directory)
 
 port = f'/dev/ttyUSB{args.usb_port}'
@@ -53,15 +53,17 @@ port = f'/dev/ttyUSB{args.usb_port}'
 # experiments suggest that RA output is about -0.215 when DEC is drift-free
 # TODO: read from hint-parameter
 
-ra_pid = PID(0, 0, 1, setpoint=0)
+kP, kI, kD = 0.005, 0, 0.01
+
+ra_pid = PID(kP, kI, kD, setpoint=0)
 ra_pid.output_limits = (-0.3, -0.1)
 ra_pid.sample_time = args.delay
 
-dec_pid = PID(0, 0, 1, setpoint=0)
-dec_pid.output_limits = (-0.2, 0.2)
+dec_pid = PID(kP, kI, kD, setpoint=0)
+dec_pid.output_limits = (-0.005, 0.005)
 dec_pid.sample_time = args.delay
 
-ra_invert, dec_invert = False, False
+ra_invert, dec_invert = True, False
 
 set_motor_speed(serial, 'A', -0.215)
 set_motor_speed(serial, 'B', 0.0)

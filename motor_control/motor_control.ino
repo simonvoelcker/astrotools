@@ -63,12 +63,6 @@ void setTimerEnabled(int timerIndex, bool enable) {
 }
 
 void updateTimerForMotor(Motor& m, long prescale, long waitCycles) {
-
-  Serial.print("\n--> prescale=");
-  Serial.print(prescale);
-  Serial.print(" waitCycles=");
-  Serial.print(waitCycles);
-  
   if (m.timerIndex == 1) {
     int setting = 5;
     switch (prescale) {
@@ -136,7 +130,6 @@ long getBestPossiblePrescale(int timerIndex, float idealPrescale) {
       return 1;
     }
   }
-  
   return 1024;
 }
 
@@ -237,14 +230,14 @@ void loop() {
     motor = Serial.read();  
     if (motor == 'A' || motor == 'B') {
       newSpeed = Serial.parseFloat();
-      Serial.print("\nMotor: ");
+      Serial.print("\nM");
       Serial.print(motor == 'A' ? "1" : "2");
-      Serial.print(" Speed: ");
-      Serial.print(newSpeed);
+      Serial.print(" S=");
+      Serial.print(newSpeed, 5);
       setMotorSpeed(motor == 'A' ? m1 : m2, newSpeed);
-      Serial.print("\nBtw, microstep position for m1: ");
+      Serial.print("\nP1=");
       Serial.print(m1.microstepCount);
-      Serial.print(", m2: ");
+      Serial.print(", P2=");
       Serial.print(m2.microstepCount);
     }
   }

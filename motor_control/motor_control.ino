@@ -11,39 +11,56 @@ struct Motor {
   long waitCycles;
   long waitCyclesLeft;
   int timerIndex;
+  
+  long microstepCount;
+  bool clockwise;
 };
 
-Motor m1 = { 3, 4, 6, 5, 7, LOW, 1024, 16, 255, 255, 1 };
-Motor m2 = { 8, 9, 11, 10, 12, LOW, 1024, 16, 255, 255, 2 };
+Motor m1 = { 3, 4, 6, 5, 7, LOW, 1024, 16, 255, 255, 1, 0, false };
+Motor m2 = { 8, 9, 11, 10, 12, LOW, 1024, 16, 255, 255, 2, 0, false };
 
-void initMotor(Motor m, bool enable) {
+void initMotor(Motor m) {
   pinMode(m.directionPin, OUTPUT);
   pinMode(m.stepPin, OUTPUT);
   pinMode(m.microstepsPin1, OUTPUT);
   pinMode(m.microstepsPin2, OUTPUT);
   pinMode(m.enablePin, OUTPUT);
 
-  digitalWrite(m.enablePin, enable ? LOW : HIGH); // low is enable
+  digitalWrite(m.enablePin, HIGH); // high is disable
   digitalWrite(m.microstepsPin1, m.microsteps == 2 || m.microsteps == 16 ? HIGH : LOW);
   digitalWrite(m.microstepsPin2, m.microsteps == 4 || m.microsteps == 16 ? HIGH : LOW);
 };
 
-void initTimers(Motor m1, Motor m2) {
-
+void initTimers() {
+  noInterrupts();
   TCCR1A = 0;
   TCCR1B = 0;
   TCNT1 = 65535;  // set counter till ISR
   TCCR1B = 0;
   TCCR1B |= (1 << CS10) | (1 << CS11);  // prescale
-  TIMSK1 |= (1 << TOIE1); // enable timer overflow interrupt
-
   TCCR2A = 0;
   TCCR2B = 0;
   TCNT2 = 255;
   TCCR2B = 0;
   TCCR2B |= (1 << CS10) | (1 << CS12); // 1024
-  TIMSK2 |= (1 << TOIE1);
+  interrupts();
 };
+
+void setTimerEnabled(int timerIndex, bool enable) {
+  if (timerIndex == 1) {
+    if (enable) {
+      TIMSK1 |= (1 << TOIE1);
+    } else {
+      TIMSK1 &= ~(1 << TOIE1);
+    }
+  } else {
+    if (enable) {
+      TIMSK2 |= (1 << TOIE1);
+    } else {
+      TIMSK2 &= ~(1 << TOIE1);
+    }
+  }
+}
 
 void updateTimerForMotor(Motor& m, long prescale, long waitCycles) {
 
@@ -125,10 +142,13 @@ long getBestPossiblePrescale(int timerIndex, float idealPrescale) {
 
 void setMotorSpeed(Motor& m, float revsPerSec) {
 
-  digitalWrite(m.enablePin, revsPerSec != 0.0 ? LOW : HIGH); // low is enable
-  if (revsPerSec == 0.0) return;
+  bool enable = revsPerSec != 0.0;
+  digitalWrite(m.enablePin, enable ? LOW : HIGH);
+  setTimerEnabled(m.timerIndex, enable);
+  if (!enable) return;
 
   digitalWrite(m.directionPin, revsPerSec > 0 ? LOW : HIGH); // low is clockwise
+  m.clockwise = revsPerSec > 0;
   revsPerSec = abs(revsPerSec);
 
   const float cpuFrequency = 16000000.0; // arduino constant  
@@ -164,16 +184,12 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
 };
 
 void setup() {
-
   Serial.begin(9600);  
   Serial.setTimeout(1000);
 
-  initMotor(m1, true);
-  initMotor(m2, true);
-
-  noInterrupts();
-  initTimers(m1, m2);
-  interrupts();
+  initMotor(m1);
+  initMotor(m2);
+  initTimers();
 
   setMotorSpeed(m1, 0.0);
   setMotorSpeed(m2, 0.0);
@@ -185,6 +201,7 @@ ISR(TIMER1_OVF_vect)
     // toggle step pin
     m1.stepPinState = m1.stepPinState == LOW ? HIGH : LOW;
     digitalWrite(m1.stepPin, m1.stepPinState);
+    if (m1.stepPinState) m1.microstepCount += (m1.clockwise ? 1 : -1);
     // reset wait cycles counter
     m1.waitCyclesLeft = m1.waitCycles;
   }
@@ -201,6 +218,7 @@ ISR(TIMER2_OVF_vect)
     // toggle step pin
     m2.stepPinState = m2.stepPinState == LOW ? HIGH : LOW;
     digitalWrite(m2.stepPin, m2.stepPinState);
+    if (m2.stepPinState) m2.microstepCount += (m2.clockwise ? 1 : -1);
     // reset wait cycles counter
     m2.waitCyclesLeft = m2.waitCycles;
   }
@@ -223,7 +241,11 @@ void loop() {
       Serial.print(motor == 'A' ? "1" : "2");
       Serial.print(" Speed: ");
       Serial.print(newSpeed);
-      setMotorSpeed(motor == 'A' ? m1 : m2, newSpeed);    
+      setMotorSpeed(motor == 'A' ? m1 : m2, newSpeed);
+      Serial.print("\nBtw, microstep position for m1: ");
+      Serial.print(m1.microstepCount);
+      Serial.print(", m2: ");
+      Serial.print(m2.microstepCount);
     }
   }
 }

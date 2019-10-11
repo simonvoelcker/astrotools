@@ -6,11 +6,15 @@ struct Motor {
   int enablePin;
 
   int stepPinState;
-  int prescale;
+  long prescale;
+  long postscale;
   int microsteps;
-  int waitCycles;
+  long waitCycles;
   int timerIndex;
 };
+
+Motor m1 = { 3, 4, 6, 5, 7, LOW, 1024, 0, 16, 255, 1 };
+Motor m2 = { 8, 9, 11, 10, 12, LOW, 1024, 0, 16, 255, 2 };
 
 void initMotor(Motor m, bool enable) {
   pinMode(m.directionPin, OUTPUT);
@@ -25,28 +29,28 @@ void initMotor(Motor m, bool enable) {
 };
 
 void initTimers(Motor m1, Motor m2) {
-  
-  // TODO these are kinda odd now
-  
+
   TCCR1A = 0;
   TCCR1B = 0;
-  TCNT1 = 65536 - m1.waitCycles;  // set counter till ISR
+  TCNT1 = 65535;  // set counter till ISR
   TCCR1B = 0;
   TCCR1B |= (1 << CS10) | (1 << CS11);  // prescale
   TIMSK1 |= (1 << TOIE1); // enable timer overflow interrupt
 
   TCCR2A = 0;
   TCCR2B = 0;
-  TCNT2 = 256 - m2.waitCycles;
+  TCNT2 = 255;
   TCCR2B = 0;
   TCCR2B |= (1 << CS10) | (1 << CS12); // 1024
   TIMSK2 |= (1 << TOIE1);
 };
 
-void updateTimerForMotor(Motor& m, long prescale, long waitCycles) {
+void updateTimerForMotor(Motor& m, long prescale, long postscale, long waitCycles) {
 
   Serial.print("\n prescale=");
   Serial.print(prescale);
+  Serial.print(" postscale=");
+  Serial.print(postscale);
   Serial.print(" waitCycles=");
   Serial.print(waitCycles);
   
@@ -74,6 +78,7 @@ void updateTimerForMotor(Motor& m, long prescale, long waitCycles) {
     TCCR2B = (TCCR2B & 0b11111000) | setting;
   }
   m.waitCycles = waitCycles;
+  m.postscale = postscale;
 };
 
 long getBestPossiblePrescale(int timerIndex, float idealPrescale) {
@@ -140,13 +145,11 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
     Serial.print("\nTOO fast! Limiting speed.");
     ticksPerSec = 6400;
   }
-  Serial.print("\nTicks per sec: ");
-  Serial.print(ticksPerSec);
   
   float clockCyclesPerTick = cpuFrequency / ticksPerSec;
 
-  float maxTimerCycles = m.timerIndex == 1 ? 65536 : 256;
-  float idealPrescale = clockCyclesPerTick / maxTimerCycles;
+  float maxTimerCyclesF = m.timerIndex == 1 ? 65535 : 255;
+  float idealPrescale = clockCyclesPerTick / maxTimerCyclesF;
   long prescale = getBestPossiblePrescale(m.timerIndex, idealPrescale);
   long waitCycles = long(clockCyclesPerTick / prescale);
 
@@ -154,16 +157,17 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
     Serial.print("\nTOO few wait cycles! Setting a lower bound.");
     waitCycles = 16;
   }
-  if (waitCycles >= maxTimerCycles) {
+  if (waitCycles >= 65536) {
     Serial.print("\nTOO many wait cycles! Setting an upper bound.");
-    waitCycles = maxTimerCycles;
-  }  
+    waitCycles = 65535;
+  }
 
-  updateTimerForMotor(m, prescale, waitCycles);
+  long maxTimerCycles = m.timerIndex == 1 ? 65535 : 255;
+  long postscale = waitCycles / maxTimerCycles;
+  waitCycles = waitCycles % maxTimerCycles;
+
+  updateTimerForMotor(m, prescale, postscale, waitCycles);
 };
-
-Motor m1 = { 3, 4, 6, 5, 7, LOW, 1024, 16, 255, 1 };
-Motor m2 = { 8, 9, 11, 10, 12, LOW, 1024, 16, 255, 2 };
 
 void setup() {
 

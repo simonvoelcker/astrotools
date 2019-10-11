@@ -5,17 +5,16 @@ struct Motor {
   int microstepsPin2;
   int enablePin;
 
-  int stepPinState;
-  long prescale;
-  long postscale;
-  long postscaleLeft;
+  int stepPinState;     // whether the step pin is high or low
+  long prescale;        // arduino clock cycles before counting down a timer
   int microsteps;
   long waitCycles;
+  long waitCyclesLeft;
   int timerIndex;
 };
 
-Motor m1 = { 3, 4, 6, 5, 7, LOW, 1024, 0, 0, 16, 255, 1 };
-Motor m2 = { 8, 9, 11, 10, 12, LOW, 1024, 0, 0, 16, 255, 2 };
+Motor m1 = { 3, 4, 6, 5, 7, LOW, 1024, 16, 255, 255, 1 };
+Motor m2 = { 8, 9, 11, 10, 12, LOW, 1024, 16, 255, 255, 2 };
 
 void initMotor(Motor m, bool enable) {
   pinMode(m.directionPin, OUTPUT);
@@ -46,12 +45,10 @@ void initTimers(Motor m1, Motor m2) {
   TIMSK2 |= (1 << TOIE1);
 };
 
-void updateTimerForMotor(Motor& m, long prescale, long postscale, long waitCycles) {
+void updateTimerForMotor(Motor& m, long prescale, long waitCycles) {
 
   Serial.print("\n--> prescale=");
   Serial.print(prescale);
-  Serial.print(" postscale=");
-  Serial.print(postscale);
   Serial.print(" waitCycles=");
   Serial.print(waitCycles);
   
@@ -78,9 +75,8 @@ void updateTimerForMotor(Motor& m, long prescale, long postscale, long waitCycle
     }
     TCCR2B = (TCCR2B & 0b11111000) | setting;
   }
-  m.postscale = postscale;
-  m.postscaleLeft = postscale;
   m.waitCycles = waitCycles;
+  m.waitCyclesLeft = waitCycles;
 };
 
 long getBestPossiblePrescale(int timerIndex, float idealPrescale) {
@@ -150,8 +146,8 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
   
   float clockCyclesPerTick = cpuFrequency / ticksPerSec;
 
-  float maxTimerCyclesF = m.timerIndex == 1 ? 65535 : 255;
-  float idealPrescale = clockCyclesPerTick / maxTimerCyclesF;
+  float maxTimerCycles = m.timerIndex == 1 ? 65535 : 255;
+  float idealPrescale = clockCyclesPerTick / maxTimerCycles;
   long prescale = getBestPossiblePrescale(m.timerIndex, idealPrescale);
   long waitCycles = long(clockCyclesPerTick / prescale);
 
@@ -164,11 +160,7 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
     waitCycles = 65535;
   }
 
-  long maxTimerCycles = m.timerIndex == 1 ? 65535 : 255;
-  long postscale = waitCycles / maxTimerCycles;
-  waitCycles = waitCycles % maxTimerCycles;
-
-  updateTimerForMotor(m, prescale, postscale, waitCycles);
+  updateTimerForMotor(m, prescale, waitCycles);
 };
 
 void setup() {
@@ -189,29 +181,33 @@ void setup() {
 
 ISR(TIMER1_OVF_vect)        
 {
-  if (m1.postscaleLeft > 0) {
-    m1.postscaleLeft--;
-  } else {
-    // reset counter and postscale
-    TCNT1 = 65536 - m1.waitCycles;
-    m1.postscaleLeft = m1.postscale;
+  if (m1.waitCyclesLeft == 0) {
     // toggle step pin
     m1.stepPinState = m1.stepPinState == LOW ? HIGH : LOW;
     digitalWrite(m1.stepPin, m1.stepPinState);
+    // reset wait cycles counter
+    m1.waitCyclesLeft = m1.waitCycles;
+  }
+  if (m1.waitCyclesLeft > 0) {
+    long waitCyclesNow = m1.waitCyclesLeft > 65536 ? 65536 : m1.waitCyclesLeft;
+    TCNT1 = 65536 - waitCyclesNow;
+    m1.waitCyclesLeft -= waitCyclesNow;
   }
 }
 
 ISR(TIMER2_OVF_vect)        
 {
-  if (m2.postscaleLeft > 0) {
-    m2.postscaleLeft--;
-  } else {
-    // reset counter and postscale
-    TCNT2 = 256 - m2.waitCycles;
-    m2.postscaleLeft = m2.postscale;
+  if (m2.waitCyclesLeft == 0) {
     // toggle step pin
     m2.stepPinState = m2.stepPinState == LOW ? HIGH : LOW;
     digitalWrite(m2.stepPin, m2.stepPinState);
+    // reset wait cycles counter
+    m2.waitCyclesLeft = m2.waitCycles;
+  }
+  if (m2.waitCyclesLeft > 0) {
+    long waitCyclesNow = m2.waitCyclesLeft > 256 ? 256 : m2.waitCyclesLeft;
+    TCNT2 = 256 - waitCyclesNow;
+    m2.waitCyclesLeft -= waitCyclesNow;
   }
 }
 

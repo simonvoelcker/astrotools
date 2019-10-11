@@ -8,13 +8,14 @@ struct Motor {
   int stepPinState;
   long prescale;
   long postscale;
+  long postscaleLeft;
   int microsteps;
   long waitCycles;
   int timerIndex;
 };
 
-Motor m1 = { 3, 4, 6, 5, 7, LOW, 1024, 0, 16, 255, 1 };
-Motor m2 = { 8, 9, 11, 10, 12, LOW, 1024, 0, 16, 255, 2 };
+Motor m1 = { 3, 4, 6, 5, 7, LOW, 1024, 0, 0, 16, 255, 1 };
+Motor m2 = { 8, 9, 11, 10, 12, LOW, 1024, 0, 0, 16, 255, 2 };
 
 void initMotor(Motor m, bool enable) {
   pinMode(m.directionPin, OUTPUT);
@@ -47,7 +48,7 @@ void initTimers(Motor m1, Motor m2) {
 
 void updateTimerForMotor(Motor& m, long prescale, long postscale, long waitCycles) {
 
-  Serial.print("\n prescale=");
+  Serial.print("\n--> prescale=");
   Serial.print(prescale);
   Serial.print(" postscale=");
   Serial.print(postscale);
@@ -77,8 +78,9 @@ void updateTimerForMotor(Motor& m, long prescale, long postscale, long waitCycle
     }
     TCCR2B = (TCCR2B & 0b11111000) | setting;
   }
-  m.waitCycles = waitCycles;
   m.postscale = postscale;
+  m.postscaleLeft = postscale;
+  m.waitCycles = waitCycles;
 };
 
 long getBestPossiblePrescale(int timerIndex, float idealPrescale) {
@@ -187,20 +189,30 @@ void setup() {
 
 ISR(TIMER1_OVF_vect)        
 {
-  // reset counter till next ISR
-  TCNT1 = 65536 - m1.waitCycles;
-  // toggle step pin
-  m1.stepPinState = m1.stepPinState == LOW ? HIGH : LOW;
-  digitalWrite(m1.stepPin, m1.stepPinState);
+  if (m1.postscaleLeft > 0) {
+    m1.postscaleLeft--;
+  } else {
+    // reset counter and postscale
+    TCNT1 = 65536 - m1.waitCycles;
+    m1.postscaleLeft = m1.postscale;
+    // toggle step pin
+    m1.stepPinState = m1.stepPinState == LOW ? HIGH : LOW;
+    digitalWrite(m1.stepPin, m1.stepPinState);
+  }
 }
 
 ISR(TIMER2_OVF_vect)        
 {
-  // reset counter till next ISR
-  TCNT2 = 256 - m2.waitCycles;
-  // toggle step pin
-  m2.stepPinState = m2.stepPinState == LOW ? HIGH : LOW;
-  digitalWrite(m2.stepPin, m2.stepPinState);
+  if (m2.postscaleLeft > 0) {
+    m2.postscaleLeft--;
+  } else {
+    // reset counter and postscale
+    TCNT2 = 256 - m2.waitCycles;
+    m2.postscaleLeft = m2.postscale;
+    // toggle step pin
+    m2.stepPinState = m2.stepPinState == LOW ? HIGH : LOW;
+    digitalWrite(m2.stepPin, m2.stepPinState);
+  }
 }
 
 void loop() {

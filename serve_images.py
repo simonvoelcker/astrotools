@@ -13,6 +13,8 @@ parser.add_argument('--out-directory', type=str, help='Output directory')
 parser.add_argument('--delay', type=int, default=3, help='Delay between images, in seconds')
 
 args = parser.parse_args()
+shutil.rmtree(args.out_directory)
+os.makedirs(args.out_directory)
 
 search_pattern = os.path.join(args.directory, args.filename_pattern)
 files = glob.glob(search_pattern)

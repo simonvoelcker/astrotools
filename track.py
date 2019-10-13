@@ -23,18 +23,20 @@ def load_frame_for_offset_detection(filename):
 
 def set_motor_speed(serial, motor, speed):
 	print(f'Setting motor {motor} speed to {speed} rev/s')
-	# serial.write(f'{speed}'.encode())
+	if serial is not None:
+		serial.write(f'{speed}'.encode())
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('directory', type=str)
+parser.add_argument('--incoming', type=str, default=os.path.join('..', 'beute', '**'))
 parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Pattern to use when searching for input images')
 parser.add_argument('--clear-input', type=bool, default=True, help='Move any input images found at startup elsewhere')
-parser.add_argument('--delay', type=int, default=1, help='Delay between images processed, in seconds')
+parser.add_argument('--delay', type=float, default=1.0, help='Delay between images processed, in seconds')
 parser.add_argument('--usb-port', type=int, default=0, help='USB port to use for the motor control')
+parser.add_argument('--no-control', action='store_true', help='Do not actually connect to the motor control')
 
 args = parser.parse_args()
-search_pattern = os.path.join(args.directory, args.filename_pattern)
+search_pattern = os.path.join(args.incoming, args.filename_pattern)
 
 files = glob.glob(search_pattern)
 if files:
@@ -47,37 +49,37 @@ if files:
 out_directory = datetime.datetime.now().strftime('tracked_%Y%m%d_%H%M%S')
 os.makedirs(out_directory)
 
-port = f'/dev/ttyUSB{args.usb_port}'
-# serial = serial.Serial(port, 9600, timeout=1)
+if args.no_control:
+	serial = None
+else:
+	port = f'/dev/ttyUSB{args.usb_port}'
+	try:
+		serial = serial.Serial(port, 9600, timeout=1)
+	except serial.serialutil.SerialException:
+		print('Failed to connect. Try --usb-port=1 or use --no-control.')
+		exit(1)
 
-# experiments suggest that RA output is about -0.215 when DEC is drift-free
-# TODO: read from hint-parameter
-
-kP, kI, kD = 0.005, 0, 0.01
-
-# timer 1 lowest possible is about 0.00005
-# timer 2 lowest possible is about 0.01 -> too fast for DEC, use for RA?
+kP, kI, kD = 0.00005, 0, 0.0001
 
 ra_pid = PID(kP, kI, kD, setpoint=0)
-ra_pid.output_limits = (-0.3, -0.1)
+ra_pid.output_limits = (-0.0028, -0.002)
 ra_pid.sample_time = args.delay
 
 dec_pid = PID(kP, kI, kD, setpoint=0)
-dec_pid.output_limits = (-0.005, 0.005)
+dec_pid.output_limits = (0.0, 0.001)
 dec_pid.sample_time = args.delay
 
 ra_invert, dec_invert = True, False
 
-set_motor_speed(serial, 'A', -0.215)
+set_motor_speed(serial, 'A', -0.0024)
 set_motor_speed(serial, 'B', 0.0)
 
 reference_frame = None
 while True:
-	time.sleep(args.delay/2)
 	files = glob.glob(search_pattern)
 	if not files:
+		time.sleep(1.0)
 		continue
-	time.sleep(args.delay/2)
 
 	if len(files) > 1:
 		print(f'WARN: Found {len(files)} files, processing only one at a time')
@@ -97,3 +99,4 @@ while True:
 		set_motor_speed(serial, 'B', dec_speed)
 
 	shutil.move(files[0], out_directory)
+	time.sleep(arg.delay-1.0)

@@ -24,7 +24,16 @@ def load_frame_for_offset_detection(filename):
 def set_motor_speed(serial, motor, speed):
 	if serial is not None:
 		serial.write(f'{speed}'.encode())
+		time.sleep(1)
+		print(serial.in_waiting)
 
+port = f'/dev/ttyUSB0'
+serial = serial.Serial(port, 9600, timeout=5)
+set_motor_speed(serial, 'A', 0.1)
+time.sleep(1.0)
+set_motor_speed(serial, 'A', 0.1)
+
+exit(0)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--incoming', type=str, default=os.path.join('..', 'beute', '**'))
@@ -50,16 +59,17 @@ os.makedirs(out_directory)
 if args.no_control:
 	serial = None
 else:
-	port = f'/dev/ttyUSB{args.usb_port}'
 	try:
-		serial = serial.Serial(port, 9600, timeout=1)
+		port = f'/dev/ttyUSB{args.usb_port}'
+		serial = serial.Serial(port, 9600, timeout=5)
 	except serial.serialutil.SerialException:
 		print('Failed to connect. Try --usb-port=1 or use --no-control.')
 		exit(1)
 
 kP, kI, kD = 0.00005, 0, 0.0001
-ra_low, ra_high = -0.0028, -0.002
-dec_low, dec_high = 0.0, 0.001
+ra_low, ra_high = -0.005, 0.0
+dec_low, dec_high = 0.0, 0.003
+ra_invert, dec_invert = True, True
 
 ra_pid = PID(kP, kI, kD, setpoint=0)
 ra_pid.output_limits = (ra_low, ra_high)
@@ -69,8 +79,6 @@ dec_pid = PID(kP, kI, kD, setpoint=0)
 dec_pid.output_limits = (dec_low, dec_high)
 dec_pid.sample_time = args.delay
 
-ra_invert, dec_invert = True, False
-
 print(f'Setting initial motor speeds')
 set_motor_speed(serial, 'A', (ra_low+ra_high)/2.0)
 set_motor_speed(serial, 'B', (dec_low+dec_high)/2.0)
@@ -78,12 +86,12 @@ set_motor_speed(serial, 'B', (dec_low+dec_high)/2.0)
 reference_frame = None
 while True:
 	files = glob.glob(search_pattern)
+	time.sleep(0.5)
 	if not files:
-		time.sleep(1.0)
 		continue
 
 	if len(files) > 1:
-		print(f'WARN: Found {len(files)} files, processing only one at a time')
+		print(f'WARN: Found {len(files)} files, consider fiddling around with --delay.')
 		files.sort()
 
 	frame = load_frame_for_offset_detection(files[0])

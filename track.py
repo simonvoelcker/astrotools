@@ -12,6 +12,7 @@ import numpy as np
 from PIL import Image
 from skimage.feature import register_translation
 from simple_pid import PID
+from influxdb import InfluxDBClient
 
 control_response_re = r'\s*M(?P<motor>[12])\s+S=(?P<speed>\-?\d+\.\d+)\s+P1=(?P<P1>\-?\d+)\s+P2=(?P<P2>\-?\d+)\s*'
 control_response_rx = re.compile(control_response_re)
@@ -51,7 +52,27 @@ def set_motor_speed(serial, motor, speed):
 			print(response)
 			exit()
 		return match.group('P1'), match.group('P2')
-	
+
+
+influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
+
+def write_axis_log_entry(time, axis, position, speed, image_error):
+	body = [
+	    {
+	        'measurement': 'axis_log',
+	        'tags': {
+	            'source': 'track.py',
+	        },
+	        'time': time,
+	        'fields': {
+	            'axis': axis,
+	            'position': float(position),
+	            'speed': float(speed),
+	            'image_error': float(image_error),
+	        }
+	    }
+	]
+	influx_client.write_points(body)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--incoming', type=str, default=os.path.join('..', 'beute', '**'))
@@ -123,5 +144,8 @@ while True:
 			f'RA pos: {int(ra_position):8}, '\
 			f'DEC pos: {int(dec_position):8}'
 		)
+		now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
+		write_axis_log_entry(now, 'RA', ra_position, ra_speed, ra_error)
+		write_axis_log_entry(now, 'DEC', dec_position, dec_speed, dec_error)
 
 	shutil.move(files[0], out_directory)

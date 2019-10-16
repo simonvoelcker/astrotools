@@ -1,3 +1,4 @@
+import re
 import sys
 import serial
 import glob
@@ -12,34 +13,50 @@ from PIL import Image
 from skimage.feature import register_translation
 from simple_pid import PID
 
+control_response_re = r'\s*M(?P<motor>[12])\s+S=(?P<speed>\-?\d+\.\d+)\s+P1=(?P<P1>\-?\d+)\s+P2=(?P<P2>\-?\d+)\s*'
+control_response_rx = re.compile(control_response_re)
+
 
 def load_frame_for_offset_detection(filename):
 	pil_image = Image.open(filename).convert('L')
 	yx_image = np.asarray(pil_image, dtype=np.int16)
 	xy_image = np.transpose(yx_image, (1, 0))
-	xy_image = np.clip(xy_image * 10, 128, 255)
+	xy_image = np.clip(xy_image * 5, 128, 255)
 	return xy_image
+
+
+def connect_serial(args):
+	if args.usb_port is None:
+		return None
+	for port in [args.usb_port, 1-args.usb_port]:
+		try:
+			ser = serial.Serial(f'/dev/ttyUSB{port}', 9600, timeout=2)
+			# connection cannot be used immediately ...yes, i know.
+			time.sleep(2)
+			return ser
+		except serial.serialutil.SerialException:
+			print(f'Failed to connect on port {port}.')
+	exit(1)
 
 
 def set_motor_speed(serial, motor, speed):
 	if serial is not None:
-		serial.write(f'{speed}'.encode())
-		time.sleep(1)
-		print(serial.in_waiting)
-
-port = f'/dev/ttyUSB0'
-serial = serial.Serial(port, 9600, timeout=5)
-set_motor_speed(serial, 'A', 0.1)
-time.sleep(1.0)
-set_motor_speed(serial, 'A', 0.1)
-
-exit(0)
+		msg = f'{motor}{speed}'
+		serial.write(msg.encode())
+		return 0, 0
+		response = serial.read(256).decode()
+		match = control_response_rx.match(response)
+		if not match:
+			print('Failed to parse response from the motor control!')
+			print(response)
+			exit()
+		return match.group('P1'), match.group('P2')
+	
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--incoming', type=str, default=os.path.join('..', 'beute', '**'))
 parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Pattern to use when searching for input images')
-parser.add_argument('--usb-port', type=int, default=0, help='USB port to use for the motor control')
-parser.add_argument('--no-control', action='store_true', help='Do not actually connect to the motor control')
+parser.add_argument('--usb-port', type=int, default=None, help='USB port to use for the motor control')
 parser.add_argument('--delay', type=float, default=1.0, help='Delay between images processed, in seconds')
 
 args = parser.parse_args()
@@ -48,40 +65,33 @@ search_pattern = os.path.join(args.incoming, args.filename_pattern)
 files = glob.glob(search_pattern)
 if files:
 	leftovers_directory = datetime.datetime.now().strftime('untracked_%Y%m%d_%H%M%S')
+	leftovers_directory = os.path.join('..', 'processed', leftovers_directory)
 	print(f'Found {len(files)} files at startup, moving them to {leftovers_directory}')
 	os.makedirs(leftovers_directory)
 	for file in files:
 		shutil.move(file, leftovers_directory)
 
 out_directory = datetime.datetime.now().strftime('tracked_%Y%m%d_%H%M%S')
+out_directory = os.path.join('..', 'processed', out_directory)
 os.makedirs(out_directory)
 
-if args.no_control:
-	serial = None
-else:
-	try:
-		port = f'/dev/ttyUSB{args.usb_port}'
-		serial = serial.Serial(port, 9600, timeout=5)
-	except serial.serialutil.SerialException:
-		print('Failed to connect. Try --usb-port=1 or use --no-control.')
-		exit(1)
+ser = connect_serial(args)
 
-kP, kI, kD = 0.00005, 0, 0.0001
-ra_low, ra_high = -0.005, 0.0
-dec_low, dec_high = 0.0, 0.003
+ra_low, ra_high = -0.005, -0.004
+dec_low, dec_high = 0.0, 0.0005
 ra_invert, dec_invert = True, True
 
-ra_pid = PID(kP, kI, kD, setpoint=0)
+ra_pid = PID(0.00001, 0, 0.0001, setpoint=0)
 ra_pid.output_limits = (ra_low, ra_high)
 ra_pid.sample_time = args.delay
 
-dec_pid = PID(kP, kI, kD, setpoint=0)
+dec_pid = PID(0.00005, 0, 0.0001, setpoint=0)
 dec_pid.output_limits = (dec_low, dec_high)
 dec_pid.sample_time = args.delay
 
 print(f'Setting initial motor speeds')
-set_motor_speed(serial, 'A', (ra_low+ra_high)/2.0)
-set_motor_speed(serial, 'B', (dec_low+dec_high)/2.0)
+set_motor_speed(ser, 'A', (ra_low+ra_high)/2.0)
+set_motor_speed(ser, 'B', (dec_low+dec_high)/2.0)
 
 reference_frame = None
 while True:
@@ -102,11 +112,16 @@ while True:
 		(ra_error, dec_error), _, __ = register_translation(reference_frame, frame)
 		ra_speed = ra_pid(-ra_error if ra_invert else ra_error)
 		dec_speed = dec_pid(-dec_error if dec_invert else dec_error)
+		set_motor_speed(ser, 'A', ra_speed)		
+		ra_position, dec_position = set_motor_speed(ser, 'B', dec_speed)
 
-		print(f'RA error: {int(ra_error):4}, DEC error: {int(dec_error):4}, RA speed: {ra_speed:8.5f}, DEC speed: {dec_speed:8.5f}')
-
-		set_motor_speed(serial, 'A', ra_speed)		
-		set_motor_speed(serial, 'B', dec_speed)
+		print(
+			f'RA error: {int(ra_error):4}, '\
+			f'DEC error: {int(dec_error):4}, '\
+			f'RA speed: {ra_speed:8.5f}, '\
+			f'DEC speed: {dec_speed:8.5f}, '\
+			f'RA pos: {int(ra_position):8}, '\
+			f'DEC pos: {int(dec_position):8}'
+		)
 
 	shutil.move(files[0], out_directory)
-	time.sleep(args.delay-1.0)

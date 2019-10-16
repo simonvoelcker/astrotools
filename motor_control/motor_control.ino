@@ -164,10 +164,6 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
   long prescale = getBestPossiblePrescale(m.timerIndex, idealPrescale);
   long waitCycles = long(clockCyclesPerTick / prescale);
 
-  if (waitCycles < 16) {
-    Serial.print("\nTOO few wait cycles! Setting a lower bound.");
-    waitCycles = 16;
-  }
   if (waitCycles >= 65536) {
     Serial.print("\nTOO many wait cycles! Setting an upper bound.");
     waitCycles = 65535;
@@ -227,7 +223,7 @@ void loop() {
   float newSpeed;
   
   if (Serial.available() > 0) {
-    motor = Serial.read();  
+    motor = Serial.read();
     if (motor == 'A' || motor == 'B') {
       newSpeed = Serial.parseFloat();
       Serial.print("\nM");
@@ -237,7 +233,7 @@ void loop() {
       setMotorSpeed(motor == 'A' ? m1 : m2, newSpeed);
       Serial.print("\nP1=");
       Serial.print(m1.microstepCount);
-      Serial.print(", P2=");
+      Serial.print(" P2=");
       Serial.print(m2.microstepCount);
     }
   }

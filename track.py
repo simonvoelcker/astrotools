@@ -6,8 +6,9 @@ import argparse
 import os
 import time
 import shutil
-import datetime
 import numpy as np
+
+from datetime import datetime, timedelta
 
 from PIL import Image
 from skimage.feature import register_translation
@@ -44,8 +45,14 @@ def set_motor_speed(serial, motor, speed):
 	if serial is not None:
 		msg = f'{motor}{speed}'
 		serial.write(msg.encode())
-		return 0, 0
-		response = serial.read(256).decode()
+
+		before = datetime.now()
+
+		response = serial.readline().decode()
+
+		after = datetime.now()
+		print(f'elapsed: {after-before}')
+
 		match = control_response_rx.match(response)
 		if not match:
 			print('Failed to parse response from the motor control!')
@@ -85,14 +92,14 @@ search_pattern = os.path.join(args.incoming, args.filename_pattern)
 
 files = glob.glob(search_pattern)
 if files:
-	leftovers_directory = datetime.datetime.now().strftime('untracked_%Y%m%d_%H%M%S')
+	leftovers_directory = datetime.now().strftime('untracked_%Y%m%d_%H%M%S')
 	leftovers_directory = os.path.join('..', 'processed', leftovers_directory)
 	print(f'Found {len(files)} files at startup, moving them to {leftovers_directory}')
 	os.makedirs(leftovers_directory)
 	for file in files:
 		shutil.move(file, leftovers_directory)
 
-out_directory = datetime.datetime.now().strftime('tracked_%Y%m%d_%H%M%S')
+out_directory = datetime.now().strftime('tracked_%Y%m%d_%H%M%S')
 out_directory = os.path.join('..', 'processed', out_directory)
 os.makedirs(out_directory)
 
@@ -109,6 +116,12 @@ ra_pid.sample_time = args.delay
 dec_pid = PID(0.00005, 0, 0.0001, setpoint=0)
 dec_pid.output_limits = (dec_low, dec_high)
 dec_pid.sample_time = args.delay
+
+
+set_motor_speed(ser, 'A', 1.0)
+
+
+exit()
 
 print(f'Setting initial motor speeds')
 set_motor_speed(ser, 'A', (ra_low+ra_high)/2.0)
@@ -144,7 +157,7 @@ while True:
 			f'RA pos: {int(ra_position):8}, '\
 			f'DEC pos: {int(dec_position):8}'
 		)
-		now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
+		now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
 		write_axis_log_entry(now, 'RA', ra_position, ra_speed, ra_error)
 		write_axis_log_entry(now, 'DEC', dec_position, dec_speed, dec_error)
 

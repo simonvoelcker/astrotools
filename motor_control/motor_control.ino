@@ -29,7 +29,7 @@ void initMotor(Motor m) {
   digitalWrite(m.enablePin, HIGH); // high is disable
   digitalWrite(m.microstepsPin1, m.microsteps == 2 || m.microsteps == 16 ? HIGH : LOW);
   digitalWrite(m.microstepsPin2, m.microsteps == 4 || m.microsteps == 16 ? HIGH : LOW);
-};
+}
 
 void initTimers() {
   noInterrupts();
@@ -44,7 +44,7 @@ void initTimers() {
   TCCR2B = 0;
   TCCR2B |= (1 << CS10) | (1 << CS12); // 1024
   interrupts();
-};
+}
 
 void setTimerEnabled(int timerIndex, bool enable) {
   if (timerIndex == 1) {
@@ -88,7 +88,7 @@ void updateTimerForMotor(Motor& m, long prescale, long waitCycles) {
   }
   m.waitCycles = waitCycles;
   m.waitCyclesLeft = waitCycles;
-};
+}
 
 long getBestPossiblePrescale(int timerIndex, float idealPrescale) {
   if (timerIndex == 1) {
@@ -153,7 +153,7 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
 
   // top speed: 1 rev/sec
   if (ticksPerSec > 6400) {
-    Serial.print("\nTOO fast! Limiting speed.");
+    Serial.print("WARN: Too many ticks per second. Limiting speed. ");
     ticksPerSec = 6400;
   }
   
@@ -165,12 +165,12 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
   long waitCycles = long(clockCyclesPerTick / prescale);
 
   if (waitCycles >= 65536) {
-    Serial.print("\nTOO many wait cycles! Setting an upper bound.");
+    Serial.print("WARN: Too many wait cycles! Setting an upper bound. ");
     waitCycles = 65535;
   }
 
   updateTimerForMotor(m, prescale, waitCycles);
-};
+}
 
 void setup() {
   Serial.begin(9600);  
@@ -226,15 +226,16 @@ void loop() {
     motor = Serial.read();
     if (motor == 'A' || motor == 'B') {
       newSpeed = Serial.parseFloat();
-      Serial.print("\nM");
+      Serial.print("M");
       Serial.print(motor == 'A' ? "1" : "2");
       Serial.print(" S=");
       Serial.print(newSpeed, 5);
       setMotorSpeed(motor == 'A' ? m1 : m2, newSpeed);
-      Serial.print("\nP1=");
+      Serial.print(" P1=");
       Serial.print(m1.microstepCount);
       Serial.print(" P2=");
       Serial.print(m2.microstepCount);
+      Serial.print("\n");
     }
   }
 }

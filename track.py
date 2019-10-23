@@ -43,16 +43,12 @@ def connect_serial(args):
 
 def set_motor_speed(serial, motor, speed):
 	if serial is not None:
-		msg = f'{motor}{speed}'
+		msg = f'{motor}{speed:9.6f}'
 		serial.write(msg.encode())
-
-		before = datetime.now()
-
+		return 0, 0
+		
+		# readback takes a second
 		response = serial.readline().decode()
-
-		after = datetime.now()
-		print(f'elapsed: {after-before}')
-
 		match = control_response_rx.match(response)
 		if not match:
 			print('Failed to parse response from the motor control!')
@@ -63,7 +59,7 @@ def set_motor_speed(serial, motor, speed):
 
 influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
 
-def write_axis_log_entry(time, axis, position, speed, image_error):
+def write_axis_log_entry(time, ra_position, ra_speed, ra_image_error, dec_position, dec_speed, dec_image_error):
 	body = [
 	    {
 	        'measurement': 'axis_log',
@@ -72,10 +68,12 @@ def write_axis_log_entry(time, axis, position, speed, image_error):
 	        },
 	        'time': time,
 	        'fields': {
-	            'axis': axis,
-	            'position': float(position),
-	            'speed': float(speed),
-	            'image_error': float(image_error),
+	            'ra_position': float(ra_position),
+	            'ra_speed': float(ra_speed),
+	            'ra_image_error': float(ra_image_error),
+	            'dec_position': float(dec_position),
+	            'dec_speed': float(dec_speed),
+	            'dec_image_error': float(dec_image_error),
 	        }
 	    }
 	]
@@ -105,23 +103,17 @@ os.makedirs(out_directory)
 
 ser = connect_serial(args)
 
-ra_low, ra_high = -0.005, -0.004
+ra_low, ra_high = -0.24, -0.2
 dec_low, dec_high = 0.0, 0.0005
 ra_invert, dec_invert = True, True
 
-ra_pid = PID(0.00001, 0, 0.0001, setpoint=0)
+ra_pid = PID(0.001, 0, 0.0001, setpoint=0)
 ra_pid.output_limits = (ra_low, ra_high)
 ra_pid.sample_time = args.delay
 
 dec_pid = PID(0.00005, 0, 0.0001, setpoint=0)
 dec_pid.output_limits = (dec_low, dec_high)
 dec_pid.sample_time = args.delay
-
-
-set_motor_speed(ser, 'A', 1.0)
-
-
-exit()
 
 print(f'Setting initial motor speeds')
 set_motor_speed(ser, 'A', (ra_low+ra_high)/2.0)
@@ -158,7 +150,6 @@ while True:
 			f'DEC pos: {int(dec_position):8}'
 		)
 		now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
-		write_axis_log_entry(now, 'RA', ra_position, ra_speed, ra_error)
-		write_axis_log_entry(now, 'DEC', dec_position, dec_speed, dec_error)
+		write_axis_log_entry(now, ra_position, ra_speed, ra_error, dec_position, dec_speed, dec_error)
 
 	shutil.move(files[0], out_directory)

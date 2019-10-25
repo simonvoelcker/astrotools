@@ -36,7 +36,7 @@ if args.range is not None:
 	files = files[int(image_range[0]):int(image_range[1])]
 	print(f'Only {len(files)} files selected for stacking')
 
-image = ImageStackNebula(args.directory, files, args.bits)
+image = ImageStackNebula.from_files(args.directory, files, args.bits)
 
 if args.auto_crop:
 	max_samples = np.amax(image.samples)

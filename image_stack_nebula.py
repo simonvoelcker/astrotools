@@ -8,8 +8,12 @@ from PIL import Image
 
 class ImageStackNebula:
 
-	def __init__(self, directory, files, bits):
+	def __init__(self, image, samples):
+		self.image = image
+		self.samples = samples
 
+	@classmethod
+	def from_files(cls, directory, files, bits):
 		dtype = np.int16 if bits == 16 else np.int32
 
 		# read offsets file
@@ -22,29 +26,62 @@ class ImageStackNebula:
 		min_offset_y = int(min(y for _,y in frame_offsets.values()))
 		max_offset_y = int(max(y for _,y in frame_offsets.values()))
 
-		frame_0 = self._load_frame(files[0], dtype=dtype)
+		frame_0 = cls._load_frame(files[0], dtype=dtype)
 		width, height, channels = frame_0.shape
 
 		output_width = width + abs(min_offset_x) + abs(max_offset_x)
 		output_height = height + abs(min_offset_y) + abs(max_offset_y)
 
-		self.image = np.zeros((output_width, output_height, channels), dtype=dtype)
-		self.samples = np.zeros((output_width, output_height), dtype=np.int16)
+		image = np.zeros((output_width, output_height, channels), dtype=dtype)
+		samples = np.zeros((output_width, output_height), dtype=np.int16)
 
 		for filename, (offset_x,offset_y) in frame_offsets.items():
 
 			filename = os.path.join(directory, filename)
-			frame = self._load_frame(filename, dtype)
+			frame = cls._load_frame(filename, dtype)
 
 			x = int(offset_x)+abs(min_offset_x)
 			y = int(offset_y)+abs(min_offset_y)
 
-			self.image[x:x+width, y:y+height, :] += frame
-			self.samples[x:x+width, y:y+height] += 1
+			image[x:x+width, y:y+height, :] += frame
+			samples[x:x+width, y:y+height] += 1
 
-		if np.amin(self.image) < 0:
+		if np.amin(image) < 0:
 			print('An overflow occurred during stacking. Consider using --bits=32')
 			sys.exit(1)
+
+		return ImageStackNebula(image, samples)
+
+	@classmethod
+	def from_frames(cls, frames, offsets, bits):
+		dtype = np.int16 if bits == 16 else np.int32
+
+		max_offset_x = int(max(x for x,_ in offsets))
+		min_offset_x = int(min(x for x,_ in offsets))
+		min_offset_y = int(min(y for _,y in offsets))
+		max_offset_y = int(max(y for _,y in offsets))
+		
+		width, height, channels = frames[0].shape
+	
+		output_width = width + abs(min_offset_x) + abs(max_offset_x)
+		output_height = height + abs(min_offset_y) + abs(max_offset_y)
+
+		image = np.zeros((output_width, output_height, channels), dtype=dtype)
+		samples = np.zeros((output_width, output_height), dtype=np.int16)
+
+		for frame, (offset_x,offset_y) in zip(frames, offsets):
+
+			x = int(offset_x)+abs(min_offset_x)
+			y = int(offset_y)+abs(min_offset_y)
+
+			image[x:x+width, y:y+height, :] += frame
+			samples[x:x+width, y:y+height] += 1
+
+		if np.amin(image) < 0:
+			print('An overflow occurred during stacking. Consider using --bits=32')
+			sys.exit(1)
+
+		return ImageStackNebula(image, samples)
 
 	@staticmethod
 	def _get_sharpness(xyc_image):

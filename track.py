@@ -14,6 +14,8 @@ from PIL import Image
 from skimage.feature import register_translation
 from simple_pid import PID
 from influxdb import InfluxDBClient
+from sharpness import get_sharpness
+
 
 control_response_re = r'\s*M(?P<motor>[12])\s+S=(?P<speed>\-?\d+\.\d+)\s+P1=(?P<P1>\-?\d+)\s+P2=(?P<P2>\-?\d+)\s*'
 control_response_rx = re.compile(control_response_re)
@@ -59,7 +61,8 @@ def set_motor_speed(serial, motor, speed):
 
 influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
 
-def write_axis_log_entry(time, ra_position, ra_speed, ra_image_error, dec_position, dec_speed, dec_image_error):
+def write_frame_stats(ra_position, ra_speed, ra_image_error, dec_position, dec_speed, dec_image_error, sharpness):
+	time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
 	body = [
 	    {
 	        'measurement': 'axis_log',
@@ -74,6 +77,7 @@ def write_axis_log_entry(time, ra_position, ra_speed, ra_image_error, dec_positi
 	            'dec_position': float(dec_position),
 	            'dec_speed': float(dec_speed),
 	            'dec_image_error': float(dec_image_error),
+	            'sharpness': float(sharpness),
 	        }
 	    }
 	]
@@ -104,10 +108,10 @@ os.makedirs(out_directory)
 ser = connect_serial(args)
 
 ra_low, ra_high = -0.24, -0.2
-dec_low, dec_high = 0.0, 0.0005
+dec_low, dec_high = -0.001, 0.0
 ra_invert, dec_invert = True, True
 
-ra_pid = PID(0.001, 0, 0.0001, setpoint=0)
+ra_pid = PID(0.002, 0.0, 0.001, setpoint=0)
 ra_pid.output_limits = (ra_low, ra_high)
 ra_pid.sample_time = args.delay
 
@@ -141,15 +145,17 @@ while True:
 		set_motor_speed(ser, 'A', ra_speed)		
 		ra_position, dec_position = set_motor_speed(ser, 'B', dec_speed)
 
+		sharpness = get_sharpness(frame)
+
 		print(
 			f'RA error: {int(ra_error):4}, '\
 			f'DEC error: {int(dec_error):4}, '\
 			f'RA speed: {ra_speed:8.5f}, '\
 			f'DEC speed: {dec_speed:8.5f}, '\
 			f'RA pos: {int(ra_position):8}, '\
-			f'DEC pos: {int(dec_position):8}'
+			f'DEC pos: {int(dec_position):8} '\
+			f'SHRP: {sharpness}'
 		)
-		now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
-		write_axis_log_entry(now, ra_position, ra_speed, ra_error, dec_position, dec_speed, dec_error)
+		write_frame_stats(ra_position, ra_speed, ra_error, dec_position, dec_speed, dec_error, sharpness)
 
 	shutil.move(files[0], out_directory)

@@ -25,8 +25,8 @@ def get_sharpness_values(frame):
 	gy, gx = np.gradient(frame)
 	gnorm = np.sqrt(gx**2 + gy**2)
 	return {
-		'sharpness_x': np.average(gx),
-		'sharpness_y': np.average(gy),
+		'sharpness_x': np.average(np.absolute(gx)),
+		'sharpness_y': np.average(np.absolute(gy)),
 		'sharpness': np.average(gnorm),
 	}
 
@@ -70,8 +70,6 @@ def set_motor_speed(serial, motor, speed):
 	return match.group('P1'), match.group('P2')
 
 
-influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
-
 def write_frame_stats(ra_position, ra_speed, ra_image_error, dec_position, dec_speed, dec_image_error, sharpness_values):
 	time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
 	body = [
@@ -99,8 +97,10 @@ def write_frame_stats(ra_position, ra_speed, ra_image_error, dec_position, dec_s
 parser = argparse.ArgumentParser()
 parser.add_argument('--incoming', type=str, default=os.path.join('..', 'beute', '**'))
 parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Pattern to use when searching for input images')
-parser.add_argument('--usb-port', type=int, default=None, help='USB port to use for the motor control')
 parser.add_argument('--delay', type=float, default=1.0, help='Delay between images processed, in seconds')
+parser.add_argument('--stats', action='store_true', help='Send stats to InfluxDB')
+parser.add_argument('--preview', type=int, default=None, help='Write preview of last N frames')
+parser.add_argument('--usb-port', type=int, default=None, help='USB port to use for the motor control. Omit for no motor control.')
 
 args = parser.parse_args()
 search_pattern = os.path.join(args.incoming, args.filename_pattern)
@@ -120,11 +120,11 @@ os.makedirs(out_directory)
 
 ser = connect_serial(args)
 
-ra_low, ra_high = -0.24, -0.2
-dec_low, dec_high = -0.001, 0.0
+ra_low, ra_high = -0.005, -0.004
+dec_low, dec_high = -0.002, 0.0
 ra_invert, dec_invert = True, True
 
-ra_pid = PID(0.002, 0.0, 0.001, setpoint=0)
+ra_pid = PID(0.00004, 0.0, 0.00004, setpoint=0)
 ra_pid.output_limits = (ra_low, ra_high)
 ra_pid.sample_time = args.delay
 
@@ -136,7 +136,16 @@ print(f'Setting initial motor speeds')
 set_motor_speed(ser, 'A', (ra_low+ra_high)/2.0)
 set_motor_speed(ser, 'B', (dec_low+dec_high)/2.0)
 
-preview = Preview(num_frames=20, bits=16)
+if args.preview is not None:
+	preview = Preview(num_frames=args.preview, bits=16)
+else:
+	preview = None
+
+if args.stats:
+	influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
+else:
+	influx_client = None
+
 reference_frame = None
 
 while True:
@@ -176,8 +185,11 @@ while True:
 			f'DEC pos: {int(dec_position):8} '\
 			f'SHRP: {sharpness_values["sharpness"]}'
 		)
-		# write_frame_stats(ra_position, ra_speed, ra_error, dec_position, dec_speed, dec_error, sharpness_values)
 
-		preview.update(frame, (ra_error, dec_error))
+		if influx_client is not None:
+			write_frame_stats(ra_position, ra_speed, ra_error, dec_position, dec_speed, dec_error, sharpness_values)
+
+		if preview is not None:
+			preview.update(frame, (ra_error, dec_error))
 
 	shutil.move(files[0], out_directory)

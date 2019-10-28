@@ -51,10 +51,7 @@ if args.range is not None:
 	files = files[int(image_range[0]):int(image_range[1])]
 	print(f'Only {len(files)} files selected for offset detection')
 
-start_frame = 0
-end_frame = 1000
-
-key_frame = load_frame_for_offset_detection(files[start_frame])
+key_frame = load_frame_for_offset_detection(files[0])
 key_frame_index = 0
 prev_frame = None
 
@@ -68,7 +65,7 @@ if False:
 frame_offsets = {0: (0,0)}	# map frame index to offsets-tuple
 frame_offsets_by_file = dict()
 
-for frame_index, file in enumerate(files[start_frame:end_frame]):
+for frame_index, file in enumerate(files):
 	curr_frame = load_frame_for_offset_detection(file)
 
 	(offset_x, offset_y), error, _ = register_translation(key_frame, curr_frame)
@@ -102,7 +99,6 @@ with open(offsets_file, 'w') as f:
 	json.dump(frame_offsets_by_file, f, indent=4, sort_keys=True)
 
 
-
 x_offsets = np.array([x for _, (x,y) in frame_offsets.items()])
 y_offsets = np.array([y for _, (x,y) in frame_offsets.items()])
 
@@ -111,7 +107,7 @@ area = np.pi*3
 
 # Plot
 plt.scatter(x_offsets, y_offsets, s=area, c=colors, alpha=0.5)
-plt.title('Scatter plot')
+plt.title('Image offset distribution')
 plt.xlabel('x')
 plt.ylabel('y')
-plt.savefig('plot.png')
+plt.savefig('image_offsets.png')

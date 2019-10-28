@@ -16,6 +16,8 @@ class ImageStackNebula:
 	def from_files(cls, directory, files, bits):
 		dtype = np.int16 if bits == 16 else np.int32
 
+		# TODO move out of this method, make it an option to use offsets.json vs database
+
 		# read offsets file
 		offsets_file = os.path.join(directory, 'offsets.json')
 		with open(offsets_file, 'r') as f:

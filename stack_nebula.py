@@ -7,6 +7,24 @@ import numpy as np
 
 from image_stack_nebula import ImageStackNebula
 
+from influxdb import InfluxDBClient
+
+
+def query_offsets(path_prefix):
+	path_prefix = path_prefix.replace('/', '\\/')
+	influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
+	offsets_query = f'SELECT ra_image_error, dec_image_error, file_path '\
+					f'FROM axis_log WHERE file_path =~ /{path_prefix}*/ ORDER BY time ASC'
+
+	offsets_result = influx_client.query(offsets_query)
+	# it will remain influxDBs secret why this is so complicated
+	rows = offsets_result.items()[0][1]
+	return {row['file_path']: (row['ra_image_error'], row['dec_image_error']) for row in rows}
+
+
+o = query_offsets('../beute/191013')
+print(o)
+sys.exit(0)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('directory', type=str)
@@ -54,13 +72,8 @@ image.normalize()
 if args.gamma:
 	image.apply_gamma(args.gamma)
 
-#	image.clamp_outliers(shades=1)
-
 if args.invert:
 	image.invert()
 
-# image.normalize_histogram(num_bins=4096)
-
-
 image.save(args.out)
-image.save_samples_map('samples.png')
+image.save_samples_map('samples_map.png')

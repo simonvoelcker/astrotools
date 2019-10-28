@@ -8,47 +8,47 @@ import time
 import shutil
 import numpy as np
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from PIL import Image
 from skimage.feature import register_translation
 from simple_pid import PID
 from influxdb import InfluxDBClient
 
 from preview import Preview
+from util import load_image, get_sharpness_values
 
 control_response_re = r'\s*M(?P<motor>[12])\s+S=(?P<speed>\-?\d+\.\d+)\s+P1=(?P<P1>\-?\d+)\s+P2=(?P<P2>\-?\d+)\s*'
 control_response_rx = re.compile(control_response_re)
 
+config = {
+	'ra_low': -0.005,
+	'ra_high': -0.004,
+	'ra_invert': True,
+	'dec_low': -0.002,
+	'dec_high': 0.0,
+	'dec_invert': True,
+	
+	'ra_pid_p': 0.00004,
+	'ra_pid_i': 0.0,
+	'ra_pid_d': 0.00004,
+	'dec_pid_p': 0.00005,
+	'dec_pid_i': 0.0,
+	'dec_pid_d': 0.0001,
 
-def get_sharpness_values(frame):
-	gy, gx = np.gradient(frame)
-	gnorm = np.sqrt(gx**2 + gy**2)
-	return {
-		'sharpness_x': np.average(np.absolute(gx)),
-		'sharpness_y': np.average(np.absolute(gy)),
-		'sharpness': np.average(gnorm),
-	}
-
-
-def load_frame(filename):
-	pil_image = Image.open(filename)
-	yxc_image = np.asarray(pil_image, dtype=np.int16)
-	xyc_image = np.transpose(yxc_image, (1, 0, 2))
-	return xyc_image
+	'sample_time': 1.0,
+}
 
 
 def connect_serial(args):
-	if args.usb_port is None:
-		return None
 	for port in [args.usb_port, 1-args.usb_port]:
 		try:
 			ser = serial.Serial(f'/dev/ttyUSB{port}', 9600, timeout=2)
 			# connection cannot be used immediately ...yes, i know.
 			time.sleep(2)
+			print(f'Connect to motor control on port {port}.')
 			return ser
 		except serial.serialutil.SerialException:
-			print(f'Failed to connect on port {port}.')
+			print(f'Failed to connect to motor control on port {port}.')
 	exit(1)
 
 
@@ -70,7 +70,7 @@ def set_motor_speed(serial, motor, speed):
 	return match.group('P1'), match.group('P2')
 
 
-def write_frame_stats(ra_position, ra_speed, ra_image_error, dec_position, dec_speed, dec_image_error, sharpness_values):
+def write_frame_stats(file_path, ra_position, ra_speed, ra_image_error, dec_position, dec_speed, dec_image_error, sharpness_values):
 	time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
 	body = [
 	    {
@@ -80,6 +80,7 @@ def write_frame_stats(ra_position, ra_speed, ra_image_error, dec_position, dec_s
 	        },
 	        'time': time,
 	        'fields': {
+	        	'file_path': file_path,
 	            'ra_position': float(ra_position),
 	            'ra_speed': float(ra_speed),
 	            'ra_image_error': float(ra_image_error),
@@ -98,53 +99,59 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--incoming', type=str, default=os.path.join('..', 'beute', '**'))
 parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Pattern to use when searching for input images')
 parser.add_argument('--delay', type=float, default=1.0, help='Delay between images processed, in seconds')
-parser.add_argument('--stats', action='store_true', help='Send stats to InfluxDB')
+parser.add_argument('--no-stats', action='store_true', help='Do not send stats to InfluxDB')
 parser.add_argument('--preview', type=int, default=None, help='Write preview of last N frames')
 parser.add_argument('--usb-port', type=int, default=None, help='USB port to use for the motor control. Omit for no motor control.')
+parser.add_argument('--keep-untracked', action='store_true', help='Move files found on startup somewhere instead of removing them')
 
 args = parser.parse_args()
 search_pattern = os.path.join(args.incoming, args.filename_pattern)
 
 files = glob.glob(search_pattern)
 if files:
-	leftovers_directory = datetime.now().strftime('untracked_%Y%m%d_%H%M%S')
-	leftovers_directory = os.path.join('..', 'processed', leftovers_directory)
-	print(f'Found {len(files)} files at startup, moving them to {leftovers_directory}')
-	os.makedirs(leftovers_directory)
-	for file in files:
-		shutil.move(file, leftovers_directory)
+	print(f'Found {len(files)} files at startup')
+	if args.keep_untracked:
+		leftovers_directory = datetime.now().strftime('untracked_%Y%m%d_%H%M%S')
+		leftovers_directory = os.path.join('..', 'processed', leftovers_directory)
+		print(f'Moving them to {leftovers_directory}')
+		os.makedirs(leftovers_directory)
+		for file in files:
+			shutil.move(file, leftovers_directory)
+	else:
+		print('Removing them. Consider using --keep_untracked if that was not okay')
+		for file in files:
+			os.remove(file)
 
 out_directory = datetime.now().strftime('tracked_%Y%m%d_%H%M%S')
 out_directory = os.path.join('..', 'processed', out_directory)
 os.makedirs(out_directory)
 
-ser = connect_serial(args)
+ser = None
+if args.usb_port is not None:
+	ser = connect_serial(args)
+else:
+	print('Not connecting to motor control. Consider using --usb-port.')
 
-ra_low, ra_high = -0.005, -0.004
-dec_low, dec_high = -0.002, 0.0
-ra_invert, dec_invert = True, True
-
-ra_pid = PID(0.00004, 0.0, 0.00004, setpoint=0)
-ra_pid.output_limits = (ra_low, ra_high)
-ra_pid.sample_time = args.delay
-
-dec_pid = PID(0.00005, 0, 0.0001, setpoint=0)
-dec_pid.output_limits = (dec_low, dec_high)
-dec_pid.sample_time = args.delay
-
-print(f'Setting initial motor speeds')
-set_motor_speed(ser, 'A', (ra_low+ra_high)/2.0)
-set_motor_speed(ser, 'B', (dec_low+dec_high)/2.0)
-
+preview = None
 if args.preview is not None:
 	preview = Preview(num_frames=args.preview, bits=16)
-else:
-	preview = None
 
-if args.stats:
+influx_client = None
+if not args.no_stats:
 	influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
-else:
-	influx_client = None
+
+ra_pid = PID(config['ra_pid_p'], config['ra_pid_i'], config['ra_pid_d'], setpoint=0)
+ra_pid.output_limits = (config['ra_low'], config['ra_high'])
+ra_pid.sample_time = args.delay
+
+dec_pid = PID(config['dec_pid_p'], config['dec_pid_i'], config['dec_pid_d'], setpoint=0)
+dec_pid.output_limits = (config['dec_low'], config['dec_high'])
+dec_pid.sample_time = args.delay
+
+if ser is not None:
+	print(f'Setting initial motor speeds')
+	set_motor_speed(ser, 'A', (config['ra_low']+config['ra_high'])/2.0)
+	set_motor_speed(ser, 'B', (config['dec_low']+config['dec_high'])/2.0)
 
 reference_frame = None
 
@@ -159,7 +166,7 @@ while True:
 		files.sort()
 
 	# original frame - all color channels
-	frame = load_frame(files[0])
+	frame = load_image(files[0], dtype=np.int16)
 	# greyscale frame, only width and height
 	frame_greyscale = np.mean(frame, axis=2)
 	# the same, but optimized for offset-detection
@@ -169,10 +176,13 @@ while True:
 		reference_frame = frame_for_offset_detection
 	else:
 		(ra_error, dec_error), _, __ = register_translation(reference_frame, frame_for_offset_detection)
-		ra_speed = ra_pid(-ra_error if ra_invert else ra_error)
-		dec_speed = dec_pid(-dec_error if dec_invert else dec_error)
-		set_motor_speed(ser, 'A', ra_speed)		
-		ra_position, dec_position = set_motor_speed(ser, 'B', dec_speed)
+		ra_speed = ra_pid(-ra_error if config['ra_invert'] else ra_error)
+		dec_speed = dec_pid(-dec_error if config['dec_invert'] else dec_error)
+
+		ra_position, dec_position = 0, 0
+		if ser is not None:
+			set_motor_speed(ser, 'A', ra_speed)		
+			set_motor_speed(ser, 'B', dec_speed)
 
 		sharpness_values = get_sharpness_values(frame_greyscale)
 
@@ -187,7 +197,7 @@ while True:
 		)
 
 		if influx_client is not None:
-			write_frame_stats(ra_position, ra_speed, ra_error, dec_position, dec_speed, dec_error, sharpness_values)
+			write_frame_stats(files[0], ra_position, ra_speed, ra_error, dec_position, dec_speed, dec_error, sharpness_values)
 
 		if preview is not None:
 			preview.update(frame, (ra_error, dec_error))

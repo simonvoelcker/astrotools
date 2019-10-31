@@ -4,9 +4,8 @@ from image_stack_nebula import ImageStackNebula
 
 
 class Preview:
-	def __init__(self, num_frames, bits):
+	def __init__(self, num_frames):
 		self.num_frames = num_frames
-		self.bits = bits
 		self.frames = []
 		self.offsets = []
 
@@ -16,7 +15,7 @@ class Preview:
 		self.stack_and_save()
 
 	def stack_and_save(self):
-		preview = ImageStackNebula.from_frames(self.frames, self.offsets, self.bits)
+		preview = ImageStackNebula.from_frames(self.frames, self.offsets)
 		preview.auto_crop(np.amax(preview.samples))
 		preview.floatify()
 		preview.convert_to_grayscale()

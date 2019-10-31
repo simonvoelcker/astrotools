@@ -134,7 +134,7 @@ else:
 
 preview = None
 if args.preview is not None:
-	preview = Preview(num_frames=args.preview, bits=16)
+	preview = Preview(num_frames=args.preview)
 
 influx_client = None
 if not args.no_stats:

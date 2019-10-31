@@ -11,6 +11,8 @@ from influxdb import InfluxDBClient
 
 
 def query_offsets(path_prefix):
+	# WIP
+	# Usage: query_offsets('../beute/191013')
 	path_prefix = path_prefix.replace('/', '\\/')
 	influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
 	offsets_query = f'SELECT ra_image_error, dec_image_error, file_path '\
@@ -22,20 +24,17 @@ def query_offsets(path_prefix):
 	return {row['file_path']: (row['ra_image_error'], row['dec_image_error']) for row in rows}
 
 
-o = query_offsets('../beute/191013')
-print(o)
-sys.exit(0)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('directory', type=str)
 parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Pattern to use when searching for input images')
-parser.add_argument('--bits', type=int, default=16, help='Bits per channel to use while stacking. Use 16 (default) or 32.')
 parser.add_argument('--out', type=str, default='stacked.png', help='Output filename')
 parser.add_argument('--auto-crop', action='store_true', help='Crop the output image to highly sampled region')
 parser.add_argument('--auto-crop-samples', type=int, default=None, help='Num samples to use as threshold for auto-crop')
 parser.add_argument('--gamma', type=float, default=None, help='Gamma-correction value to apply')
 parser.add_argument('--invert', action='store_true')
 parser.add_argument('--range', type=str, default=None, help='Stack only given range of images, not all')
+parser.add_argument('--darkframe-directory', type=str, default=None, help='Where to find darkframes')
 
 args = parser.parse_args()
 
@@ -54,7 +53,17 @@ if args.range is not None:
 	files = files[int(image_range[0]):int(image_range[1])]
 	print(f'Only {len(files)} files selected for stacking')
 
-image = ImageStackNebula.from_files(args.directory, files, args.bits)
+if args.darkframe_directory is not None:
+	search_pattern = os.path.join(args.darkframe_directory, args.filename_pattern)
+	darkframe_files = glob.glob(search_pattern)
+	master_dark = ImageStackNebula.from_files(args.darkframe_directory, darkframe_files, offsets=None)
+
+frame_offsets = None
+offsets_file = os.path.join(args.directory, 'offsets.json')
+with open(offsets_file, 'r') as f:
+	frame_offsets = json.load(f)
+
+image = ImageStackNebula.from_files(args.directory, files, frame_offsets)
 
 if args.auto_crop:
 	max_samples = np.amax(image.samples)
@@ -66,7 +75,6 @@ if args.auto_crop:
 image.floatify()
 image.convert_to_grayscale()
 image.normalize_samples()
-
 image.normalize()
 
 if args.gamma:

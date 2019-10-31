@@ -13,34 +13,25 @@ class ImageStackNebula:
 		self.samples = samples
 
 	@classmethod
-	def from_files(cls, directory, files, bits):
-		dtype = np.int16 if bits == 16 else np.int32
+	def from_files(cls, directory, files, offsets):
+		max_offset_x = int(max(x for x,_ in offsets.values()))
+		min_offset_x = int(min(x for x,_ in offsets.values()))
+		min_offset_y = int(min(y for _,y in offsets.values()))
+		max_offset_y = int(max(y for _,y in offsets.values()))
 
-		# TODO move out of this method, make it an option to use offsets.json vs database
-
-		# read offsets file
-		offsets_file = os.path.join(directory, 'offsets.json')
-		with open(offsets_file, 'r') as f:
-			frame_offsets = json.load(f)
-
-		max_offset_x = int(max(x for x,_ in frame_offsets.values()))
-		min_offset_x = int(min(x for x,_ in frame_offsets.values()))
-		min_offset_y = int(min(y for _,y in frame_offsets.values()))
-		max_offset_y = int(max(y for _,y in frame_offsets.values()))
-
-		frame_0 = cls._load_frame(files[0], dtype=dtype)
+		frame_0 = cls._load_frame(files[0], dtype=np.int32)
 		width, height, channels = frame_0.shape
 
 		output_width = width + abs(min_offset_x) + abs(max_offset_x)
 		output_height = height + abs(min_offset_y) + abs(max_offset_y)
 
-		image = np.zeros((output_width, output_height, channels), dtype=dtype)
+		image = np.zeros((output_width, output_height, channels), dtype=np.int32)
 		samples = np.zeros((output_width, output_height), dtype=np.int16)
 
-		for filename, (offset_x,offset_y) in frame_offsets.items():
+		for filename, (offset_x,offset_y) in offsets.items():
 
 			filename = os.path.join(directory, filename)
-			frame = cls._load_frame(filename, dtype)
+			frame = cls._load_frame(filename, dtype=np.int32)
 
 			x = int(offset_x)+abs(min_offset_x)
 			y = int(offset_y)+abs(min_offset_y)
@@ -48,16 +39,10 @@ class ImageStackNebula:
 			image[x:x+width, y:y+height, :] += frame
 			samples[x:x+width, y:y+height] += 1
 
-		if np.amin(image) < 0:
-			print('An overflow occurred during stacking. Consider using --bits=32')
-			sys.exit(1)
-
 		return ImageStackNebula(image, samples)
 
 	@classmethod
-	def from_frames(cls, frames, offsets, bits):
-		dtype = np.int16 if bits == 16 else np.int32
-
+	def from_frames(cls, frames, offsets):
 		max_offset_x = int(max(x for x,_ in offsets))
 		min_offset_x = int(min(x for x,_ in offsets))
 		min_offset_y = int(min(y for _,y in offsets))
@@ -68,7 +53,7 @@ class ImageStackNebula:
 		output_width = width + abs(min_offset_x) + abs(max_offset_x)
 		output_height = height + abs(min_offset_y) + abs(max_offset_y)
 
-		image = np.zeros((output_width, output_height, channels), dtype=dtype)
+		image = np.zeros((output_width, output_height, channels), dtype=np.int32)
 		samples = np.zeros((output_width, output_height), dtype=np.int16)
 
 		for frame, (offset_x,offset_y) in zip(frames, offsets):
@@ -78,10 +63,6 @@ class ImageStackNebula:
 
 			image[x:x+width, y:y+height, :] += frame
 			samples[x:x+width, y:y+height] += 1
-
-		if np.amin(image) < 0:
-			print('An overflow occurred during stacking. Consider using --bits=32')
-			sys.exit(1)
 
 		return ImageStackNebula(image, samples)
 

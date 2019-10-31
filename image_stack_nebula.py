@@ -13,6 +13,24 @@ class ImageStackNebula:
 		self.samples = samples
 
 	@classmethod
+	def create_master_dark(cls, directory, files):
+		frame_0 = cls._load_frame(files[0], dtype=np.int32)
+		width, height, channels = frame_0.shape
+
+		image = np.zeros((width, height, channels), dtype=np.int32)
+		samples = np.zeros((width, height), dtype=np.int16)
+
+		for filename in files:
+			filename = os.path.basename(filename)
+			filepath = os.path.join(directory, filename)
+			frame = cls._load_frame(filepath, dtype=np.int32)
+
+			image[:, :, :] += frame
+			samples[:, :] += 1
+
+		return ImageStackNebula(image, samples)
+
+	@classmethod
 	def from_files(cls, directory, files, offsets):
 		max_offset_x = int(max(x for x,_ in offsets.values()))
 		min_offset_x = int(min(x for x,_ in offsets.values()))
@@ -28,10 +46,12 @@ class ImageStackNebula:
 		image = np.zeros((output_width, output_height, channels), dtype=np.int32)
 		samples = np.zeros((output_width, output_height), dtype=np.int16)
 
-		for filename, (offset_x,offset_y) in offsets.items():
+		for filename in files:
+			filename = os.path.basename(filename)
+			offset_x, offset_y = offsets[filename]
 
-			filename = os.path.join(directory, filename)
-			frame = cls._load_frame(filename, dtype=np.int32)
+			filepath = os.path.join(directory, filename)
+			frame = cls._load_frame(filepath, dtype=np.int32)
 
 			x = int(offset_x)+abs(min_offset_x)
 			y = int(offset_y)+abs(min_offset_y)

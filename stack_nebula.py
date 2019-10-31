@@ -54,9 +54,15 @@ if args.range is not None:
 	print(f'Only {len(files)} files selected for stacking')
 
 if args.darkframe_directory is not None:
+	print(f'Handling darkframes from {args.darkframe_directory}')
 	search_pattern = os.path.join(args.darkframe_directory, args.filename_pattern)
 	darkframe_files = glob.glob(search_pattern)
-	master_dark = ImageStackNebula.from_files(args.darkframe_directory, darkframe_files, offsets=None)
+	print(f'Found {len(darkframe_files)} darkframes. Averaging.')
+	master_dark = ImageStackNebula.create_master_dark(args.darkframe_directory, darkframe_files)
+	master_dark.floatify()
+	master_dark.image /= float(len(darkframe_files))
+	master_dark.image = np.clip(master_dark.image, 0.0, 255.0)
+	master_dark.normalize()
 
 frame_offsets = None
 offsets_file = os.path.join(args.directory, 'offsets.json')

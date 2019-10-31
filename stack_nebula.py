@@ -44,6 +44,9 @@ if args.darkframe_directory is not None:
 	darkframe_files = glob.glob(search_pattern)
 	print(f'Found {len(darkframe_files)} darkframes - Creating an average frame')
 	master_dark = ImageStackNebula.create_master_dark(args.darkframe_directory, darkframe_files)
+else:
+	print('Not using darkframes. Consider --darkframe-directory')
+	master_dark = None
 
 print('Searching for files to stack')
 search_pattern = os.path.join(args.directory, args.filename_pattern)
@@ -67,7 +70,7 @@ offsets_file = os.path.join(args.directory, 'offsets.json')
 with open(offsets_file, 'r') as f:
 	frame_offsets = json.load(f)
 
-print('Stacking')
+print('Stacking...')
 image = ImageStackNebula.from_files(args.directory, files, frame_offsets, master_dark)
 
 if args.auto_crop:

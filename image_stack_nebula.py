@@ -50,6 +50,9 @@ class ImageStackNebula:
 			filepath = os.path.join(directory, filename)
 			frame = cls._load_frame(filepath, dtype=float)
 
+			if master_dark_frame is not None:
+				frame -= master_dark_frame
+
 			x = int(offset_x)+abs(min_offset_x)
 			y = int(offset_y)+abs(min_offset_y)
 

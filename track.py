@@ -29,10 +29,10 @@ config = {
 	'dec_invert': True,
 	
 	'ra_pid_p': 0.00004,
-	'ra_pid_i': 0.0,
+	'ra_pid_i': 0.000001,
 	'ra_pid_d': 0.00004,
 	'dec_pid_p': 0.00005,
-	'dec_pid_i': 0.0,
+	'dec_pid_i': 0.000001,
 	'dec_pid_d': 0.0001,
 
 	'sample_time': 1.0,
@@ -118,7 +118,7 @@ if files:
 		for file in files:
 			shutil.move(file, leftovers_directory)
 	else:
-		print('Removing them. Consider using --keep_untracked if that was not okay')
+		print('Removing them. Consider using --keep-untracked if that was not okay')
 		for file in files:
 			os.remove(file)
 

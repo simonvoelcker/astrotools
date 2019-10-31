@@ -38,6 +38,14 @@ parser.add_argument('--darkframe-directory', type=str, default=None, help='Where
 
 args = parser.parse_args()
 
+if args.darkframe_directory is not None:
+	print(f'Handling darkframes from {args.darkframe_directory}')
+	search_pattern = os.path.join(args.darkframe_directory, args.filename_pattern)
+	darkframe_files = glob.glob(search_pattern)
+	print(f'Found {len(darkframe_files)} darkframes - Creating an average frame')
+	master_dark = ImageStackNebula.create_master_dark(args.darkframe_directory, darkframe_files)
+
+print('Searching for files to stack')
 search_pattern = os.path.join(args.directory, args.filename_pattern)
 files = glob.glob(search_pattern)
 
@@ -45,7 +53,7 @@ if not files:
 	print('No files. Use --filename-pattern if the images are not .tif')
 	sys.exit(1)
 
-print(f'Found {len(files)} files')
+print(f'Found {len(files)} files to stack. Consider --range if that\'s too many')
 files.sort()
 
 if args.range is not None:
@@ -53,23 +61,14 @@ if args.range is not None:
 	files = files[int(image_range[0]):int(image_range[1])]
 	print(f'Only {len(files)} files selected for stacking')
 
-if args.darkframe_directory is not None:
-	print(f'Handling darkframes from {args.darkframe_directory}')
-	search_pattern = os.path.join(args.darkframe_directory, args.filename_pattern)
-	darkframe_files = glob.glob(search_pattern)
-	print(f'Found {len(darkframe_files)} darkframes. Averaging.')
-	master_dark = ImageStackNebula.create_master_dark(args.darkframe_directory, darkframe_files)
-	master_dark.floatify()
-	master_dark.image /= float(len(darkframe_files))
-	master_dark.image = np.clip(master_dark.image, 0.0, 255.0)
-	master_dark.normalize()
-
+print('Loading offsets from offsets.json')
 frame_offsets = None
 offsets_file = os.path.join(args.directory, 'offsets.json')
 with open(offsets_file, 'r') as f:
 	frame_offsets = json.load(f)
 
-image = ImageStackNebula.from_files(args.directory, files, frame_offsets)
+print('Stacking')
+image = ImageStackNebula.from_files(args.directory, files, frame_offsets, master_dark)
 
 if args.auto_crop:
 	max_samples = np.amax(image.samples)
@@ -78,7 +77,6 @@ if args.auto_crop:
 	print(f'Cropping image to region with at least {min_samples} samples')
 	image.auto_crop(min_samples)
 
-image.floatify()
 image.convert_to_grayscale()
 image.normalize_samples()
 image.normalize()

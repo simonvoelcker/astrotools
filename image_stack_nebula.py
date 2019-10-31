@@ -17,21 +17,18 @@ class ImageStackNebula:
 		frame_0 = cls._load_frame(files[0], dtype=np.int32)
 		width, height, channels = frame_0.shape
 
-		image = np.zeros((width, height, channels), dtype=np.int32)
-		samples = np.zeros((width, height), dtype=np.int16)
+		image = np.zeros((width, height, channels), dtype=float)
 
 		for filename in files:
-			filename = os.path.basename(filename)
-			filepath = os.path.join(directory, filename)
-			frame = cls._load_frame(filepath, dtype=np.int32)
-
+			frame = cls._load_frame(filename, dtype=float)
 			image[:, :, :] += frame
-			samples[:, :] += 1
 
-		return ImageStackNebula(image, samples)
+		image /= float(len(files))
+		image = np.clip(image, 0.0, 255.0)
+		return image
 
 	@classmethod
-	def from_files(cls, directory, files, offsets):
+	def from_files(cls, directory, files, offsets, master_dark_frame):
 		max_offset_x = int(max(x for x,_ in offsets.values()))
 		min_offset_x = int(min(x for x,_ in offsets.values()))
 		min_offset_y = int(min(y for _,y in offsets.values()))
@@ -43,7 +40,7 @@ class ImageStackNebula:
 		output_width = width + abs(min_offset_x) + abs(max_offset_x)
 		output_height = height + abs(min_offset_y) + abs(max_offset_y)
 
-		image = np.zeros((output_width, output_height, channels), dtype=np.int32)
+		image = np.zeros((output_width, output_height, channels), dtype=float)
 		samples = np.zeros((output_width, output_height), dtype=np.int16)
 
 		for filename in files:
@@ -51,7 +48,7 @@ class ImageStackNebula:
 			offset_x, offset_y = offsets[filename]
 
 			filepath = os.path.join(directory, filename)
-			frame = cls._load_frame(filepath, dtype=np.int32)
+			frame = cls._load_frame(filepath, dtype=float)
 
 			x = int(offset_x)+abs(min_offset_x)
 			y = int(offset_y)+abs(min_offset_y)
@@ -73,7 +70,7 @@ class ImageStackNebula:
 		output_width = width + abs(min_offset_x) + abs(max_offset_x)
 		output_height = height + abs(min_offset_y) + abs(max_offset_y)
 
-		image = np.zeros((output_width, output_height, channels), dtype=np.int32)
+		image = np.zeros((output_width, output_height, channels), dtype=float)
 		samples = np.zeros((output_width, output_height), dtype=np.int16)
 
 		for frame, (offset_x,offset_y) in zip(frames, offsets):
@@ -99,10 +96,6 @@ class ImageStackNebula:
 		yxc_image = np.asarray(pil_image, dtype=dtype)
 		xyc_image = np.transpose(yxc_image, (1, 0, 2))
 		return xyc_image
-
-	def floatify(self):
-		print('Converting image to float')
-		self.image = self.image.astype(float)
 
 	def convert_to_grayscale(self):
 		print('Converting image to greyscale (ghetto style)')

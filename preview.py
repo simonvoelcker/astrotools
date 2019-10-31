@@ -17,7 +17,6 @@ class Preview:
 	def stack_and_save(self):
 		preview = ImageStackNebula.from_frames(self.frames, self.offsets)
 		preview.auto_crop(np.amax(preview.samples))
-		preview.floatify()
 		preview.convert_to_grayscale()
 		preview.normalize_samples()
 		preview.normalize()

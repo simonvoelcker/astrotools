@@ -35,6 +35,8 @@ parser.add_argument('--gamma', type=float, default=None, help='Gamma-correction 
 parser.add_argument('--invert', action='store_true')
 parser.add_argument('--range', type=str, default=None, help='Stack only given range of images, not all')
 parser.add_argument('--darkframe-directory', type=str, default=None, help='Where to find darkframes')
+parser.add_argument('--apply-function', action='store_true', help='Apply custom function to output image')
+parser.add_argument('--color', action='store_true', help='Preserve color')
 
 args = parser.parse_args()
 
@@ -80,12 +82,26 @@ if args.auto_crop:
 	print(f'Cropping image to region with at least {min_samples} samples')
 	image.auto_crop(min_samples)
 
-image.convert_to_grayscale()
+if not args.color:
+	image.convert_to_grayscale()
+
 image.normalize_samples()
 image.normalize()
 
 if args.gamma:
 	image.apply_gamma(args.gamma)
+
+def f(p):
+	low = 50.0/255.0
+	high = 95.0/255.0
+	if p <= low:
+		return 0.0
+	if p >= high:
+		return 1.0
+	return (p-low) / (high-low)
+
+if args.apply_function:
+	image.apply_function(f)
 
 if args.invert:
 	image.invert()

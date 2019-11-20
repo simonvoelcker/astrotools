@@ -1,6 +1,3 @@
-import re
-import sys
-import serial
 import glob
 import argparse
 import os
@@ -16,9 +13,7 @@ from influxdb import InfluxDBClient
 
 from preview import Preview
 from util import load_image, get_sharpness_values
-
-control_response_re = r'\s*M(?P<motor>[12])\s+S=(?P<speed>\-?\d+\.\d+)\s+P1=(?P<P1>\-?\d+)\s+P2=(?P<P2>\-?\d+)\s*'
-control_response_rx = re.compile(control_response_re)
+from steer import AxisControl
 
 config = {
 	'ra_low': -0.005,
@@ -35,39 +30,8 @@ config = {
 	'dec_pid_i': 0.000001,
 	'dec_pid_d': 0.0001,
 
-	'sample_time': 1.0,
+	'sample_time': 10.0,
 }
-
-
-def connect_serial(args):
-	for port in [args.usb_port, 1-args.usb_port]:
-		try:
-			ser = serial.Serial(f'/dev/ttyUSB{port}', 9600, timeout=2)
-			# connection cannot be used immediately ...yes, i know.
-			time.sleep(2)
-			print(f'Connect to motor control on port {port}.')
-			return ser
-		except serial.serialutil.SerialException:
-			print(f'Failed to connect to motor control on port {port}.')
-	exit(1)
-
-
-def set_motor_speed(serial, motor, speed):
-	if serial is None:
-		return 0, 0
-
-	msg = f'{motor}{speed:9.6f}'
-	serial.write(msg.encode())
-	return 0, 0
-	
-	# readback takes a second
-	response = serial.readline().decode()
-	match = control_response_rx.match(response)
-	if not match:
-		print('Failed to parse response from the motor control!')
-		print(response)
-		exit()
-	return match.group('P1'), match.group('P2')
 
 
 def write_frame_stats(file_path, ra_position, ra_speed, ra_image_error, dec_position, dec_speed, dec_image_error, sharpness_values):
@@ -126,12 +90,6 @@ out_directory = datetime.now().strftime('tracked_%Y%m%d_%H%M%S')
 out_directory = os.path.join('..', 'processed', out_directory)
 os.makedirs(out_directory)
 
-ser = None
-if args.usb_port is not None:
-	ser = connect_serial(args)
-else:
-	print('Not connecting to motor control. Consider using --usb-port.')
-
 preview = None
 if args.preview is not None:
 	preview = Preview(num_frames=args.preview)
@@ -148,10 +106,16 @@ dec_pid = PID(config['dec_pid_p'], config['dec_pid_i'], config['dec_pid_d'], set
 dec_pid.output_limits = (config['dec_low'], config['dec_high'])
 dec_pid.sample_time = args.delay
 
-if ser is not None:
+axis_control = None
+if args.usb_port is not None:
+	# Try both USB (my) ports. They keep switching randomly and I want to be lazy.
+	axis_control = AxisControl([args.usb_port, 1-args.usb_port])
 	print(f'Setting initial motor speeds')
-	set_motor_speed(ser, 'A', (config['ra_low']+config['ra_high'])/2.0)
-	set_motor_speed(ser, 'B', (config['dec_low']+config['dec_high'])/2.0)
+	axis_control.set_motor_speed('A', (config['ra_low']+config['ra_high'])/2.0)
+	axis_control.set_motor_speed('B', (config['dec_low']+config['dec_high'])/2.0)
+else:
+	print('Not connecting to motor control. Consider using --usb-port.')
+
 
 reference_frame = None
 
@@ -179,10 +143,12 @@ while True:
 		ra_speed = ra_pid(-ra_error if config['ra_invert'] else ra_error)
 		dec_speed = dec_pid(-dec_error if config['dec_invert'] else dec_error)
 
+		# position readback takes a second - skip for now
 		ra_position, dec_position = 0, 0
-		if ser is not None:
-			set_motor_speed(ser, 'A', ra_speed)		
-			set_motor_speed(ser, 'B', dec_speed)
+
+		if axis_control is not None:
+			axis_control.set_motor_speed('A', ra_speed)		
+			axis_control.set_motor_speed('B', dec_speed)
 
 		sharpness_values = get_sharpness_values(frame_greyscale)
 

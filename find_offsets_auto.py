@@ -13,11 +13,11 @@ from skimage.feature import register_translation
 import matplotlib.pyplot as plt
 
 
-def load_frame_for_offset_detection(filename):
+def load_frame_for_offset_detection(filename, amplification, threshold):
 	pil_image = Image.open(filename).convert('L')
 	yx_image = np.asarray(pil_image, dtype=np.int16)
 	xy_image = np.transpose(yx_image, (1, 0))
-	xy_image = np.clip(xy_image * 10, 128, 255)
+	xy_image = np.clip(xy_image * amplification, threshold, 255)
 	return xy_image
 
 
@@ -33,6 +33,8 @@ parser.add_argument('directory', type=str)
 parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Pattern to use when searching for input images')
 parser.add_argument('--max-frame-distance', type=int, default=480, help='Maximum cartesian distance between frames, in pixels')
 parser.add_argument('--range', type=str, default=None, help='Stack only given range of images, not all')
+parser.add_argument('--amplification', type=int, default=5, help='Multiply images by this number before offset detection')
+parser.add_argument('--threshold', type=int, default=128, help='Clip images by this brightness value after amplification')
 
 args = parser.parse_args()
 
@@ -51,7 +53,7 @@ if args.range is not None:
 	files = files[int(image_range[0]):int(image_range[1])]
 	print(f'Only {len(files)} files selected for offset detection')
 
-key_frame = load_frame_for_offset_detection(files[0])
+key_frame = load_frame_for_offset_detection(files[0], args.amplification, args.threshold)
 key_frame_index = 0
 prev_frame = None
 
@@ -66,7 +68,7 @@ frame_offsets = {0: (0,0)}	# map frame index to offsets-tuple
 frame_offsets_by_file = dict()
 
 for frame_index, file in enumerate(files):
-	curr_frame = load_frame_for_offset_detection(file)
+	curr_frame = load_frame_for_offset_detection(file, args.amplification, args.threshold)
 
 	(offset_x, offset_y), error, _ = register_translation(key_frame, curr_frame)
 	cartesian_offset = math.sqrt(offset_x*offset_x + offset_y*offset_y)

@@ -92,8 +92,8 @@ if args.gamma:
 	image.apply_gamma(args.gamma)
 
 def f(p):
-	low = 50.0/255.0
-	high = 95.0/255.0
+	low = 40.0/255.0
+	high = 100.0/255.0
 	if p <= low:
 		return 0.0
 	if p >= high:

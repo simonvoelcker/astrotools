@@ -43,11 +43,12 @@ def save_animation(frames, filename, dtype=np.int8):
 	pil_images[0].save(filename, save_all=True, append_images=pil_images[1:], duration=50, loop=0)
 
 
-def get_sharpness_values(frame):
+def get_sharpness_aog(frame):
+	# average of gradient
 	gy, gx = np.gradient(frame)
 	gnorm = np.sqrt(gx**2 + gy**2)
-	return {
-		'sharpness_x': np.average(np.absolute(gx)),
-		'sharpness_y': np.average(np.absolute(gy)),
-		'sharpness': np.average(gnorm),
-	}
+	return np.average(gnorm)
+
+def get_sharpness_vol(frame):
+	# variance of laplacian
+	return 0.0

@@ -12,7 +12,7 @@ from simple_pid import PID
 from influxdb import InfluxDBClient
 
 from preview import Preview
-from util import load_image, get_sharpness_values
+from util import load_image, get_sharpness_vol, get_sharpness_aog
 from steer import AxisControl
 
 config = {
@@ -34,7 +34,7 @@ config = {
 }
 
 
-def write_frame_stats(file_path, ra_position, ra_speed, ra_image_error, dec_position, dec_speed, dec_image_error, sharpness_values):
+def write_frame_stats(file_path, ra_position, ra_speed, ra_image_error, dec_position, dec_speed, dec_image_error, sharpness_aog, sharpness_vol):
 	time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
 	body = [
 	    {
@@ -51,9 +51,8 @@ def write_frame_stats(file_path, ra_position, ra_speed, ra_image_error, dec_posi
 	            'dec_position': float(dec_position),
 	            'dec_speed': float(dec_speed),
 	            'dec_image_error': float(dec_image_error),
-	            'sharpness': float(sharpness_values['sharpness']),
-	            'sharpness_x': float(sharpness_values['sharpness_x']),
-	            'sharpness_y': float(sharpness_values['sharpness_y']),
+	            'sharpness_aog': float(sharpness_aog),
+	            'sharpness_vol': float(sharpness_vol),
 	        }
 	    }
 	]
@@ -143,27 +142,25 @@ while True:
 		ra_speed = ra_pid(-ra_error if config['ra_invert'] else ra_error)
 		dec_speed = dec_pid(-dec_error if config['dec_invert'] else dec_error)
 
-		# position readback takes a second - skip for now
-		ra_position, dec_position = 0, 0
-
 		if axis_control is not None:
 			axis_control.set_motor_speed('A', ra_speed)		
 			axis_control.set_motor_speed('B', dec_speed)
 
-		sharpness_values = get_sharpness_values(frame_greyscale)
+		sharpness_aog = get_sharpness_aog(frame_greyscale)
+		sharpness_vol = get_sharpness_vol(frame_greyscale)
 
 		print(
 			f'RA error: {int(ra_error):4}, '\
 			f'DEC error: {int(dec_error):4}, '\
 			f'RA speed: {ra_speed:8.5f}, '\
 			f'DEC speed: {dec_speed:8.5f}, '\
-			f'RA pos: {int(ra_position):8}, '\
-			f'DEC pos: {int(dec_position):8} '\
-			f'SHRP: {sharpness_values["sharpness"]}'
+			f'SHRP-VOL: {sharpness_vol}'\
+			f'SHRP-AOG: {sharpness_aog}'
 		)
 
 		if influx_client is not None:
-			write_frame_stats(files[0], ra_position, ra_speed, ra_error, dec_position, dec_speed, dec_error, sharpness_values)
+			# position readback via serial is slow - set to zero for now
+			write_frame_stats(files[0], 0.0, ra_speed, ra_error, 0.0, dec_speed, dec_error, sharpness_aog, sharpness_vol)
 
 		if preview is not None:
 			preview.update(frame, (ra_error, dec_error))

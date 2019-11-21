@@ -5,7 +5,7 @@ import os
 import json
 
 from alignment import Alignment
-from util import load_image_greyscale
+from util import load_image_greyscale, get_sharpness_aog, get_sharpness_vol
 
 
 parser = argparse.ArgumentParser()
@@ -38,9 +38,14 @@ alignment = Alignment(args.amplification, args.threshold, args.max_frame_distanc
 
 frame_offsets_by_file = dict()	# map filename to offsets tuple
 for frame_index, file in enumerate(files):
+	basename = os.path.basename(file)
 	frame = load_image_greyscale(file)
 	offsets = alignment.get_offsets(frame, frame_index)
-	frame_offsets_by_file[os.path.basename(file)] = offsets
+	frame_offsets_by_file[basename] = offsets
+	sharpness_aog = get_sharpness_aog(frame)
+	sharpness_vol = get_sharpness_vol(frame)
+
+	print(f'({frame_index+1}/{len(files)}) Name={basename}, Offset={offsets}, Sharpness(AoG)={sharpness_aog:.2f}, Sharpness(VoL)={sharpness_vol:.2f}')
 
 if not args.dryrun:
 	offsets_file = os.path.join(args.directory, 'offsets.json')

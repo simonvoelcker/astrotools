@@ -36,20 +36,18 @@ class Alignment:
 
 		(offset_x, offset_y), error, _ = register_translation(self.key_frame, curr_frame)
 		cartesian_offset = math.sqrt(offset_x*offset_x + offset_y*offset_y)
-		print(f'Frame {frame_index}: Offsets x={offset_x}, y={offset_y}, total={cartesian_offset:.2f}, error={error:.2f}')
 		
 		if cartesian_offset > self.max_frame_distance:
 			if self.key_frame_index == frame_index-1:
 				print('Too big offset between adjacent frames. Aborting.')
 				sys.exit(1)
 
-			print(f'That was too far. Using frame {frame_index-1} as key new frame.')
+			print(f'Too big offset between frame and key frame. Using frame {frame_index-1} as key new frame.')
 			self.key_frame = prev_frame
 			self.key_frame_index = frame_index-1
 
 			(offset_x, offset_y), error, _ = register_translation(self.key_frame, curr_frame)
 			cartesian_offset = math.sqrt(offset_x*offset_x + offset_y*offset_y)
-			print(f'Frame {frame_index}: Offsets x={offset_x}, y={offset_y}, total={cartesian_offset:.2f}, error={error:.2f}')
 
 		key_frame_offset = self.frame_offsets[self.key_frame_index]
 		offset_x += key_frame_offset[0]

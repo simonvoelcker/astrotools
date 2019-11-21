@@ -26,15 +26,9 @@ class Alignment:
 		# map frame index to offsets-tuple
 		self.frame_offsets = {0: (0,0)}
 
-	def load_frame_for_offset_detection(self, filename):
-		pil_image = Image.open(filename).convert('L')
-		yx_image = np.asarray(pil_image, dtype=np.int16)
-		xy_image = np.transpose(yx_image, (1, 0))
-		xy_image = np.clip(xy_image * self.amplification, self.threshold, 255)
-		return xy_image
-
-	def get_offsets(self, frame_index, file):
-		curr_frame = self.load_frame_for_offset_detection(file)
+	def get_offsets(self, frame, frame_index):
+		# apply measures to improve offset detection on our kind of images
+		curr_frame = np.clip(frame * self.amplification, self.threshold, 255)
 
 		if frame_index == 0:
 			self.key_frame = curr_frame

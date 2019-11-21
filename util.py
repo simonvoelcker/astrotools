@@ -3,11 +3,18 @@ import numpy as np
 from PIL import Image
 
 
-def load_image(filename, dtype):
+def load_image(filename, dtype=np.int16):
 	pil_image = Image.open(filename)
 	yxc_image = np.asarray(pil_image, dtype=dtype)
 	xyc_image = np.transpose(yxc_image, (1, 0, 2))
 	return xyc_image
+
+
+def load_image_greyscale(filename, dtype=np.int16):
+	pil_image = Image.open(filename).convert('L')
+	yx_image = np.asarray(pil_image, dtype=dtype)
+	xy_image = np.transpose(yx_image, (1, 0))
+	return xy_image
 
 
 def save_image(image, filename):

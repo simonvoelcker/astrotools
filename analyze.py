@@ -5,6 +5,7 @@ import os
 import json
 
 from alignment import Alignment
+from util import load_image_greyscale
 
 
 parser = argparse.ArgumentParser()
@@ -37,7 +38,8 @@ alignment = Alignment(args.amplification, args.threshold, args.max_frame_distanc
 
 frame_offsets_by_file = dict()	# map filename to offsets tuple
 for frame_index, file in enumerate(files):
-	offsets = alignment.get_offsets(frame_index, file)
+	frame = load_image_greyscale(file)
+	offsets = alignment.get_offsets(frame, frame_index)
 	frame_offsets_by_file[os.path.basename(file)] = offsets
 
 if not args.dryrun:

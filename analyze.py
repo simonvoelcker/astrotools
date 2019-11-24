@@ -4,8 +4,12 @@ import argparse
 import os
 import json
 
+import numpy as np
+
 from alignment import Alignment
-from util import load_image_greyscale, get_sharpness_aog, get_sharpness_vol
+from util import load_image_greyscale, save_image_greyscale
+from util import get_sharpness_aog, get_sharpness_vol, get_sharpness_sobel
+from skimage.transform import rescale
 
 
 parser = argparse.ArgumentParser()
@@ -42,14 +46,29 @@ for frame_index, file in enumerate(files):
 	frame = load_image_greyscale(file)
 	offsets = alignment.get_offsets(frame, frame_index)
 	frame_offsets_by_file[basename] = offsets
+	
+	frame = rescale(frame, 1.0/4.0, multichannel=False)
+	frame = (32768 * frame).astype(np.int16)
+	save_image_greyscale(frame, f'downsampled/{frame_index}.png')
+
 	sharpness_aog = get_sharpness_aog(frame)
 	sharpness_vol = get_sharpness_vol(frame)
+	sharpness_sobel = get_sharpness_sobel(frame)
+	brightness = np.average(frame)
 
-	print(f'({frame_index+1}/{len(files)}) Name={basename}, Offset={offsets}, Sharpness(AoG)={sharpness_aog:.2f}, Sharpness(VoL)={sharpness_vol:.2f}')
+	print(f'({frame_index+1}/{len(files)}) '\
+		  f'Name={basename}, '\
+		  f'Offset={offsets}, '\
+		  f'Sharpness(AoG)={sharpness_aog:.2f}, '\
+		  f'Sharpness(VoL)={sharpness_vol:.10f}, '\
+		  f'Sharpness(VoL)={sharpness_sobel:.10f}, '\
+		  f'Brightness={brightness:.10f}')
 
 if not args.dryrun:
 	offsets_file = os.path.join(args.directory, 'offsets.json')
 	with open(offsets_file, 'w') as f:
 		json.dump(frame_offsets_by_file, f, indent=4, sort_keys=True)
+	print('Wrote offsets.json')
 
 	alignment.create_plot(title='Image offset distribution', filename='image_offsets.png')
+	print('Wrote image_offsets.png')

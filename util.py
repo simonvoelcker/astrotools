@@ -1,6 +1,7 @@
 import numpy as np
 
 from PIL import Image
+from skimage.filters import laplace, sobel
 
 
 def load_image(filename, dtype=np.int16):
@@ -20,6 +21,18 @@ def load_image_greyscale(filename, dtype=np.int16):
 def save_image(image, filename):
 	yxc_image = np.transpose(image, (1, 0, 2))
 	yxc_image = yxc_image.astype(np.int8)
+	pil_image = Image.fromarray(yxc_image, mode='RGB')
+	pil_image.save(filename)
+
+
+def save_image_greyscale(image, filename):
+	yx_image = np.transpose(image, (1, 0))
+	yx_image = yx_image.astype(np.int8)
+	# convert to RGB, ghetto style
+	yxc_image = np.zeros((yx_image.shape[0], yx_image.shape[1], 3), dtype=np.int8)
+	yxc_image[:,:,0] = yx_image
+	yxc_image[:,:,1] = yx_image
+	yxc_image[:,:,2] = yx_image
 	pil_image = Image.fromarray(yxc_image, mode='RGB')
 	pil_image.save(filename)
 
@@ -49,7 +62,6 @@ def save_animation(frames, filename, dtype=np.int8):
 		pil_images.append(pil_image)	
 	pil_images[0].save(filename, save_all=True, append_images=pil_images[1:], duration=50, loop=0)
 
-
 def get_sharpness_aog(frame):
 	# average of gradient
 	gy, gx = np.gradient(frame)
@@ -57,5 +69,9 @@ def get_sharpness_aog(frame):
 	return np.average(gnorm)
 
 def get_sharpness_vol(frame):
-	# variance of laplacian
-	return 0.0
+	# variance of laplacian on a downscaled image
+	return laplace(frame).var()
+
+def get_sharpness_sobel(frame):
+	# variance of sobel
+	return sobel(frame).var()

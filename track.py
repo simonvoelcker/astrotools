@@ -17,9 +17,9 @@ from steer import AxisControl
 
 config = {
 	'ra_low': -0.005,
-	'ra_high': -0.004,
+	'ra_high': -0.0046,
 	'ra_invert': True,
-	'dec_low': -0.002,
+	'dec_low': -0.001,
 	'dec_high': 0.0,
 	'dec_invert': True,
 	
@@ -133,7 +133,7 @@ while True:
 	# greyscale frame, only width and height
 	frame_greyscale = np.mean(frame, axis=2)
 	# the same, but optimized for offset-detection
-	frame_for_offset_detection = np.clip(frame_greyscale * 5, 128, 255)
+	frame_for_offset_detection = np.clip(frame_greyscale * 1, 128, 255)
 
 	if reference_frame is None:
 		reference_frame = frame_for_offset_detection

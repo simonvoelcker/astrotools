@@ -84,7 +84,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--here', type=str, help='Current position. Format: __h__m__s:__d__m__s')
 	parser.add_argument('--target', type=str, help='Target position. Format: __h__m__s:__d__m__s')
-	parser.add_argument('--dryrun', action='store_true', help='Do not actually steer')
+	parser.add_argument('--usb-port', type=int, default=None, help='USB port to use for the motor control. Omit for no motor control.')
 	args = parser.parse_args()
 
 	ra_from, dec_from = AxisControl.parse_coordinates(args.here)
@@ -100,18 +100,38 @@ if __name__ == '__main__':
 	ra_axis_ratio = 69.0 * 3.0 * 2.0
 	dec_axis_ratio = 105.6 * 2.0
 
+	axis_control = None
+	if args.usb_port is not None:
+		axis_control = AxisControl([args.usb_port, 1-args.usb_port])
+		print('Setting motors to resting speed')
+		axis_control.set_motor_speed('A', ra_resting_speed)
+		axis_control.set_motor_speed('B', dec_resting_speed)
+
 	if ra_from and ra_to:
 		ra_revolutions = (ra_to-ra_from) / 360.0 * ra_axis_ratio
 		ra_speed = ra_max_speed if ra_revolutions > 0 else -ra_max_speed
 		ra_time = abs(ra_revolutions / ra_speed)
-		print(f'Should set RA axis speed to {ra_speed} for {ra_time} seconds')
 
-		if ra_revolutions > 0:
-			ra_rest_time = ra_revolutions / -ra_resting_speed
-			print(f'Alternative: set RA speed to 0 for {ra_rest_time} seconds')
+		if ra_revolutions > 0 and ra_time < 60:
+			# just wait at zero speed instead of steering
+			ra_speed = 0
+			ra_time = ra_revolutions / -ra_resting_speed
+		
+		print(f'Setting RA axis speed to {ra_speed} for {ra_time} seconds, then back to resting speed')
+		if axis_control:
+			axis_control.set_motor_speed('A', ra_speed)
+			time.sleep(ra_time)
+			axis_control.set_motor_speed('A', ra_resting_speed)
 
 	if dec_from and dec_to:
 		dec_revolutions = (dec_to-dec_from) / 360.0 * dec_axis_ratio
 		dec_speed = -dec_max_speed if dec_revolutions > 0 else dec_max_speed
 		dec_time = abs(dec_revolutions / dec_speed)
-		print(f'Should set DEC axis speed to {dec_speed} for {dec_time} seconds')
+
+		print(f'Setting DEC axis speed to {dec_speed} for {dec_time} seconds, then back to resting speed')
+		if axis_control:
+			axis_control.set_motor_speed('B', dec_speed)
+			time.sleep(dec_time)
+			axis_control.set_motor_speed('B', dec_resting_speed)
+
+	print('Done')

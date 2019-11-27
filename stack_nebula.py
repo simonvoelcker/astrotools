@@ -36,7 +36,7 @@ parser.add_argument('--invert', action='store_true')
 parser.add_argument('--range', type=str, default=None, help='Stack only given range of images, not all')
 parser.add_argument('--darkframe-directory', type=str, default=None, help='Where to find darkframes')
 parser.add_argument('--apply-function', action='store_true', help='Apply custom function to output image')
-parser.add_argument('--color', action='store_true', help='Preserve color')
+parser.add_argument('--color-mode', type=str, default='rgb', help='Options: grey, r, g, b, rgb')
 
 args = parser.parse_args()
 
@@ -45,7 +45,7 @@ if args.darkframe_directory is not None:
 	search_pattern = os.path.join(args.darkframe_directory, args.filename_pattern)
 	darkframe_files = glob.glob(search_pattern)
 	print(f'Found {len(darkframe_files)} darkframes - Creating an average frame')
-	master_dark = ImageStackNebula.create_master_dark(args.darkframe_directory, darkframe_files)
+	master_dark = ImageStackNebula.create_master_dark(args.darkframe_directory, darkframe_files, args.color_mode)
 else:
 	print('Not using darkframes. Consider --darkframe-directory')
 	master_dark = None
@@ -73,7 +73,7 @@ with open(offsets_file, 'r') as f:
 	frame_offsets = json.load(f)
 
 print('Stacking...')
-image = ImageStackNebula.from_files(args.directory, files, frame_offsets, master_dark)
+image = ImageStackNebula.from_files(args.directory, files, frame_offsets, args.color_mode, master_dark)
 
 if args.auto_crop:
 	max_samples = np.amax(image.samples)
@@ -81,9 +81,6 @@ if args.auto_crop:
 	min_samples = args.auto_crop_samples or max_samples
 	print(f'Cropping image to region with at least {min_samples} samples')
 	image.auto_crop(min_samples)
-
-if not args.color:
-	image.convert_to_grayscale()
 
 image.normalize_samples()
 image.normalize()

@@ -13,14 +13,14 @@ class ImageStackNebula:
 		self.samples = samples
 
 	@classmethod
-	def create_master_dark(cls, directory, files):
-		frame_0 = cls._load_frame(files[0], dtype=np.int32)
+	def create_master_dark(cls, directory, files, color_mode):
+		frame_0 = cls._load_frame(files[0], dtype=np.int32, color_mode=color_mode)
 		width, height, channels = frame_0.shape
 
 		image = np.zeros((width, height, channels), dtype=float)
 
 		for filename in files:
-			frame = cls._load_frame(filename, dtype=float)
+			frame = cls._load_frame(filename, dtype=float, color_mode=color_mode)
 			image[:, :, :] += frame
 
 		image /= float(len(files))
@@ -28,13 +28,13 @@ class ImageStackNebula:
 		return image
 
 	@classmethod
-	def from_files(cls, directory, files, offsets, master_dark_frame):
+	def from_files(cls, directory, files, offsets, color_mode, master_dark_frame):
 		max_offset_x = int(max(x for x,_ in offsets.values()))
 		min_offset_x = int(min(x for x,_ in offsets.values()))
 		min_offset_y = int(min(y for _,y in offsets.values()))
 		max_offset_y = int(max(y for _,y in offsets.values()))
 
-		frame_0 = cls._load_frame(files[0], dtype=np.int32)
+		frame_0 = cls._load_frame(files[0], dtype=np.int32, color_mode=color_mode)
 		width, height, channels = frame_0.shape
 
 		output_width = width + abs(min_offset_x) + abs(max_offset_x)
@@ -48,7 +48,7 @@ class ImageStackNebula:
 			offset_x, offset_y = offsets[filename]
 
 			filepath = os.path.join(directory, filename)
-			frame = cls._load_frame(filepath, dtype=float)
+			frame = cls._load_frame(filepath, dtype=float, color_mode=color_mode)
 
 			if master_dark_frame is not None:
 				frame -= master_dark_frame
@@ -94,18 +94,22 @@ class ImageStackNebula:
 		return np.average(gnorm)
 
 	@staticmethod
-	def _load_frame(filename, dtype):
+	def _load_frame(filename, dtype, color_mode='rgb'):
 		pil_image = Image.open(filename)
 		yxc_image = np.asarray(pil_image, dtype=dtype)
 		xyc_image = np.transpose(yxc_image, (1, 0, 2))
-		return xyc_image
 
-	def convert_to_grayscale(self):
-		print('Converting image to greyscale (ghetto style)')
-		grayscale_image = self.image[:,:,0] / 3 + self.image[:,:,1] / 3 + self.image[:,:,2] / 3 
-		self.image[:,:,0] = grayscale_image
-		self.image[:,:,1] = grayscale_image
-		self.image[:,:,2] = grayscale_image
+		if color_mode == 'r':
+			xyc_image = np.expand_dims(xyc_image[:,:,0], axis=2)
+		elif color_mode == 'g':
+			xyc_image = np.expand_dims(xyc_image[:,:,1], axis=2)
+		elif color_mode == 'b':
+			xyc_image = np.expand_dims(xyc_image[:,:,2], axis=2)
+		elif color_mode == 'grey':
+			grayscale_image = xyc_image[:,:,0] / 3 + xyc_image[:,:,1] / 3 + xyc_image[:,:,2] / 3 
+			xyc_image = np.expand_dims(grayscale_image, axis=2)
+
+		return xyc_image
 
 	def normalize(self):
 		min_value = np.amin(self.image)
@@ -235,6 +239,15 @@ class ImageStackNebula:
 		out_image = (255.0 * self.image)
 		yxc_image = np.transpose(out_image, (1, 0, 2))
 		yxc_image = yxc_image.astype(np.int8)
+
+		if yxc_image.shape[2] == 1:
+			# expand image to three equal channels
+			expanded_image = np.zeros((yxc_image.shape[0], yxc_image.shape[1], 3), dtype=np.int8)
+			expanded_image[:,:,0] = yxc_image[:,:,0]
+			expanded_image[:,:,1] = yxc_image[:,:,0]
+			expanded_image[:,:,2] = yxc_image[:,:,0]
+			yxc_image = expanded_image
+
 		pil_image = Image.fromarray(yxc_image, mode='RGB')
 		pil_image.save(filename)
 

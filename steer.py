@@ -84,20 +84,21 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--here', type=str, help='Current position. Format: __h__m__s:__d__m__s')
 	parser.add_argument('--target', type=str, help='Target position. Format: __h__m__s:__d__m__s')
+	parser.add_argument('--dryrun', action='store_true', help='Do not actually steer')
 	args = parser.parse_args()
 
 	ra_from, dec_from = AxisControl.parse_coordinates(args.here)
 	ra_to, dec_to = AxisControl.parse_coordinates(args.target)
 
-	ra_resting_speed = -0.0048
+	ra_resting_speed = -0.0047
 	dec_resting_speed = 0.0
 
-	ra_max_speed = 0.5
-	dec_max_speed = 0.01
+	ra_max_speed = 0.2
+	dec_max_speed = 0.1
 
 	# 2.0 is magic
-	ra_axis_ratio = 207.0 * 2.0
-	dec_axis_ratio = 69.0 * 2.0
+	ra_axis_ratio = 69.0 * 3.0 * 2.0
+	dec_axis_ratio = 105.6 * 2.0
 
 	if ra_from and ra_to:
 		ra_revolutions = (ra_to-ra_from) / 360.0 * ra_axis_ratio

@@ -12,7 +12,7 @@ from simple_pid import PID
 from influxdb import InfluxDBClient
 
 from preview import Preview
-from util import load_image, get_sharpness_vol, get_sharpness_aog
+from util import load_image
 from steer import AxisControl
 
 config = {
@@ -34,7 +34,7 @@ config = {
 }
 
 
-def write_frame_stats(file_path, ra_position, ra_speed, ra_image_error, dec_position, dec_speed, dec_image_error, sharpness_aog, sharpness_vol):
+def write_frame_stats(**kwargs):
 	time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
 	body = [
 	    {
@@ -43,17 +43,7 @@ def write_frame_stats(file_path, ra_position, ra_speed, ra_image_error, dec_posi
 	            'source': 'track.py',
 	        },
 	        'time': time,
-	        'fields': {
-	        	'file_path': file_path,
-	            'ra_position': float(ra_position),
-	            'ra_speed': float(ra_speed),
-	            'ra_image_error': float(ra_image_error),
-	            'dec_position': float(dec_position),
-	            'dec_speed': float(dec_speed),
-	            'dec_image_error': float(dec_image_error),
-	            'sharpness_aog': float(sharpness_aog),
-	            'sharpness_vol': float(sharpness_vol),
-	        }
+	        'fields': kwargs, 
 	    }
 	]
 	influx_client.write_points(body)
@@ -66,6 +56,7 @@ parser.add_argument('--no-stats', action='store_true', help='Do not send stats t
 parser.add_argument('--preview', type=int, default=None, help='Write preview of last N frames')
 parser.add_argument('--usb-port', type=int, default=None, help='USB port to use for the motor control. Omit for no motor control.')
 parser.add_argument('--keep-untracked', action='store_true', help='Move files found on startup somewhere instead of removing them')
+parser.add_argument('--image-amplification', type=int, default=1, help='Multiply images by this number for offset detection')
 
 args = parser.parse_args()
 search_pattern = os.path.join(args.incoming, args.filename_pattern)
@@ -133,7 +124,7 @@ while True:
 	# greyscale frame, only width and height
 	frame_greyscale = np.mean(frame, axis=2)
 	# the same, but optimized for offset-detection
-	frame_for_offset_detection = np.clip(frame_greyscale * 1, 128, 255)
+	frame_for_offset_detection = np.clip(frame_greyscale * args.image_amplification, 128, 255)
 
 	if reference_frame is None:
 		reference_frame = frame_for_offset_detection
@@ -146,21 +137,27 @@ while True:
 			axis_control.set_motor_speed('A', ra_speed)		
 			axis_control.set_motor_speed('B', dec_speed)
 
-		sharpness_aog = get_sharpness_aog(frame_greyscale)
-		sharpness_vol = get_sharpness_vol(frame_greyscale)
-
 		print(
 			f'RA error: {int(ra_error):4}, '\
 			f'DEC error: {int(dec_error):4}, '\
 			f'RA speed: {ra_speed:8.5f}, '\
-			f'DEC speed: {dec_speed:8.5f}, '\
-			f'SHRP-VOL: {sharpness_vol}'\
-			f'SHRP-AOG: {sharpness_aog}'
+			f'DEC speed: {dec_speed:8.5f}'
 		)
 
 		if influx_client is not None:
-			# position readback via serial is slow - set to zero for now
-			write_frame_stats(files[0], 0.0, ra_speed, ra_error, 0.0, dec_speed, dec_error, sharpness_aog, sharpness_vol)
+			write_frame_stats(
+				file_path=files[0],
+				ra_image_error=float(ra_error),
+				ra_speed=float(ra_speed),
+				ra_pid_p=float(ra_pid.components[0]),
+				ra_pid_i=float(ra_pid.components[1]),
+				ra_pid_d=float(ra_pid.components[2]),
+				dec_image_error=float(dec_error),
+				dec_speed=float(dec_speed),
+				dec_pid_p=float(dec_pid.components[0]),
+				dec_pid_i=float(dec_pid.components[1]),
+				dec_pid_d=float(dec_pid.components[2]),
+			)
 
 		if preview is not None:
 			preview.update(frame, (ra_error, dec_error))

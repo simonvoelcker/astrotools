@@ -93,8 +93,8 @@ if __name__ == '__main__':
 	ra_resting_speed = -0.0047
 	dec_resting_speed = 0.0
 
-	ra_max_speed = 0.2
-	dec_max_speed = 0.1
+	ra_max_speed = 0.4
+	dec_max_speed = 0.3
 
 	# 2.0 is magic
 	ra_axis_ratio = 69.0 * 3.0 * 2.0
@@ -109,10 +109,10 @@ if __name__ == '__main__':
 
 	if ra_from and ra_to:
 		ra_revolutions = (ra_to-ra_from) / 360.0 * ra_axis_ratio
-		ra_speed = ra_max_speed if ra_revolutions > 0 else -ra_max_speed
+		ra_speed = (ra_max_speed if ra_revolutions > 0 else -ra_max_speed) + ra_resting_speed
 		ra_time = abs(ra_revolutions / ra_speed)
 
-		if ra_revolutions > 0 and ra_time < 60:
+		if ra_revolutions > 0 and ra_time < 5:
 			# just wait at zero speed instead of steering
 			ra_speed = 0
 			ra_time = ra_revolutions / -ra_resting_speed

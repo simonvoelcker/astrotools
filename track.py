@@ -16,19 +16,19 @@ from util import load_image
 from steer import AxisControl
 
 config = {
-	'ra_low': -0.005,
-	'ra_high': -0.0046,
+	'ra_center': -0.0047,
+	'ra_range': 0.001,
 	'ra_invert': True,
-	'dec_low': -0.001,
-	'dec_high': 0.0,
-	'dec_invert': True,
+	'ra_pid_p': 0.00002,
+	'ra_pid_i': 0.0,
+	'ra_pid_d': 0.0002,
 	
-	'ra_pid_p': 0.00004,
-	'ra_pid_i': 0.000001,
-	'ra_pid_d': 0.00004,
-	'dec_pid_p': 0.00005,
-	'dec_pid_i': 0.000001,
-	'dec_pid_d': 0.0001,
+	'dec_center': 0.0,
+	'dec_range': 0.001,
+	'dec_invert': True,
+	'dec_pid_p': 0.00001,
+	'dec_pid_i': 0.0,
+	'dec_pid_d': 0.001,
 
 	'sample_time': 10.0,
 }
@@ -89,11 +89,11 @@ if not args.no_stats:
 	influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
 
 ra_pid = PID(config['ra_pid_p'], config['ra_pid_i'], config['ra_pid_d'], setpoint=0)
-ra_pid.output_limits = (config['ra_low'], config['ra_high'])
+ra_pid.output_limits = (-config['ra_range'], config['ra_range'])
 ra_pid.sample_time = args.delay
 
 dec_pid = PID(config['dec_pid_p'], config['dec_pid_i'], config['dec_pid_d'], setpoint=0)
-dec_pid.output_limits = (config['dec_low'], config['dec_high'])
+dec_pid.output_limits = (-config['dec_range'], config['dec_range'])
 dec_pid.sample_time = args.delay
 
 axis_control = None
@@ -101,8 +101,8 @@ if args.usb_port is not None:
 	# Try both USB (my) ports. They keep switching randomly and I want to be lazy.
 	axis_control = AxisControl([args.usb_port, 1-args.usb_port])
 	print(f'Setting initial motor speeds')
-	axis_control.set_motor_speed('A', (config['ra_low']+config['ra_high'])/2.0)
-	axis_control.set_motor_speed('B', (config['dec_low']+config['dec_high'])/2.0)
+	axis_control.set_motor_speed('A', config['ra_center'])
+	axis_control.set_motor_speed('B', config['dec_center'])
 else:
 	print('Not connecting to motor control. Consider using --usb-port.')
 
@@ -130,8 +130,8 @@ while True:
 		reference_frame = frame_for_offset_detection
 	else:
 		(ra_error, dec_error), _, __ = register_translation(reference_frame, frame_for_offset_detection)
-		ra_speed = ra_pid(-ra_error if config['ra_invert'] else ra_error)
-		dec_speed = dec_pid(-dec_error if config['dec_invert'] else dec_error)
+		ra_speed = config['ra_center'] + ra_pid(-ra_error if config['ra_invert'] else ra_error)
+		dec_speed = config['dec_center'] + dec_pid(-dec_error if config['dec_invert'] else dec_error)
 
 		if axis_control is not None:
 			axis_control.set_motor_speed('A', ra_speed)		

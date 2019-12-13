@@ -1,7 +1,11 @@
 import numpy as np
+import subprocess
+import re
 
 from PIL import Image
 from skimage.filters import laplace, sobel
+
+coordinates_rx = re.compile(r'^.*RA,Dec = \((?P<ra>[\d\.]+),(?P<dec>[\d\.]+)\).*$', re.DOTALL)
 
 
 def load_image(filename, dtype=np.int16):
@@ -75,3 +79,28 @@ def get_sharpness_vol(frame):
 def get_sharpness_sobel(frame):
 	# variance of sobel
 	return sobel(frame).var()
+
+def locate_image(filepath):
+	solve_command = [
+		'/usr/local/astrometry/bin/solve-field',
+		filepath,
+		'--scale-units', 'arcsecperpix',
+		'--scale-low', '0.8',
+		'--scale-high', '1.0',
+		'--overwrite',
+		'--no-plots',
+		'--parity', 'pos',
+		'--temp-axy',
+		'--solved', 'none',
+		'--corr', 'none',
+		'--new-fits', 'none',
+		'--index-xyls', 'none',
+		'--match', 'none',
+		'--rdls', 'none',
+		'--wcs', 'none',
+	]
+	output = subprocess.check_output(solve_command, stderr=subprocess.DEVNULL)
+	match = coordinates_rx.match(output.decode())
+	if not match:
+		return None
+	return float(match.group('ra')), float(match.group('dec'))

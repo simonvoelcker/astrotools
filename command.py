@@ -1,7 +1,10 @@
 import cmd
 import sys
+import glob
+import os
 
 from steer import AxisControl
+from util import locate_image
 
 
 class CommandShell(cmd.Cmd):
@@ -14,6 +17,8 @@ class CommandShell(cmd.Cmd):
 
 	here = None
 	target = None
+
+	image_source = os.path.join('..', 'beute', '**')
 
 	def do_connect(self, arg):
 		if self.axis_control:
@@ -75,26 +80,23 @@ class CommandShell(cmd.Cmd):
 			return
 		self.axis_control.steer(self.here, self.target)
 
-	def do_solve(self, arg):
-		print(f'solve: {arg}')
-		solve_command = [
-			'/usr/local/astrometry/bin/solve-field',
-			'serie01_vgf.png',
-			'--scale-units', 'arcsecperpix',
-			'--scale-low', '0.8',
-			'--scale-high', '1.0',
-			'--overwrite',
-			'--no-plots',
-			'--parity', 'pos',
-			'--temp-axy',
-			'--solved', 'none',
-			'--corr', 'none',
-			'--new-fits', 'none',
-			'--index-xyls', 'none',
-			'--match', 'none',
-			'--rdls', 'none',
-			'--wcs', 'none',
-		]
+	def do_set_image_source(self, arg):
+		self.image_source = arg
+
+	def do_list_images(self, args):
+		search_pattern = os.path.join(self.image_source, '*.tif')
+		for f in glob.glob(search_pattern):
+			print(f)
+
+	def do_whereami(self, arg):
+		search_pattern = os.path.join(self.image_source, '*.png')
+		all_images = glob.glob(search_pattern)
+		if not all_images:
+			print('No images')
+			return
+		latest_image = max(all_images, key=os.path.getctime)
+		coordinates = locate_image(latest_image)
+		print(coordinates)
 
 	def do_exit(self, arg):
 		return True

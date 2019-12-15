@@ -20,6 +20,9 @@ class CommandShell(cmd.Cmd):
 
 	image_source_pattern = os.path.join('..', 'beute', '**', '*.tif')
 
+	def do_exit(self, arg):
+		return True
+
 	def do_connect(self, arg):
 		if self.axis_control.connected():
 			print('Already connected')
@@ -63,7 +66,11 @@ class CommandShell(cmd.Cmd):
 		if not self.target:
 			print('No target coordinate set')
 			return
-		self.axis_control.steer(self.here, self.target)
+		try:
+			self.axis_control.steer(self.here, self.target)
+		except KeyboardInterrupt:
+			print('Maneuver aborted')
+			self.do_rest(arg=None)
 
 	def do_set_image_source_pattern(self, arg):
 		self.image_source_pattern = arg
@@ -81,8 +88,9 @@ class CommandShell(cmd.Cmd):
 		self.here = locate_image(latest_image)
 		print(f'Found current coordinates to be {self.here} (using image {latest_image})')
 
-	def do_exit(self, arg):
-		return True
+	def do_track(self, arg):
+		# keep pointing in current direction, image-offset based
+		pass
 
 if __name__ == '__main__':
 	CommandShell().cmdloop()

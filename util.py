@@ -103,9 +103,4 @@ def locate_image(filepath):
 	match = coordinates_rx.match(output.decode())
 	if not match:
 		return None
-	ra = float(match.group('ra'))
-	dec = float(match.group('dec'))
-
-	ra_str = f'{int(ra/15.0)}h {int((ra-int(ra))*60.0)}m'
-	dec_str = f'{int(dec)}d {int((dec-int(dec)))}m'
-	return ra_str, dec_str
+	return float(match.group('ra')), float(match.group('dec'))

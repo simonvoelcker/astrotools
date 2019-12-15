@@ -88,15 +88,15 @@ class CommandShell(cmd.Cmd):
 		for f in glob.glob(search_pattern):
 			print(f)
 
-	def do_whereami(self, arg):
-		search_pattern = os.path.join(self.image_source, '*.png')
+	def do_autohere(self, arg):
+		search_pattern = os.path.join(self.image_source, '*.tif')
 		all_images = glob.glob(search_pattern)
 		if not all_images:
 			print('No images')
 			return
 		latest_image = max(all_images, key=os.path.getctime)
-		coordinates = locate_image(latest_image)
-		print(coordinates)
+		self.here = locate_image(latest_image)
+		print(f'Found current coordinates to be {self.here} (using image {latest_image})')
 
 	def do_exit(self, arg):
 		return True

@@ -53,12 +53,10 @@ class AxisControl:
 	def parse_coordinates(coordinates):
 		# parse coordinates from format: __h__m__s:__d__m__s, convert to angles (arcsecs)
 		# coordinates may be omitted, but the separating colon is mandatory
-		#
-		# no support for negative declination
-		# 
+
 		coordinates_rx = re.compile(r'(?P<ra>.*)?:(?P<dec>.*)?')
 		ra_rx = re.compile(r'(?P<h>\d+)h(?P<m>\d+)m(?P<s>\d+)s')
-		dec_rx = re.compile(r'(?P<d>\d+)d(?P<m>\d+)m(?P<s>\d+)s')
+		dec_rx = re.compile(r'(?P<sign>[\+\-]?)(?P<d>\d+)d(?P<m>\d+)m(?P<s>\d+)s')
 
 		coordinates_match = coordinates_rx.match(coordinates)
 		if coordinates_match is None:
@@ -88,12 +86,39 @@ class AxisControl:
 			degrees = int(dec_match.group('d'))
 			arcmin = int(dec_match.group('m'))
 			arcsec = int(dec_match.group('s'))
+			sign = -1 if dec_match.group('sign') == '-' else 1
 			# convert to degrees (float)
-			dec_degrees = float(degrees) + arcmin / 60.0 + arcsec / 3600.0
+			dec_degrees = sign * (float(degrees) + arcmin / 60.0 + arcsec / 3600.0)
 		else:
 			dec_degrees = None
 
 		return ra_degrees, dec_degrees
+
+	@staticmethod
+	def format_coordinates(coordinates):
+		# format coordinates from angles to __h__m__s:__d__m__s
+		ra_degrees_f, dec_degrees_f = coordinates
+		
+		ra_hours_f = ra_degrees_f / 15.0
+		ra_hours = int(ra_hours_f)
+		ra_hours_remain = ra_hours_f - ra_hours
+		ra_minutes_f = 60.0 * ra_hours_remain
+		ra_minutes = int(ra_minutes_f)
+		ra_minutes_remain = ra_minutes_f - ra_minutes
+		ra_seconds_f = 60.0 * ra_minutes_remain
+		ra_seconds = int(ra_seconds_f)
+
+		dec_sign = '-' if dec_degrees_f < 0 else '+'
+		dec_degrees_f = abs(dec_degrees_f)
+		dec_degrees = int(dec_degrees_f)
+		dec_degrees_remain = dec_degrees_f - dec_degrees
+		dec_moa_f = 60.0 * dec_degrees_remain
+		dec_moa = int(dec_moa_f)
+		dec_moa_remain = dec_moa_f - dec_moa
+		dec_soa_f = 60.0 * dec_moa_remain
+		dec_soa = int(dec_soa_f)
+
+		return f'{ra_hours:2}h{ra_minutes:2}m{ra_seconds:2}s:{dec_sign}{dec_degrees}d{dec_moa:2}m{dec_soa:2}s'
 
 	def steer(self, here_coordinates, target_coordinates):
 		print('Setting motors to resting speed')

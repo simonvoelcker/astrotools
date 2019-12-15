@@ -17,6 +17,9 @@ class AxisControl:
 	ra_axis_ratio = 69.0 * 3.0 * 2.0  # 2.0 is magic
 	dec_axis_ratio = 105.6 * 2.0  # 2.0 is magic
 
+	dec_backlash_direction = None  # +1, -1, None
+	dec_backlash_revolutions = 0.2
+
 	def __init__(self):
 		self.serial = None
 
@@ -27,6 +30,7 @@ class AxisControl:
 				# connection cannot be used immediately ...yes, i know.
 				time.sleep(2)
 				print(f'Connected to motor control on port {port}.')
+				return
 			except serial.serialutil.SerialException:
 				print(f'Failed to connect to motor control on port {port}.')
 
@@ -38,10 +42,13 @@ class AxisControl:
 
 	def set_motor_speed(self, motor, speed):
 		if self.serial is None:
-			print(f'(Dryrun) Setting motor {motor} speed to {speed:9.6f} U/s')
+			print(f'Setting motor {motor} speed to {speed:9.6f} U/s (DRYRUN)')
 		else:
+			print(f'Setting motor {motor} speed to {speed:9.6f} U/s')
 			msg = f'{motor}{speed:9.6f}'
 			self.serial.write(msg.encode())
+		if motor == 'B':
+			self.dec_backlash_direction = 1 if speed > 0 else -1
 
 	def read_position(self):
 		# this is too slow right now. revive later.
@@ -143,6 +150,15 @@ class AxisControl:
 			return None
 
 		dec_revolutions = (dec_to-dec_from) / 360.0 * self.dec_axis_ratio
+
+		if self.dec_backlash_direction is not None:
+			if self.dec_backlash_direction > 0 and dec_revolutions > 0:
+				print(f'Applying backlash correction due to direction change: {dec_revolutions} revs => {dec_revolutions + self.dec_backlash_revolutions} revs')
+				dec_revolutions += self.dec_backlash_revolutions
+			elif self.dec_backlash_direction < 0 and dec_revolutions < 0:
+				print(f'Applying backlash correction due to direction change: {dec_revolutions} revs => {dec_revolutions - self.dec_backlash_revolutions} revs')
+				dec_revolutions -= self.dec_backlash_revolutions
+
 		dec_speed = -self.dec_max_speed if dec_revolutions > 0 else self.dec_max_speed
 		dec_time = abs(dec_revolutions / dec_speed)
 

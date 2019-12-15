@@ -99,7 +99,8 @@ dec_pid.sample_time = args.delay
 axis_control = None
 if args.usb_port is not None:
 	# Try both USB (my) ports. They keep switching randomly and I want to be lazy.
-	axis_control = AxisControl([args.usb_port, 1-args.usb_port])
+	axis_control = AxisControl()
+	axis_control.connect(usb_ports=[0,1])
 	print(f'Setting initial motor speeds')
 	axis_control.set_motor_speed('A', config['ra_center'])
 	axis_control.set_motor_speed('B', config['dec_center'])

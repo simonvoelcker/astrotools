@@ -86,7 +86,12 @@ class CommandShell(cmd.Cmd):
 			return
 		latest_image = max(all_images, key=os.path.getctime)
 		self.here = locate_image(latest_image)
-		print(f'Found current coordinates to be {self.here} (using image {latest_image})')
+		formatted = AxisControl.format_coordinates(self.here)
+		print(f'Found current coordinates to be {self.here} ({formatted}) (using image {latest_image})')
+
+		if self.target:
+			diff = (self.target[0] - self.here[0], self.target[1] - self.here[1])
+			print(f'Target difference: {diff[0]:6.3f}, {diff[1]:6.3f} ({AxisControl.format_coordinates(diff)})')
 
 	def do_track(self, arg):
 		# keep pointing in current direction, image-offset based

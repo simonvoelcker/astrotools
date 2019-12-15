@@ -11,54 +11,42 @@ class CommandShell(cmd.Cmd):
 	intro = 'Interactive command shell for telescope control'
 	prompt = '>>> '
 
-	axis_control = None
+	axis_control = AxisControl()
 	ra_resting_speed = -0.0047
 	dec_resting_speed = 0.0
 
 	here = None
 	target = None
 
-	image_source = os.path.join('..', 'beute', '**')
+	image_source_pattern = os.path.join('..', 'beute', '**', '*.tif')
 
 	def do_connect(self, arg):
-		if self.axis_control:
+		if self.axis_control.connected():
 			print('Already connected')
 			return
-		self.axis_control = AxisControl([0, 1])
+		self.axis_control.connect(usb_ports=[0,1])
 
 	def do_disconnect(self, arg):
-		if not self.axis_control:
+		if not self.axis_control.connected():
 			print('Not connected')
 			return
-		self.axis_control = None		
+		self.axis_control.disconnect()
 
 	def do_rest(self, arg):
-		if not self.axis_control:
-			print('Not connected')
-			return
 		print('Setting motors to resting speed')
 		self.axis_control.set_motor_speed('A', self.ra_resting_speed)
 		self.axis_control.set_motor_speed('B', self.dec_resting_speed)
 
 	def do_stop(self, arg):
-		if not self.axis_control:
-			print('Not connected')
-			return
 		print('Stopping motors')
 		self.axis_control.set_motor_speed('A', 0)
 		self.axis_control.set_motor_speed('B', 0)		
 
 	def do_ra(self, arg):
-		if not self.axis_control:
-			print('Not connected')
-			return
 		print(f'Setting RA motor speed to {float(arg)}')
 		self.axis_control.set_motor_speed('A', float(arg))
 
 	def do_dec(self, arg):
-		if not self.axis_control:
-			print('Not connected')
-			return
 		print(f'Setting DEC motor speed to {float(arg)}')
 		self.axis_control.set_motor_speed('B', float(arg))
 
@@ -75,22 +63,17 @@ class CommandShell(cmd.Cmd):
 		if not self.target:
 			print('No target coordinate set')
 			return
-		if not self.axis_control:
-			print('Not connected')
-			return
 		self.axis_control.steer(self.here, self.target)
 
-	def do_set_image_source(self, arg):
-		self.image_source = arg
+	def do_set_image_source_pattern(self, arg):
+		self.image_source_pattern = arg
 
 	def do_list_images(self, args):
-		search_pattern = os.path.join(self.image_source, '*.tif')
-		for f in glob.glob(search_pattern):
+		for f in glob.glob(self.image_source_pattern):
 			print(f)
 
 	def do_autohere(self, arg):
-		search_pattern = os.path.join(self.image_source, '*.tif')
-		all_images = glob.glob(search_pattern)
+		all_images = glob.glob(self.image_source_pattern)
 		if not all_images:
 			print('No images')
 			return

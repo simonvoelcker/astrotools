@@ -17,25 +17,28 @@ class AxisControl:
 	ra_axis_ratio = 69.0 * 3.0 * 2.0  # 2.0 is magic
 	dec_axis_ratio = 105.6 * 2.0  # 2.0 is magic
 
-	def __init__(self, usb_ports=None):
+	def __init__(self):
 		self.serial = None
 
-		if usb_ports is None:
-			return  # dryrun mode
-
+	def connect(self, usb_ports):
 		for port in usb_ports:
 			try:
 				self.serial = serial.Serial(f'/dev/ttyUSB{port}', 9600, timeout=2)
 				# connection cannot be used immediately ...yes, i know.
 				time.sleep(2)
 				print(f'Connected to motor control on port {port}.')
-				return
 			except serial.serialutil.SerialException:
 				print(f'Failed to connect to motor control on port {port}.')
 
+	def disconnect(self):
+		self.serial = None
+
+	def connected(self):
+		return self.serial is not None
+
 	def set_motor_speed(self, motor, speed):
 		if self.serial is None:
-			print(f'Would set motor {motor} speed to {speed} U/s')
+			print(f'(Dryrun) Setting motor {motor} speed to {speed:9.6f} U/s')
 		else:
 			msg = f'{motor}{speed:9.6f}'
 			self.serial.write(msg.encode())
@@ -120,49 +123,63 @@ class AxisControl:
 
 		return f'{ra_hours:2}h{ra_minutes:2}m{ra_seconds:2}s:{dec_sign}{dec_degrees}d{dec_moa:2}m{dec_soa:2}s'
 
-	def steer(self, here_coordinates, target_coordinates):
-		print('Setting motors to resting speed')
-		self.set_motor_speed('A', self.ra_resting_speed)
-		self.set_motor_speed('B', self.dec_resting_speed)
+	def _calc_ra_maneuver(self, ra_from, ra_to):
+		if not ra_from or not ra_to or ra_from == ra_to:
+			return None
 
+		ra_revolutions = (ra_to-ra_from) / 360.0 * self.ra_axis_ratio
+		ra_speed = (self.ra_max_speed if ra_revolutions > 0 else -self.ra_max_speed) + self.ra_resting_speed
+		ra_time = abs(ra_revolutions / ra_speed)
+
+		if ra_revolutions > 0 and ra_time < 5:
+			# just wait at zero speed instead of steering
+			ra_speed = 0
+			ra_time = ra_revolutions / -self.ra_resting_speed
+
+		return ra_speed, ra_time
+		
+	def _calc_dec_maneuver(self, dec_from, dec_to):
+		if not dec_from or not dec_to or dec_from == dec_to:
+			return None
+
+		dec_revolutions = (dec_to-dec_from) / 360.0 * self.dec_axis_ratio
+		dec_speed = -self.dec_max_speed if dec_revolutions > 0 else self.dec_max_speed
+		dec_time = abs(dec_revolutions / dec_speed)
+
+		return dec_speed, dec_time
+
+	def steer(self, here_coordinates, target_coordinates):
 		ra_from, dec_from = here_coordinates
 		ra_to, dec_to = target_coordinates
 
-		if ra_from and ra_to:
-			ra_revolutions = (ra_to-ra_from) / 360.0 * self.ra_axis_ratio
-			ra_speed = (self.ra_max_speed if ra_revolutions > 0 else -self.ra_max_speed) + self.ra_resting_speed
-			ra_time = abs(ra_revolutions / ra_speed)
+		ra_maneuver = self._calc_ra_maneuver(ra_from, ra_to)
+		dec_maneuver = self._calc_dec_maneuver(dec_from, dec_to)
 
-			if ra_revolutions > 0 and ra_time < 5:
-				# just wait at zero speed instead of steering
-				ra_speed = 0
-				ra_time = ra_revolutions / -self.ra_resting_speed
-			
-			print(f'Setting RA axis speed to {ra_speed} for {ra_time} seconds, then back to resting speed')
+		if ra_maneuver and dec_maneuver:
+			# combined maneuver
+			ra_speed, ra_time = ra_maneuver
+			dec_speed, dec_time = dec_maneuver
+			# slow down the quicker maneuver to match execution times
+			if ra_time > dec_time:
+				dec_speed *= dec_time / ra_time
+			else:
+				ra_speed *= ra_time / dec_time
+			common_time = max(ra_time, dec_time)
 			self.set_motor_speed('A', ra_speed)
+			self.set_motor_speed('B', dec_speed)
+			print(f'Waiting {common_time:6.3f} seconds')
+			time.sleep(common_time)
+			self.set_motor_speed('A', self.ra_resting_speed)
+			self.set_motor_speed('B', self.dec_resting_speed)
+		elif ra_maneuver:
+			ra_speed, ra_time = ra_maneuver
+			self.set_motor_speed('A', ra_speed)
+			print(f'Waiting {ra_time:6.3f} seconds')
 			time.sleep(ra_time)
 			self.set_motor_speed('A', self.ra_resting_speed)
-
-		if dec_from and dec_to:
-			dec_revolutions = (dec_to-dec_from) / 360.0 * self.dec_axis_ratio
-			dec_speed = -self.dec_max_speed if dec_revolutions > 0 else self.dec_max_speed
-			dec_time = abs(dec_revolutions / dec_speed)
-
-			print(f'Setting DEC axis speed to {dec_speed} for {dec_time} seconds, then back to resting speed')
+		elif dec_maneuver:
+			dec_speed, dec_time = dec_maneuver
 			self.set_motor_speed('B', dec_speed)
+			print(f'Waiting {dec_time:6.3f} seconds')
 			time.sleep(dec_time)
 			self.set_motor_speed('B', self.dec_resting_speed)
-
-
-if __name__ == '__main__':
-	parser = argparse.ArgumentParser()
-	parser.add_argument('--here', type=str, help='Current position. Format: __h__m__s:__d__m__s')
-	parser.add_argument('--target', type=str, help='Target position. Format: __h__m__s:__d__m__s')
-	parser.add_argument('--usb-port', type=int, default=None, help='USB port to use for the motor control. Omit for no motor control.')
-	args = parser.parse_args()
-
-	here_coordinates = AxisControl.parse_coordinates(args.here)
-	target_coordinates = AxisControl.parse_coordinates(args.target)
-
-	axis_control = AxisControl([args.usb_port, 1-args.usb_port] if args.usb_port is not None else None)
-	axis_control.steer(here_coordinates, target_coordinates)

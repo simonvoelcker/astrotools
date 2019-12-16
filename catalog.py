@@ -37,7 +37,8 @@ class Catalog:
 		return entries
 
 	def get_entry(self, name):
-		return self.entries.get(name)
+		entry = self.entries.get(name)
+		return {key: value for key, value in zip(self._header, entry)}
 
 if __name__ == '__main__':
 	catalog = Catalog()

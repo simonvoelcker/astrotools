@@ -6,6 +6,7 @@ import os
 from steer import AxisControl
 from util import locate_image
 from coordinates import Coordinates
+from catalog import Catalog
 
 
 class CommandShell(cmd.Cmd):
@@ -20,6 +21,8 @@ class CommandShell(cmd.Cmd):
 	target = None
 
 	image_source_pattern = os.path.join('..', 'beute', '**', '*.tif')
+
+	catalog = Catalog()
 
 	def do_exit(self, arg):
 		return True
@@ -80,22 +83,39 @@ class CommandShell(cmd.Cmd):
 		for f in glob.glob(self.image_source_pattern):
 			print(f)
 
-	def do_autohere(self, arg):
+	def do_sync(self, arg):
+		# update self.here to match what's in the latest image
+
 		all_images = glob.glob(self.image_source_pattern)
 		if not all_images:
 			print('No images')
 			return
+
 		latest_image = max(all_images, key=os.path.getctime)
 		self.here = locate_image(latest_image)
 		if self.here is None:
 			print(f'Failed to determine coordinates from image {latest_image}')
 			return
+
 		print(f'Current coordinates: {self.here} ({self.here.format()}) (using image {latest_image})')
 
 		if self.target:
 			diff = Coordinates(self.target.ra - self.here.ra, self.target.dec - self.here.dec)
 			print(f'Target difference: {diff} ({diff.format()})')
 
+	def do_lookup(self, arg):
+		entry = self.catalog.get_entry(arg)
+		print(f'Found entry: {entry}')
+
+	def do_targetobject(self, arg):
+		catalog = Catalog()
+		entry = catalog.get_entry(arg)
+		if entry is None:
+			print('No entry found')
+			return
+		coordinates = Coordinates.parse_csvformat(entry['RA'], entry['Dec'])
+		print(f'Setting target coordinates: {coordinates}')
+		self.target = coordinates
 
 if __name__ == '__main__':
 	CommandShell().cmdloop()

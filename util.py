@@ -4,8 +4,9 @@ import re
 
 from PIL import Image
 from skimage.filters import laplace, sobel
+from coordinates import Coordinates
 
-coordinates_rx = re.compile(r'^.*RA,Dec = \((?P<ra>[\d\.]+),(?P<dec>[\d\.]+)\).*$', re.DOTALL)
+astrometry_coordinates_rx = re.compile(r'^.*RA,Dec = \((?P<ra>[\d\.]+),(?P<dec>[\d\.]+)\).*$', re.DOTALL)
 
 
 def load_image(filename, dtype=np.int16):
@@ -100,7 +101,7 @@ def locate_image(filepath):
 		'--wcs', 'none',
 	]
 	output = subprocess.check_output(solve_command, stderr=subprocess.DEVNULL)
-	match = coordinates_rx.match(output.decode())
+	match = astrometry_coordinates_rx.match(output.decode())
 	if not match:
 		return None
-	return float(match.group('ra')), float(match.group('dec'))
+	return Coordinates(float(match.group('ra')), float(match.group('dec')))

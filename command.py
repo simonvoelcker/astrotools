@@ -5,6 +5,7 @@ import os
 
 from steer import AxisControl
 from util import locate_image
+from coordinates import Coordinates
 
 
 class CommandShell(cmd.Cmd):
@@ -54,10 +55,10 @@ class CommandShell(cmd.Cmd):
 		self.axis_control.set_motor_speed('B', float(arg))
 
 	def do_here(self, arg):
-		self.here = AxisControl.parse_coordinates(arg)
+		self.here = Coordinates.parse(arg)
 
 	def do_target(self, arg):
-		self.target = AxisControl.parse_coordinates(arg)
+		self.target = Coordinates.parse(arg)
 
 	def do_steer(self, arg):
 		if not self.here:
@@ -86,16 +87,15 @@ class CommandShell(cmd.Cmd):
 			return
 		latest_image = max(all_images, key=os.path.getctime)
 		self.here = locate_image(latest_image)
-		formatted = AxisControl.format_coordinates(self.here)
-		print(f'Found current coordinates to be {self.here} ({formatted}) (using image {latest_image})')
+		if self.here is None:
+			print(f'Failed to determine coordinates from image {latest_image}')
+			return
+		print(f'Current coordinates: {self.here} ({self.here.format()}) (using image {latest_image})')
 
 		if self.target:
-			diff = (self.target[0] - self.here[0], self.target[1] - self.here[1])
-			print(f'Target difference: {diff[0]:6.3f}, {diff[1]:6.3f} ({AxisControl.format_coordinates(diff)})')
+			diff = Coordinates(self.target.ra - self.here.ra, self.target.dec - self.here.dec)
+			print(f'Target difference: {diff} ({diff.format()})')
 
-	def do_track(self, arg):
-		# keep pointing in current direction, image-offset based
-		pass
 
 if __name__ == '__main__':
 	CommandShell().cmdloop()

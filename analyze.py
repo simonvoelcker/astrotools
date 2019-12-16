@@ -47,9 +47,9 @@ for frame_index, file in enumerate(files):
 	offsets = alignment.get_offsets(frame, frame_index)
 	frame_offsets_by_file[basename] = offsets
 	
-	frame = rescale(frame, 1.0/4.0, multichannel=False)
-	frame = (32768 * frame).astype(np.int16)
-	save_image_greyscale(frame, f'downsampled/{frame_index}.png')
+	# frame = rescale(frame, 1.0/4.0, multichannel=False)
+	# frame = (32768 * frame).astype(np.int16)
+	# save_image_greyscale(frame, f'downsampled/{frame_index}.png')
 
 	sharpness_aog = get_sharpness_aog(frame)
 	sharpness_vol = get_sharpness_vol(frame)

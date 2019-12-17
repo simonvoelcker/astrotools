@@ -38,6 +38,8 @@ class Catalog:
 
 	def get_entry(self, name):
 		entry = self.entries.get(name)
+		if entry is None:
+			return None
 		return {key: value for key, value in zip(self._header, entry)}
 
 if __name__ == '__main__':

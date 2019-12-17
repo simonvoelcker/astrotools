@@ -7,6 +7,7 @@ from steer import AxisControl
 from util import locate_image
 from coordinates import Coordinates
 from catalog import Catalog
+from track_target import Tracking
 
 
 class CommandShell(cmd.Cmd):
@@ -116,6 +117,18 @@ class CommandShell(cmd.Cmd):
 		coordinates = Coordinates.parse_csvformat(entry['RA'], entry['Dec'])
 		print(f'Setting target coordinates: {coordinates}')
 		self.target = coordinates
+
+	def do_track(self, arg):
+		delay = float(arg)
+		if self.target is None:
+			print('No target set')
+			return
+		tracking = Tracking(self.image_source_pattern, delay, self.axis_control)
+		try:
+			print(f'Tracking {self.target}')
+			tracking.track_target(self.target)
+		except KeyboardInterrupt:
+			print('Tracking aborted')
 
 if __name__ == '__main__':
 	CommandShell().cmdloop()

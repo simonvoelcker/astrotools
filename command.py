@@ -93,7 +93,13 @@ class CommandShell(cmd.Cmd):
 			return
 
 		latest_image = max(all_images, key=os.path.getctime)
-		self.here = locate_image(latest_image)
+
+		try:
+			self.here = locate_image(latest_image)
+		except KeyboardInterrupt:
+			print('Sync aborted')
+			return
+
 		if self.here is None:
 			print(f'Failed to determine coordinates from image {latest_image}')
 			return

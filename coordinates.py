@@ -67,8 +67,8 @@ class Coordinates:
 
 	def format(self):
 		# format coordinates from angles to my ghetto format: __h__m__s:__d__m__s
-		ra_degrees_f = self.ra_degrees
-		dec_degrees_f = self.dec_degrees
+		ra_degrees_f = self.ra
+		dec_degrees_f = self.dec
 		
 		ra_hours_f = ra_degrees_f / 15.0
 		ra_hours = int(ra_hours_f)

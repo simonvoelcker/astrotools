@@ -43,7 +43,7 @@ class Alignment:
 				sys.exit(1)
 
 			print(f'Too big offset between frame and key frame. Using frame {frame_index-1} as key new frame.')
-			self.key_frame = prev_frame
+			self.key_frame = self.prev_frame
 			self.key_frame_index = frame_index-1
 
 			(offset_x, offset_y), error, _ = register_translation(self.key_frame, curr_frame)

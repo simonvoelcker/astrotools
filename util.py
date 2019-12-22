@@ -81,13 +81,14 @@ def get_sharpness_sobel(frame):
 	# variance of sobel
 	return sobel(frame).var()
 
-def locate_image(filepath):
+def locate_image(filepath, cpulimit=5):
 	solve_command = [
 		'/usr/local/astrometry/bin/solve-field',
 		filepath,
 		'--scale-units', 'arcsecperpix',
 		'--scale-low', '0.8',
 		'--scale-high', '1.0',
+		'--cpulimit', str(cpulimit),
 		'--overwrite',
 		'--no-plots',
 		'--parity', 'pos',

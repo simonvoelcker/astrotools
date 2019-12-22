@@ -17,17 +17,17 @@ class Tracking:
 	config = {
 		'ra_center': -0.0047,
 		'ra_range': 0.001,
-		'ra_invert': True,
-		'ra_pid_p': 0.00002,
+		'ra_invert': False,
+		'ra_pid_p': 0.002,
 		'ra_pid_i': 0.0,
-		'ra_pid_d': 0.0002,
+		'ra_pid_d': 0.0,
 		
 		'dec_center': 0.0,
-		'dec_range': 0.001,
+		'dec_range': 0.0005,
 		'dec_invert': True,
-		'dec_pid_p': 0.00001,
+		'dec_pid_p': 0.05,
 		'dec_pid_i': 0.0,
-		'dec_pid_d': 0.001,
+		'dec_pid_d': 0.0,
 
 		'sample_time': 10.0,
 	}
@@ -71,13 +71,15 @@ class Tracking:
 			time.sleep(0.5)  # wait here, not above, to be sure the new file is complete on disk
 			if not new_files:
 				continue
+			known_files = all_files
 			if len(new_files) > 1:
 				print(f'WARN: Found {len(new_files)} new images at once')
-			newest_file = max(new_images, key=os.path.getctime)
+			newest_file = max(new_files, key=os.path.getctime)
+			print(f'Handling new file: {newest_file}')
 			self.on_new_file(newest_file)
 
 	def on_new_file(self, file_path):
-		image_coordinates = locate_image(file_path)
+		image_coordinates = locate_image(file_path, cpulimit=self.delay)
 		if not image_coordinates:
 			print(f'Failed to locate: {file_path}')
 			return
@@ -85,26 +87,28 @@ class Tracking:
 		ra_error = image_coordinates.ra - self.target.ra
 		dec_error = image_coordinates.dec - self.target.dec
 
-		ra_speed = self.config['ra_center'] + ra_pid(-ra_error if self.config['ra_invert'] else ra_error)
-		dec_speed = self.config['dec_center'] + dec_pid(-dec_error if self.config['dec_invert'] else dec_error)
+		print(f'image: {image_coordinates} target: {self.target}')
+
+		ra_speed = self.config['ra_center'] + self.ra_pid(-ra_error if self.config['ra_invert'] else ra_error)
+		dec_speed = self.config['dec_center'] + self.dec_pid(-dec_error if self.config['dec_invert'] else dec_error)
 
 		self.axis_control.set_motor_speed('A', ra_speed)		
 		self.axis_control.set_motor_speed('B', dec_speed)
 
-		print(f'RA error: {int(ra_error):4}, DEC error: {int(dec_error):4}, '\
-			  f'RA speed: {ra_speed:8.5f}, DEC speed: {dec_speed:8.5f}')
+		print(f'RA error: {ra_error:8.6f}, DEC error: {dec_error:8.6f}, '\
+			  f'RA speed: {ra_speed:8.6f}, DEC speed: {dec_speed:8.6f}')
 
 		if self.influx_client is not None:
-			write_frame_stats(
+			self.write_frame_stats(
 				file_path=file_path,
 				ra_image_error=float(ra_error),
 				ra_speed=float(ra_speed),
-				ra_pid_p=float(ra_pid.components[0]),
-				ra_pid_i=float(ra_pid.components[1]),
-				ra_pid_d=float(ra_pid.components[2]),
+				ra_pid_p=float(self.ra_pid.components[0]),
+				ra_pid_i=float(self.ra_pid.components[1]),
+				ra_pid_d=float(self.ra_pid.components[2]),
 				dec_image_error=float(dec_error),
 				dec_speed=float(dec_speed),
-				dec_pid_p=float(dec_pid.components[0]),
-				dec_pid_i=float(dec_pid.components[1]),
-				dec_pid_d=float(dec_pid.components[2]),
+				dec_pid_p=float(self.dec_pid.components[0]),
+				dec_pid_i=float(self.dec_pid.components[1]),
+				dec_pid_d=float(self.dec_pid.components[2]),
 			)

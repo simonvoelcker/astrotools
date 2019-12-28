@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Panorama Viewer</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link rel="stylesheet" href="style.css">
+		<link rel="stylesheet" href="lib/bootstrap.min.css">
+		<link rel="stylesheet" href="lib/bootstrap-theme.min.css">
+	</head>
+	<body>
+
+		<script src="lib/jquery-1.11.3.min.js"></script>
+		<script src="lib/bootstrap.min.js"></script>
+		<script src="lib/three.min.js"></script>
+	    <script src="lib/tween.min.js"></script>
+		<script src="Config.js"></script>
+		<script src="WebGLView.js"></script>
+		<script src="PanoramaView.js"></script>
+		<script src="Navigation.js"></script>
+		<script src="controls/OrbitControls.js"></script>
+		<script src="helpers/Detector.js"></script>
+
+		<script id="vertexShader" type="x-shader/x-vertex">
+			varying vec2 vUv;
+			varying vec3 vPos;
+			void main() {
+			    vUv = uv;
+			    vPos = position;
+			    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+			    gl_Position = projectionMatrix * mvPosition;
+			}
+		</script>
+
+		<script id="fragmentShader" type="x-shader/x-fragment">
+			uniform sampler2D texture;
+			uniform sampler2D oidTexture;
+			uniform vec3 objectId;
+			uniform vec3 highlight;
+			uniform float intensity;
+			varying vec2 vUv;
+
+			void main(void) {
+			    vec3 tex = texture2D(texture, vUv).rgb;
+			    vec4 oid = texture2D(oidTexture, vUv);
+				vec3 eps = vec3(0.02, 0.02, 0.02);
+
+				if( all(greaterThanEqual(oid.rgb, objectId-eps)) &&
+				 	 all(lessThanEqual(oid.rgb, objectId+eps)) ) {
+					if (oid.a == 1.0) {
+						// fully inside object -> tex
+						gl_FragColor = vec4(tex, 1.0);
+					} else if (oid.a > 0.9) {
+						// oid.a == 0.9 -> highlight lerped with tex by intensity
+						// 		= (1.0 - intensity) * tex + intensity * highlight
+						// oid.a == 1.0 -> tex
+						gl_FragColor = vec4(
+							10.0 * (oid.a - 0.9) *
+							tex +
+							10.0 * (1.0 - oid.a) *
+				    		((1.0 - intensity) * tex + intensity * highlight),
+							1.0);
+					} else {
+						// oid.a == 0.0 -> darkened background
+						// 		= (1.0 - intensity) * tex	
+						// oid.a == 0.9 -> highlight lerped with tex by intensity
+						// 		= (1.0 - intensity) * tex + intensity * highlight
+				    	gl_FragColor = vec4(
+				    		oid.a / 0.9 * 
+				    		((1.0 - intensity) * tex + intensity * highlight) +
+				    		(1.0 - oid.a / 0.9) *
+				    		((1.0 - intensity) * tex),
+				    		1.0);
+					}
+			    } else {
+			       // oid does not match -> background -> darken by intensity
+			       gl_FragColor = vec4((1.0 - intensity) * tex, 1.0);
+			    }
+			}
+		</script>
+
+		<div id="loading">
+			<div id="spinbox" class="spinning">
+				<span id="loading-indicator" class="glyphicon glyphicon-refresh"></span>
+			</div>
+		</div>
+
+		<div id="container"></div>
+
+		<div id="header">	
+			<div id="infobox">
+				<span id="infotext">Info</span>
+			</div>
+		</div>
+
+		<div id="footer">
+			<div id="navigation">
+				<span id="prev" class="glyphicon glyphicon-backward icon"></span>
+				<span id="current">1/1</span>
+				<span id="next" class="glyphicon glyphicon-forward icon"></span>
+			</div>
+
+			<div id="settings" class="dropup">
+				<div id="settings-toggle"
+						class="dropdown-toggle"
+						data-toggle="dropdown"
+						aria-haspopup="true"
+						aria-expanded="false">
+					<span class="glyphicon glyphicon-cog icon"></span>
+				</div>
+				<ul class="dropdown-menu dropdown-menu-right" aria-labelledby="settings-toggle">
+					<li><div id="fisheye" href="">
+						<span class="glyphicon glyphicon-unchecked"></span>
+						<span>Fish Eye</span>
+					</div></li>
+				</ul>
+			</div>			
+		</div>
+
+		<script id="vertexShader" type="x-shader/x-vertex">
+			varying vec2 vUv;
+			void main() {
+			    vUv = uv;
+			    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+			    gl_Position = projectionMatrix * mvPosition;
+			}
+		</script>
+
+		<script id="fragmentShader" type="x-shader/x-fragment">
+			uniform sampler2D texture;
+			varying vec2 vUv;
+
+			void main(void) {
+  		        gl_FragColor = texture2D(texture, vUv);
+			}
+		</script>
+
+		<script>
+
+			// some day.
+	        // "use strict";
+
+	        if (!Detector.webgl) Detector.addGetWebGLMessage();
+
+			handleUrlParams( window.location.search.substr(1).split('&') );
+
+	        var container = document.getElementById('container');
+
+	        var webGLView = new WebGLView();
+	        rendererContext = webGLView.initialize(container, window.innerWidth, window.innerHeight);
+
+	        onWindowResize = function() {
+	            webGLView.onResize(window.innerWidth, window.innerHeight);
+	        }
+
+	        window.addEventListener('resize', onWindowResize, false);
+	        container.appendChild(webGLView.renderer.domElement);
+
+	        updateAndRender = function() {
+	            webGLView.update();                
+	            webGLView.render();
+	            requestAnimationFrame(updateAndRender);
+	        }
+
+	        var setLoading = function(loading) {
+	        	if (loading) {
+		        	$('#loading').show();
+	        	} else {
+		        	$('#loading').hide();
+	        	}
+	        }
+
+	        var setImageUrls = function(url, oidUrl) {
+	        	setLoading(true);
+	        	webGLView.panoramaView.loadTextures(url, oidUrl, function onLoaded() {
+	        		setLoading(false);
+	        	});
+	        }
+
+	        var setFishEyeMode = function(enabled) {
+	        	webGLView.setFishEyeMode(enabled);
+	        }
+
+	        var navigation = new Navigation(setImageUrls, setFishEyeMode);
+
+	        var onLeftClick = function(event) {
+	            // intersection: has distance, face, faceIndex, object, point
+	            var intersection = webGLView.getIntersectionFromEvent(event);
+	            if (intersection != null) {
+	                oid = webGLView.panoramaView.selectPoint(intersection.point);
+	                navigation.setSelectedOid(oid);
+	                webGLView.focusObjectById(oid);
+	            }
+	        }
+
+	        var lastMouseDown = null;
+	        var lastMouseDownButton = null;
+	        var dragging = false;
+	        var dragThreshold = 20;
+
+	        document.addEventListener('mousedown', function(event) {
+	        	lastMouseDown = { x: event.x, y: event.y };
+	        	lastMouseDownButton = event.button;
+	        	dragging = false;
+	        }, false);
+	        document.addEventListener('mousemove', function(event) {
+	        	if (event.buttons != 0) {
+		        	d = Math.abs(event.x-lastMouseDown.x) + Math.abs(event.y-lastMouseDown.y)
+		        	if (d > dragThreshold) {
+		        		dragging = true;
+		        	}
+	        	}
+	        }, false);
+		    document.addEventListener('mouseup', function(event) {
+		        event.preventDefault();
+		        if (!dragging) {
+		        	if (lastMouseDownButton == 0) {
+		        		onLeftClick(event);
+		        	}
+		        }
+		    }, false);
+
+	        if (navigator.userAgent.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile/i)) {
+	        	// mobile
+	        } else {
+	        	// not mobile. duh.
+	        }
+
+	        updateAndRender();
+
+		</script>
+	
+	</body>
+</html>

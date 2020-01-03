@@ -22,7 +22,7 @@ class Tracking:
 		'ra_pid_i': 0.0,
 		'ra_pid_d': 0.0,
 		
-		'dec_center': 0.0,
+		'dec_center': 0.0005,
 		'dec_range': 0.0005,
 		'dec_invert': True,
 		'dec_pid_p': 0.05,

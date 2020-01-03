@@ -8,6 +8,7 @@ import numpy as np
 from image_stack_nebula import ImageStackNebula
 
 from influxdb import InfluxDBClient
+from util import create_average_frame
 
 
 def query_offsets(path_prefix):
@@ -34,21 +35,24 @@ parser.add_argument('--auto-crop-samples', type=int, default=None, help='Num sam
 parser.add_argument('--gamma', type=float, default=None, help='Gamma-correction value to apply')
 parser.add_argument('--invert', action='store_true')
 parser.add_argument('--range', type=str, default=None, help='Stack only given range of images, not all')
-parser.add_argument('--darkframe-directory', type=str, default=None, help='Where to find darkframes')
+parser.add_argument('--darks', type=str, default=None, help='Where to find dark frames')
+parser.add_argument('--flats', type=str, default=None, help='Where to find flat frames')
+parser.add_argument('--biases', type=str, default=None, help='Where to find bias frames')
 parser.add_argument('--apply-function', action='store_true', help='Apply custom function to output image')
 parser.add_argument('--color-mode', type=str, default='rgb', help='Options: grey, r, g, b, rgb')
 
 args = parser.parse_args()
 
-if args.darkframe_directory is not None:
-	print(f'Handling darkframes from {args.darkframe_directory}')
-	search_pattern = os.path.join(args.darkframe_directory, args.filename_pattern)
-	darkframe_files = glob.glob(search_pattern)
-	print(f'Found {len(darkframe_files)} darkframes - Creating an average frame')
-	master_dark = ImageStackNebula.create_master_dark(args.darkframe_directory, darkframe_files, args.color_mode)
+master_dark = create_average_frame(args.darks, args.filename_pattern, args.color_mode)
+average_flat = create_average_frame(args.flats, args.filename_pattern, args.color_mode)
+average_bias = create_average_frame(args.biases, args.filename_pattern, args.color_mode)
+
+if average_flat is not None and average_bias is not None:
+	average_flat -= average_bias
+	master_flat = average_flat / np.average(average_flat)
 else:
-	print('Not using darkframes. Consider --darkframe-directory')
-	master_dark = None
+	master_flat = None
+
 
 print('Searching for files to stack')
 search_pattern = os.path.join(args.directory, args.filename_pattern)
@@ -73,7 +77,14 @@ with open(offsets_file, 'r') as f:
 	frame_offsets = json.load(f)
 
 print('Stacking...')
-image = ImageStackNebula.from_files(args.directory, files, frame_offsets, args.color_mode, master_dark)
+image = ImageStackNebula.from_files(
+	args.directory,
+	files,
+	frame_offsets,
+	args.color_mode,
+	master_dark,
+	master_flat,
+)
 
 if args.auto_crop:
 	max_samples = np.amax(image.samples)

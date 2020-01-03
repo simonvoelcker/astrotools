@@ -1,10 +1,13 @@
 import numpy as np
 import subprocess
 import re
+import os
+import glob
 
 from PIL import Image
 from skimage.filters import laplace, sobel
 from coordinates import Coordinates
+from image_stack_nebula import ImageStackNebula
 
 astrometry_coordinates_rx = re.compile(r'^.*RA,Dec = \((?P<ra>[\d\.]+),(?P<dec>[\d\.]+)\).*$', re.DOTALL)
 
@@ -21,6 +24,16 @@ def load_image_greyscale(filename, dtype=np.int16):
 	yx_image = np.asarray(pil_image, dtype=dtype)
 	xy_image = np.transpose(yx_image, (1, 0))
 	return xy_image
+
+
+def create_average_frame(directory, search_pattern, color_mode):
+	if directory is None:
+		return None
+	full_search_pattern = os.path.join(directory, search_pattern)
+	files = glob.glob(full_search_pattern)
+	print(f'Found {len(files)} frames in {directory} - Creating an average frame')
+	average_frame = ImageStackNebula.create_average_frame(directory, files, color_mode)
+	return average_frame
 
 
 def save_image(image, filename):

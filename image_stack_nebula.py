@@ -13,7 +13,7 @@ class ImageStackNebula:
 		self.samples = samples
 
 	@classmethod
-	def create_master_dark(cls, directory, files, color_mode):
+	def create_average_frame(cls, directory, files, color_mode):
 		frame_0 = cls._load_frame(files[0], dtype=np.int32, color_mode=color_mode)
 		width, height, channels = frame_0.shape
 
@@ -28,7 +28,7 @@ class ImageStackNebula:
 		return image
 
 	@classmethod
-	def from_files(cls, directory, files, offsets, color_mode, master_dark_frame):
+	def from_files(cls, directory, files, offsets, color_mode, master_dark, master_flat):
 		max_offset_x = int(max(x for x,_ in offsets.values()))
 		min_offset_x = int(min(x for x,_ in offsets.values()))
 		min_offset_y = int(min(y for _,y in offsets.values()))
@@ -50,8 +50,10 @@ class ImageStackNebula:
 			filepath = os.path.join(directory, filename)
 			frame = cls._load_frame(filepath, dtype=float, color_mode=color_mode)
 
-			if master_dark_frame is not None:
-				frame -= master_dark_frame
+			if master_dark is not None:
+				frame -= master_dark
+			if master_flat is not None:
+				frame /= master_flat
 
 			x = int(offset_x)+abs(min_offset_x)
 			y = int(offset_y)+abs(min_offset_y)

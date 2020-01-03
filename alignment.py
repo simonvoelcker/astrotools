@@ -10,6 +10,7 @@ from skimage.feature import register_translation
 
 
 class Alignment:
+	# Rotation, Flipping, Offset detection.
 
 	def __init__(self, amplification=5, threshold=128):
 		# factor by which brightness should be scaled up for alignment

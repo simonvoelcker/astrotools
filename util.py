@@ -9,8 +9,6 @@ from skimage.filters import laplace, sobel
 from coordinates import Coordinates
 from image_stack_nebula import ImageStackNebula
 
-astrometry_coordinates_rx = re.compile(r'^.*RA,Dec = \((?P<ra>[\d\.]+),(?P<dec>[\d\.]+)\).*$', re.DOTALL)
-
 
 def load_image(filename, dtype=np.int16):
 	pil_image = Image.open(filename)
@@ -114,8 +112,56 @@ def locate_image(filepath, cpulimit=5):
 		'--rdls', 'none',
 		'--wcs', 'none',
 	]
-	output = subprocess.check_output(solve_command, stderr=subprocess.DEVNULL)
-	match = astrometry_coordinates_rx.match(output.decode())
+	output = subprocess.check_output(solve_command, stderr=subprocess.DEVNULL).decode()
+	astrometry_coordinates_rx = re.compile(r'^.*RA,Dec = \((?P<ra>[\d\.]+),(?P<dec>[\d\.]+)\).*$', re.DOTALL)
+	match = astrometry_coordinates_rx.match(output)
 	if not match:
 		return None
 	return Coordinates(float(match.group('ra')), float(match.group('dec')))
+
+
+def get_astrometric_metadata(filepath, cpulimit=5):
+	solve_command = [
+		'/usr/local/astrometry/bin/solve-field',
+		filepath,
+		'--scale-units', 'arcsecperpix',
+		'--scale-low', '0.8',
+		'--scale-high', '1.0',
+		'--cpulimit', str(cpulimit),
+		'--overwrite',
+		'--no-plots',
+		'--parity', 'pos',
+		'--temp-axy',
+		'--solved', 'none',
+		'--corr', 'none',
+		'--new-fits', 'none',
+		'--index-xyls', 'none',
+		'--match', 'none',
+		'--rdls', 'none',
+		'--wcs', 'last_match.wcs',  # must be non-none so the detailed output is available
+	]
+	output = subprocess.check_output(solve_command, stderr=subprocess.DEVNULL).decode()
+
+	# Output example:
+	#
+	# Field center: (RA,Dec) = (114.133515, 65.594210) deg.
+	# Field center: (RA H:M:S, Dec D:M:S) = (07:36:32.044, +65:35:39.156).
+	# Field size: 28.9649 x 16.3092 arcminutes
+	# Field rotation angle: up is 1.76056 degrees E of N
+	# Field parity: pos
+
+	metadata_regexes = {
+		'center_deg': r'^.*Field center: \(RA,Dec\) = \((?P<ra>[\d\.]*), (?P<dec>[\d\.]*)\) deg\..*$',
+		'center': r'^.*Field center: \(RA H:M:S, Dec D:M:S\) = \((?P<ra>[\d\.\:]*), (?P<dec>[\d\.\:\+\-]*)\)\..*$',
+		'size': r'^.*Field size: (?P<width>[\d\.]*) x (?P<height>[\d\.]*) (?P<unit>\w*).*$',
+		'rotation': r'^.*Field rotation angle: up is (?P<angle>[\d\.]*) degrees (?P<direction>[WE]) of N.*$',
+		'parity': r'^.*Field parity: (?P<parity>pos|neg).*$',
+	}
+
+	metadata = {}
+	for metadata_key, metadata_regex in metadata_regexes.items():
+		rx = re.compile(metadata_regex, re.DOTALL)
+		match = rx.match(output)
+		metadata[metadata_key] = match.groupdict() if match else None
+
+	return metadata

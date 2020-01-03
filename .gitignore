@@ -3,4 +3,5 @@ __pycache__
 *.gif
 *.tif
 *.jpg
+*.wcs
 viewer/images

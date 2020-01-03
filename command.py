@@ -2,6 +2,7 @@ import cmd
 import sys
 import glob
 import os
+import json
 
 from steer import AxisControl
 from util import locate_image
@@ -125,11 +126,15 @@ class CommandShell(cmd.Cmd):
 		self.target = coordinates
 
 	def do_track(self, arg):
-		delay = float(arg)
 		if self.target is None:
 			print('No target set')
 			return
-		tracking = Tracking(self.image_source_pattern, delay, self.axis_control)
+
+		config_file = arg or 'config.json'
+		with open(config_file, 'r') as f:
+			config = json.load(f)
+
+		tracking = Tracking(config['tracking'], self.image_source_pattern, self.axis_control)
 		try:
 			print(f'Tracking {self.target}')
 			tracking.track_target(self.target)

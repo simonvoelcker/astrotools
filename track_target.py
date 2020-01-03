@@ -14,38 +14,21 @@ from util import locate_image
 
 
 class Tracking:
-	config = {
-		'ra_center': -0.0047,
-		'ra_range': 0.001,
-		'ra_invert': False,
-		'ra_pid_p': 0.002,
-		'ra_pid_i': 0.0,
-		'ra_pid_d': 0.0,
-		
-		'dec_center': 0.0005,
-		'dec_range': 0.0005,
-		'dec_invert': True,
-		'dec_pid_p': 0.05,
-		'dec_pid_i': 0.0,
-		'dec_pid_d': 0.0,
-
-		'sample_time': 10.0,
-	}
-
-	def __init__(self, image_search_pattern, delay, axis_control):
+	def __init__(self, config, image_search_pattern, axis_control):
+		self.config = config
 		self.image_search_pattern = image_search_pattern
-		self.delay = delay
+
 		self.target = None
 		self.axis_control = axis_control
 		self.influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
 
-		self.ra_pid = PID(self.config['ra_pid_p'], self.config['ra_pid_i'], self.config['ra_pid_d'], setpoint=0)
-		self.ra_pid.output_limits = (-self.config['ra_range'], self.config['ra_range'])
-		self.ra_pid.sample_time = self.delay
+		self.ra_pid = PID(self.config['ra']['pid_p'], self.config['ra']['pid_i'], self.config['ra']['pid_d'], setpoint=0)
+		self.ra_pid.output_limits = (-self.config['ra']['range'], self.config['ra']['range'])
+		self.ra_pid.sample_time = self.config['sample_time']
 
-		self.dec_pid = PID(self.config['dec_pid_p'], self.config['dec_pid_i'], self.config['dec_pid_d'], setpoint=0)
-		self.dec_pid.output_limits = (-self.config['dec_range'], self.config['dec_range'])
-		self.dec_pid.sample_time = self.delay
+		self.dec_pid = PID(self.config['dec']['pid_p'], self.config['dec']['pid_i'], self.config['dec']['pid_d'], setpoint=0)
+		self.dec_pid.output_limits = (-self.config['dec']['range'], self.config['dec']['range'])
+		self.dec_pid.sample_time = self.config['sample_time']
 
 	def write_frame_stats(self, **kwargs):
 		time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
@@ -89,8 +72,8 @@ class Tracking:
 
 		print(f'image: {image_coordinates} target: {self.target}')
 
-		ra_speed = self.config['ra_center'] + self.ra_pid(-ra_error if self.config['ra_invert'] else ra_error)
-		dec_speed = self.config['dec_center'] + self.dec_pid(-dec_error if self.config['dec_invert'] else dec_error)
+		ra_speed = self.config['ra']['center'] + self.ra_pid(-ra_error if self.config['ra']['invert'] else ra_error)
+		dec_speed = self.config['dec']['center'] + self.dec_pid(-dec_error if self.config['dec']['invert'] else dec_error)
 
 		self.axis_control.set_motor_speed('A', ra_speed)		
 		self.axis_control.set_motor_speed('B', dec_speed)

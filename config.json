@@ -1,0 +1,21 @@
+{
+	"tracking":	{
+		"sample_time": 10.0,
+		"ra": {
+			"center": -0.0047,
+			"range": 0.001,
+			"invert": false,
+			"pid_p": 0.002,
+			"pid_i": 0.0,
+			"pid_d": 0.0,
+		},
+		"dec": {
+			"center": 0.0005,
+			"range": 0.0005,
+			"invert": true,
+			"pid_p": 0.05,
+			"pid_i": 0.0,
+			"pid_d": 0.0
+		}		
+	}
+}

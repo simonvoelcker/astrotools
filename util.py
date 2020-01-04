@@ -8,6 +8,7 @@ from PIL import Image
 from skimage.filters import laplace, sobel
 from coordinates import Coordinates
 from image_stack_nebula import ImageStackNebula
+from influxdb import InfluxDBClient
 
 
 def load_image(filename, dtype=np.int16):
@@ -144,13 +145,17 @@ def get_astrometric_metadata(filepath, cpulimit=5):
 
 	# Output example:
 	#
+	# [...] pixel scale 0.907073 arcsec/pix.
+	# [...]
 	# Field center: (RA,Dec) = (114.133515, 65.594210) deg.
 	# Field center: (RA H:M:S, Dec D:M:S) = (07:36:32.044, +65:35:39.156).
 	# Field size: 28.9649 x 16.3092 arcminutes
 	# Field rotation angle: up is 1.76056 degrees E of N
 	# Field parity: pos
+	# [...]
 
 	metadata_regexes = {
+		'pixel_scale': r'^.*pixel scale (?P<scale>[\d\.]*) (?P<unit>[\w\/]*)\..*$',
 		'center_deg': r'^.*Field center: \(RA,Dec\) = \((?P<ra>[\d\.]*), (?P<dec>[\d\.]*)\) deg\..*$',
 		'center': r'^.*Field center: \(RA H:M:S, Dec D:M:S\) = \((?P<ra>[\d\.\:]*), (?P<dec>[\d\.\:\+\-]*)\)\..*$',
 		'size': r'^.*Field size: (?P<width>[\d\.]*) x (?P<height>[\d\.]*) (?P<unit>\w*).*$',
@@ -162,6 +167,25 @@ def get_astrometric_metadata(filepath, cpulimit=5):
 	for metadata_key, metadata_regex in metadata_regexes.items():
 		rx = re.compile(metadata_regex, re.DOTALL)
 		match = rx.match(output)
+		if not match:
+			print('WARN: No match found for "{metadata_key}" in output of solve-field of file {filepath}.')
+			print('Field may not have been solved or the output of the solver could not be parsed.')
 		metadata[metadata_key] = match.groupdict() if match else None
 
 	return metadata
+
+
+def query_offsets(path_prefix):
+	# WIP and maybe a bad idea.
+	# should keep tracking and alignment cleanly separated, in prep for a guiding camera.
+
+	# Usage: query_offsets('../beute/191013')
+	path_prefix = path_prefix.replace('/', '\\/')
+	influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
+	offsets_query = f'SELECT ra_image_error, dec_image_error, file_path '\
+					f'FROM axis_log WHERE file_path =~ /{path_prefix}*/ ORDER BY time ASC'
+
+	offsets_result = influx_client.query(offsets_query)
+	# it will remain influxDBs secret why this is so complicated
+	rows = offsets_result.items()[0][1]
+	return {row['file_path']: (row['ra_image_error'], row['dec_image_error']) for row in rows}

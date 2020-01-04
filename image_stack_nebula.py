@@ -2,8 +2,10 @@ import json
 import os
 import sys
 import numpy as np
+import math
 
 from PIL import Image
+from skimage.transform import rotate 
 
 
 class ImageStackNebula:
@@ -54,6 +56,81 @@ class ImageStackNebula:
 				frame -= master_dark
 			if master_flat is not None:
 				frame /= master_flat
+
+			x = int(offset_x)+abs(min_offset_x)
+			y = int(offset_y)+abs(min_offset_y)
+
+			image[x:x+width, y:y+height, :] += frame
+			samples[x:x+width, y:y+height] += 1
+
+		return ImageStackNebula(image, samples)
+
+	@classmethod
+	def from_files(cls, directory, files, frame_metadata, color_mode, master_dark, master_flat):
+
+		# Phase 1: Offsets
+		# Phase 2: Flipping
+		# Phase 3: Rotation
+
+		# restore good 'ol offsets from frame_metadata
+		# Note: not accounting for rotation makes this worse than pixel-based offset detection
+
+		file_basenames = [os.path.basename(f) for f in files]
+		centers = [frame_metadata[f]['center_deg'] for f in file_basenames]
+		centers = [(float(center['ra']), float(center['dec'])) for center in centers]
+
+		# seems to differ a little between frames, must average
+		pixel_scales = [float(frame_metadata[f]['pixel_scale']['scale']) for f in file_basenames]
+		average_pixel_scale_aspp = sum(pixel_scales) / len(pixel_scales)
+
+		offsets = {}
+		for frame_index, center in enumerate(centers):
+			file_basename = file_basenames[frame_index]
+			if frame_index == 0:
+				offsets[file_basename] = (0, 0)
+			else:
+				offset_x_deg = centers[frame_index][0] - centers[0][0]
+				offset_y_deg = centers[frame_index][1] - centers[0][1]
+
+				c = math.cos(math.radians(centers[frame_index][1]))
+
+				offset_x_pix = -int(offset_x_deg * 3600.0 * c / average_pixel_scale_aspp)
+				offset_y_pix = int(offset_y_deg * 3600.0 / average_pixel_scale_aspp)
+				offsets[file_basename] = (offset_x_pix, offset_y_pix)
+
+		angles = {
+			f: float(frame_metadata[f]['rotation']['angle'])
+			for f in file_basenames
+		}
+
+		max_offset_x = int(max(x for x,_ in offsets.values()))
+		min_offset_x = int(min(x for x,_ in offsets.values()))
+		min_offset_y = int(min(y for _,y in offsets.values()))
+		max_offset_y = int(max(y for _,y in offsets.values()))
+
+		frame_0 = cls._load_frame(files[0], dtype=np.int32, color_mode=color_mode)
+		width, height, channels = frame_0.shape
+
+		output_width = width + abs(min_offset_x) + abs(max_offset_x)
+		output_height = height + abs(min_offset_y) + abs(max_offset_y)
+
+		image = np.zeros((output_width, output_height, channels), dtype=float)
+		samples = np.zeros((output_width, output_height), dtype=np.int16)
+
+		for filename in files:
+			filename = os.path.basename(filename)
+			offset_x, offset_y = offsets[filename]
+			angle = angles[filename]
+
+			filepath = os.path.join(directory, filename)
+			frame = cls._load_frame(filepath, dtype=float, color_mode=color_mode)
+
+			if master_dark is not None:
+				frame -= master_dark
+			if master_flat is not None:
+				frame /= master_flat
+
+			frame = rotate(frame, angle)
 
 			x = int(offset_x)+abs(min_offset_x)
 			y = int(offset_y)+abs(min_offset_y)
@@ -223,6 +300,12 @@ class ImageStackNebula:
 					max_x = max(max_x or x, x)
 					min_y = min(min_y or y, y)
 					max_y = max(max_y or y, y)
+
+		inset = 50
+		min_x += inset
+		max_x -= inset
+		min_y += inset
+		max_y -= inset
 
 		print(f'Cropping image to x=[{min_x},{max_x}], y=[{min_y},{max_y}]')
 		self.image = self.image[min_x:max_x+1, min_y:max_y+1, :]

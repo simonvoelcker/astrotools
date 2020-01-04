@@ -6,24 +6,7 @@ import json
 import numpy as np
 
 from image_stack_nebula import ImageStackNebula
-
-from influxdb import InfluxDBClient
 from util import create_average_frame
-
-
-def query_offsets(path_prefix):
-	# WIP
-	# Usage: query_offsets('../beute/191013')
-	path_prefix = path_prefix.replace('/', '\\/')
-	influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
-	offsets_query = f'SELECT ra_image_error, dec_image_error, file_path '\
-					f'FROM axis_log WHERE file_path =~ /{path_prefix}*/ ORDER BY time ASC'
-
-	offsets_result = influx_client.query(offsets_query)
-	# it will remain influxDBs secret why this is so complicated
-	rows = offsets_result.items()[0][1]
-	return {row['file_path']: (row['ra_image_error'], row['dec_image_error']) for row in rows}
-
 
 
 parser = argparse.ArgumentParser()
@@ -54,7 +37,6 @@ else:
 	master_flat = None
 
 
-print('Searching for files to stack')
 search_pattern = os.path.join(args.directory, args.filename_pattern)
 files = glob.glob(search_pattern)
 
@@ -70,17 +52,23 @@ if args.range is not None:
 	files = files[int(image_range[0]):int(image_range[1])]
 	print(f'Only {len(files)} files selected for stacking')
 
-print('Loading offsets from offsets.json')
-frame_offsets = None
-offsets_file = os.path.join(args.directory, 'offsets.json')
-with open(offsets_file, 'r') as f:
-	frame_offsets = json.load(f)
+# print('Loading offsets from offsets.json')
+# frame_offsets = None
+# offsets_file = os.path.join(args.directory, 'offsets.json')
+# with open(offsets_file, 'r') as f:
+# 	frame_offsets = json.load(f)
+
+print('Loading offsets from astrometric_metadata.json')
+astrometric_metadata = None
+metadata_file = os.path.join(args.directory, 'astrometric_metadata.json')
+with open(metadata_file, 'r') as f:
+	astrometric_metadata = json.load(f)
 
 print('Stacking...')
 image = ImageStackNebula.from_files(
 	args.directory,
 	files,
-	frame_offsets,
+	astrometric_metadata,
 	args.color_mode,
 	master_dark,
 	master_flat,

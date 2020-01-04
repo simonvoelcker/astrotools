@@ -4,4 +4,5 @@ __pycache__
 *.tif
 *.jpg
 *.wcs
+*.csv
 viewer/images

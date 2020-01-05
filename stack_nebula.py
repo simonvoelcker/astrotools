@@ -66,7 +66,6 @@ with open(metadata_file, 'r') as f:
 
 print('Stacking...')
 image = ImageStackNebula.from_files(
-	args.directory,
 	files,
 	astrometric_metadata,
 	args.color_mode,

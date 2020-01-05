@@ -62,9 +62,11 @@ class Tracking:
 			self.on_new_file(newest_file)
 
 	def on_new_file(self, file_path):
-		image_coordinates = locate_image(file_path, cpulimit=self.delay)
+		image_coordinates = locate_image(file_path)
 		if not image_coordinates:
-			print(f'Failed to locate: {file_path}')
+			print(f'Failed to locate: {file_path}. Falling back to resting speed.')
+			self.axis_control.set_motor_speed('A', -0.0047)		
+			self.axis_control.set_motor_speed('B', 0.0)
 			return
 
 		ra_error = image_coordinates.ra - self.target.ra

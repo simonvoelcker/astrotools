@@ -7,7 +7,7 @@
 			"invert": false,
 			"pid_p": 0.002,
 			"pid_i": 0.0,
-			"pid_d": 0.0,
+			"pid_d": 0.0
 		},
 		"dec": {
 			"center": 0.0005,

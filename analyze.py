@@ -9,14 +9,15 @@ import itertools
 import numpy as np
 
 from alignment import Alignment
-from util import get_astrometric_metadata, load_image_greyscale
+from frame import Frame
+from util import load_image_greyscale
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('directory', type=str)
 parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Pattern to use when searching for input images')
 parser.add_argument('--range', type=str, default=None, help='Stack only given range of images, not all')
-parser.add_argument('--amplification', type=int, default=5, help='Multiply images by this number before offset detection')
+parser.add_argument('--amplification', type=int, default=1, help='Multiply images by this number before offset detection')
 parser.add_argument('--threshold', type=int, default=128, help='Clip images by this brightness value after amplification')
 
 args = parser.parse_args()
@@ -43,10 +44,10 @@ astrometric_metadata_by_file = dict()
 
 for frame_index, file in enumerate(files):
 	basename = os.path.basename(file)
-	astrometric_metadata_by_file[basename] = get_astrometric_metadata(file)
+	astrometric_metadata_by_file[basename] = Frame.get_astrometric_metadata(file)
 
-	frame = load_image_greyscale(file)
-	offsets = alignment.get_offsets(frame, frame_index)
+	frame_image = load_image_greyscale(file)
+	offsets = alignment.get_offsets(frame_image, frame_index)
 	frame_offsets_by_file[basename] = offsets
 	
 	print(f'({frame_index+1}/{len(files)}) Name={basename}, Offset={offsets}')

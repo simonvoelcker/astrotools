@@ -113,66 +113,16 @@ def locate_image(filepath, cpulimit=5):
 		'--rdls', 'none',
 		'--wcs', 'none',
 	]
-	output = subprocess.check_output(solve_command, stderr=subprocess.DEVNULL).decode()
+	try:
+		output = subprocess.check_output(solve_command, timeout=cpulimit, stderr=subprocess.DEVNULL).decode()
+	except subprocess.TimeoutExpired:
+		print('Timed out trying to solve field')
+		return None
 	astrometry_coordinates_rx = re.compile(r'^.*RA,Dec = \((?P<ra>[\d\.]+),(?P<dec>[\d\.]+)\).*$', re.DOTALL)
 	match = astrometry_coordinates_rx.match(output)
 	if not match:
 		return None
 	return Coordinates(float(match.group('ra')), float(match.group('dec')))
-
-
-def get_astrometric_metadata(filepath, cpulimit=5):
-	solve_command = [
-		'/usr/local/astrometry/bin/solve-field',
-		filepath,
-		'--scale-units', 'arcsecperpix',
-		'--scale-low', '0.8',
-		'--scale-high', '1.0',
-		'--cpulimit', str(cpulimit),
-		'--overwrite',
-		'--no-plots',
-		'--parity', 'pos',
-		'--temp-axy',
-		'--solved', 'none',
-		'--corr', 'none',
-		'--new-fits', 'none',
-		'--index-xyls', 'none',
-		'--match', 'none',
-		'--rdls', 'none',
-		'--wcs', 'last_match.wcs',  # must be non-none so the detailed output is available
-	]
-	output = subprocess.check_output(solve_command, stderr=subprocess.DEVNULL).decode()
-
-	# Output example:
-	#
-	# [...] pixel scale 0.907073 arcsec/pix.
-	# [...]
-	# Field center: (RA,Dec) = (114.133515, 65.594210) deg.
-	# Field center: (RA H:M:S, Dec D:M:S) = (07:36:32.044, +65:35:39.156).
-	# Field size: 28.9649 x 16.3092 arcminutes
-	# Field rotation angle: up is 1.76056 degrees E of N
-	# Field parity: pos
-	# [...]
-
-	metadata_regexes = {
-		'pixel_scale': r'^.*pixel scale (?P<scale>[\d\.]*) (?P<unit>[\w\/]*)\..*$',
-		'center_deg': r'^.*Field center: \(RA,Dec\) = \((?P<ra>[\d\.]*), (?P<dec>[\d\.]*)\) deg\..*$',
-		'center': r'^.*Field center: \(RA H:M:S, Dec D:M:S\) = \((?P<ra>[\d\.\:]*), (?P<dec>[\d\.\:\+\-]*)\)\..*$',
-		'size': r'^.*Field size: (?P<width>[\d\.]*) x (?P<height>[\d\.]*) (?P<unit>\w*).*$',
-		'rotation': r'^.*Field rotation angle: up is (?P<angle>[\d\.]*) degrees (?P<direction>[WE]) of N.*$',
-		'parity': r'^.*Field parity: (?P<parity>pos|neg).*$',
-	}
-
-	metadata = {}
-	for metadata_key, metadata_regex in metadata_regexes.items():
-		rx = re.compile(metadata_regex, re.DOTALL)
-		match = rx.match(output)
-		if not match:
-			print('WARN: No match found for "{metadata_key}" in output of solve-field of file {filepath}.')
-			print('Field may not have been solved or the output of the solver could not be parsed.')
-		metadata[metadata_key] = match.groupdict() if match else None
-
-	return metadata
 
 
 def query_offsets(path_prefix):

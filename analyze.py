@@ -1,7 +1,7 @@
+import os
 import sys
 import glob
 import argparse
-import os
 
 from analyzer import Analyzer
 from frame import Frame
@@ -35,10 +35,11 @@ analyzer = Analyzer(args.amplification, args.threshold)
 
 for frame_index, filepath in enumerate(files):
 	frame = Frame(filepath)
-	analyzer.analyze(frame, frame_index)
+	analyzer.analyze(frame)
 	print(f'Processed frame {frame_index+1}/{len(files)}')
 
 analyzer.write_astrometric_metadata(args.directory)
 analyzer.write_offsets_file(args.directory)
+analyzer.create_offsets_plot()
 
 print('Done')

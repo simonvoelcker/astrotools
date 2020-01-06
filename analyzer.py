@@ -2,6 +2,7 @@ import os
 import sys
 import math
 import json
+import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -13,64 +14,86 @@ from util import load_image_greyscale
 
 
 class Analyzer:
-	# Rotation, Flipping, Offset detection.
 
-	def __init__(self, amplification=5, threshold=128):
+	def __init__(self, amplification=1, threshold=128):
 		# factor by which brightness should be scaled up for alignment
 		self.amplification = amplification
 		# brightness threshold to apply before alignment
 		self.threshold = threshold
 
-		self.key_frame = None
+		self.offsets_reference_frame = None
 
-		# map frame index to offsets-tuple
-		self.frame_offsets = {0: (0,0)}
+		# map frames to frame metadata
+		self.frame_offsets = {}
+		self.astrometric_metadata = {}
+		self.frame_times = {}
 
-		self.frame_offsets_by_file = {}
-		self.astrometric_metadata_by_file = {}
-
-	def analyze(self, frame, frame_index):
-		basename = os.path.basename(frame.filepath)
-		self.astrometric_metadata_by_file[basename] = Frame.get_astrometric_metadata(frame.filepath)
+	def analyze(self, frame):
+		self.astrometric_metadata[frame] = Frame.get_astrometric_metadata(frame.filepath)
 		frame_image = load_image_greyscale(frame.filepath)
-		self.frame_offsets_by_file[basename] = self.get_offsets(frame_image, frame_index)
+		self.frame_offsets[frame] = self.get_offsets(frame_image)
 
-	def get_offsets(self, frame, frame_index):
+		frame_time_posix = os.path.getctime(frame.filepath)
+		frame_time = datetime.datetime.utcfromtimestamp(frame_time_posix)
+		self.frame_times[frame] = frame_time
+
+	def get_offsets(self, frame):
 		# apply measures to improve offset detection on our kind of images
-		# TODO use those sneaky sigma-tricks from the astrometry guys
 		curr_frame = np.clip(frame * self.amplification, self.threshold, 255)
 
-		if frame_index == 0:
-			self.key_frame = curr_frame
-			return (0,0)
+		if self.offsets_reference_frame is None:
+			self.offsets_reference_frame = curr_frame
+			return 0, 0
 
-		(offset_x, offset_y), error, _ = register_translation(self.key_frame, curr_frame)
-		offsets = (offset_x, offset_y)
-		self.frame_offsets[frame_index] = offsets
-		return offsets
+		(offset_x, offset_y), error, _ = register_translation(self.offsets_reference_frame, curr_frame)
+		return (offset_x, offset_y)
 
 	def write_astrometric_metadata(self, directory, filename='astrometric_metadata.json'): 
 		filepath = os.path.join(directory, filename)
+		metadata_by_file = {
+			os.path.basename(frame.filepath): metadata
+			for frame, metadata in self.astrometric_metadata.items()
+		}
 		with open(filepath, 'w') as f:
-			json.dump(self.astrometric_metadata_by_file, f, indent=4, sort_keys=True)
+			json.dump(metadata_by_file, f, indent=4, sort_keys=True)
 
-	def write_offsets_file(self, directory, filename='offsets,json'):
+	def write_offsets_file(self, directory, filename='offsets.json'):
 		filepath = os.path.join(directory, filename)
+		offsets_by_file = {
+			os.path.basename(frame.filepath): offsets
+			for frame, offsets in self.frame_offsets.items()
+		}
 		with open(filepath, 'w') as f:
-			json.dump(self.frame_offsets_by_file, f, indent=4, sort_keys=True)
+			json.dump(offsets_by_file, f, indent=4, sort_keys=True)
 
-	def create_plot(self, title, filename):
-		x_offsets = np.array([x for _, (x,y) in self.frame_offsets.items()])
-		y_offsets = np.array([y for _, (x,y) in self.frame_offsets.items()])
+	def create_offsets_plot(self, filename='offsets_plot.png'):
+		x_offsets = np.array([x for x,y in self.frame_offsets.values()])
+		y_offsets = np.array([y for x,y in self.frame_offsets.values()])
 
 		colors = (0,0,0)
 		area = np.pi*3
 
 		plt.scatter(x_offsets, y_offsets, s=area, c=colors, alpha=0.5)
-		plt.title(title)
+		plt.title('Frame offsets')
 		plt.xlabel('x')
 		plt.ylabel('y')
 		plt.savefig(filename)
+
+	def write_to_influx(self):
+		influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
+	
+		time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
+		body = [
+		    {
+		        'measurement': 'frame_stats',
+		        'tags': {
+		            'source': 'analyzer.py',
+		        },
+		        'time': time,
+		        'fields': kwargs, 
+		    }
+		]
+		influx_client.write_points(body)
 
 #
 # Experimental: Detect blurry frames through offsets between runs of three frames

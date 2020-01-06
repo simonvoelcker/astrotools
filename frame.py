@@ -6,7 +6,7 @@ import re
 
 class Frame:
 
-	def __init__(self, filepath, metadata):
+	def __init__(self, filepath, metadata=None):
 		self.filepath = filepath
 		self.metadata = metadata
 

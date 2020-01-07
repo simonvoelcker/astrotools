@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 from PIL import Image
 from skimage.feature import register_translation
+from influxdb import InfluxDBClient
 
 from frame import Frame
 from util import load_image_greyscale
@@ -26,20 +27,28 @@ class Analyzer:
 		# map frames to frame metadata
 		self.frame_offsets = {}
 		self.astrometric_metadata = {}
-		self.frame_times = {}
+		self.frame_brightness = {}
+
+	def get_astrometric_metadata_hint(self):
+		for metadata in self.astrometric_metadata.values():
+			if metadata is not None:
+				return {
+					'ra': metadata['center_deg']['ra'],
+					'dec': metadata['center_deg']['dec'],
+					'radius': 1.0,
+				}
+		return None
 
 	def analyze(self, frame):
-		self.astrometric_metadata[frame] = Frame.get_astrometric_metadata(frame.filepath)
-		frame_image = load_image_greyscale(frame.filepath)
-		self.frame_offsets[frame] = self.get_offsets(frame_image)
-
-		frame_time_posix = os.path.getctime(frame.filepath)
-		frame_time = datetime.datetime.utcfromtimestamp(frame_time_posix)
-		self.frame_times[frame] = frame_time
+		hint = self.get_astrometric_metadata_hint()
+		self.astrometric_metadata[frame] = frame.compute_astrometric_metadata(hint)
+		self.frame_offsets[frame] = self.get_offsets(frame)
+		self.frame_brightness[frame] = np.average(load_image_greyscale(frame.filepath))
 
 	def get_offsets(self, frame):
+		frame_image = load_image_greyscale(frame.filepath)
 		# apply measures to improve offset detection on our kind of images
-		curr_frame = np.clip(frame * self.amplification, self.threshold, 255)
+		curr_frame = np.clip(frame_image * self.amplification, self.threshold, 255)
 
 		if self.offsets_reference_frame is None:
 			self.offsets_reference_frame = curr_frame
@@ -81,19 +90,53 @@ class Analyzer:
 
 	def write_to_influx(self):
 		influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
-	
-		time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
-		body = [
-		    {
-		        'measurement': 'frame_stats',
-		        'tags': {
-		            'source': 'analyzer.py',
-		        },
-		        'time': time,
-		        'fields': kwargs, 
-		    }
-		]
-		influx_client.write_points(body)
+
+		frames = list(self.frame_offsets.keys())
+
+		frame_0_time_posix = os.path.getctime(frames[0].filepath)
+		exposure = 15
+
+		for frame_index, frame in enumerate(frames):
+			frame_time_posix = frame_0_time_posix + frame_index * exposure
+			frame_time = datetime.datetime.utcfromtimestamp(frame_time_posix).strftime('%Y-%m-%dT%H:%M:%S%Z')
+			print(f'Frame {os.path.basename(frame.filepath)}: Time={frame_time}')
+
+			fields = {
+				'filepath': frame.filepath,
+				'basename': os.path.basename(frame.filepath),
+				'time_posix': float(frame_time_posix),
+			}
+			metadata = self.astrometric_metadata[frame]
+			if metadata is not None:
+				fields.update({
+					'center_ra': metadata['center']['ra'],
+					'center_dec': metadata['center']['dec'],
+					'center_ra_deg': float(metadata['center_deg']['ra']),
+					'center_dec_deg': float(metadata['center_deg']['dec']),
+					'parity': bool(metadata['parity']['parity'] == 'pos'),
+					'pixel_scale': float(metadata['pixel_scale']['scale']),
+					'pixel_scale_unit': metadata['pixel_scale']['unit'],
+					'rotation_angle': float(metadata['rotation']['angle']),
+					'rotation_direction': metadata['rotation']['direction'],
+					'size_width': float(metadata['size']['width']),
+					'size_height': float(metadata['size']['height']),
+					'size_unit': metadata['size']['unit'],
+					'offset_x': float(self.frame_offsets[frame][0]),
+					'offset_y': float(self.frame_offsets[frame][1]),
+					'brightness': float(self.frame_brightness[frame]),
+				})
+
+			body = [
+			    {
+			        'measurement': 'frame_stats',
+			        'tags': {
+			            'source': 'analyzer.py',
+			        },
+			        'time': frame_time,
+			        'fields': fields, 
+			    }
+			]
+			influx_client.write_points(body)
 
 #
 # Experimental: Detect blurry frames through offsets between runs of three frames

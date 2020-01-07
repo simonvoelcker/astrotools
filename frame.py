@@ -43,8 +43,11 @@ class Frame:
 
 		return (offset_x_pix, offset_y_pix)
 
+	def compute_astrometric_metadata(self, hint):
+		return self.get_astrometric_metadata(self.filepath, hint=hint)
+
 	@staticmethod
-	def get_astrometric_metadata(filepath, cpulimit=5):
+	def get_astrometric_metadata(filepath, cpulimit=5, hint=None):
 		solve_command = [
 			'/usr/local/astrometry/bin/solve-field',
 			filepath,
@@ -64,8 +67,14 @@ class Frame:
 			'--rdls', 'none',
 			'--wcs', 'last_match.wcs',  # must be non-none so the detailed output is available
 		]
+		if hint is not None:
+			solve_command += [
+				'--ra', str(hint['ra']),
+				'--dec', str(hint['dec']),
+				'--radius', str(hint['radius']),
+			]
 		try:
-			output = subprocess.check_output(solve_command, timeout=cpulimit, stderr=subprocess.DEVNULL).decode()
+			output = subprocess.check_output(solve_command, timeout=30, stderr=subprocess.DEVNULL).decode()
 		except subprocess.TimeoutExpired:
 			print('Timed out trying to solve field')
 			return None
@@ -95,8 +104,9 @@ class Frame:
 			rx = re.compile(metadata_regex, re.DOTALL)
 			match = rx.match(output)
 			if not match:
-				print('WARN: No match found for "{metadata_key}" in output of solve-field of file {filepath}.')
+				print(f'WARN: No match found for "{metadata_key}" in output of solve-field of file {filepath}.')
 				print('Field may not have been solved or the output of the solver could not be parsed.')
+				return None
 			metadata[metadata_key] = match.groupdict() if match else None
 
 		return metadata

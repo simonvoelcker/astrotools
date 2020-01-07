@@ -36,10 +36,11 @@ analyzer = Analyzer(args.amplification, args.threshold)
 for frame_index, filepath in enumerate(files):
 	frame = Frame(filepath)
 	analyzer.analyze(frame)
-	print(f'Processed frame {frame_index+1}/{len(files)}')
+	print(f'Processed frame {frame_index+1}/{len(files)}: {frame.filepath}')
 
 analyzer.write_astrometric_metadata(args.directory)
 analyzer.write_offsets_file(args.directory)
 analyzer.create_offsets_plot()
+analyzer.write_to_influx()
 
 print('Done')

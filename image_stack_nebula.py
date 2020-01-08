@@ -323,3 +323,4 @@ class ImageStackNebula:
 		yx_image = yx_image.astype(np.uint8)
 		pil_image = Image.fromarray(yx_image, mode='L')
 		pil_image.save(filename)
+		

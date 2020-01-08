@@ -36,6 +36,10 @@ def create_average_frame(directory, search_pattern, color_mode):
 
 
 def save_image(image, filename):
+	if image.shape[2] == 1:
+		save_image_greyscale(image[:,:,0], filename)
+		return
+
 	yxc_image = np.transpose(image, (1, 0, 2))
 	yxc_image = yxc_image.astype(np.int8)
 	pil_image = Image.fromarray(yxc_image, mode='RGB')

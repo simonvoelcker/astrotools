@@ -6,7 +6,7 @@ import json
 import numpy as np
 
 from image_stack_nebula import ImageStackNebula
-from util import create_average_frame
+from util import create_average_frame, save_image
 
 
 parser = argparse.ArgumentParser()
@@ -27,12 +27,16 @@ parser.add_argument('--color-mode', type=str, default='rgb', help='Options: grey
 args = parser.parse_args()
 
 master_dark = create_average_frame(args.darks, args.filename_pattern, args.color_mode)
+if master_dark is not None:
+	save_image(master_dark * 64.0, 'master_dark.png')
 average_flat = create_average_frame(args.flats, args.filename_pattern, args.color_mode)
 average_bias = create_average_frame(args.biases, args.filename_pattern, args.color_mode)
 
 if average_flat is not None and average_bias is not None:
 	average_flat -= average_bias
 	master_flat = average_flat / np.average(average_flat)
+	save_image(average_bias * 64.0, 'average_bias.png')
+	save_image((master_flat - 1.0) * 1500.0 + 128.0, 'master_flat.png')
 else:
 	master_flat = None
 

@@ -29,12 +29,19 @@ class Frame:
 		# but can be found in self.metadata['pixel_scale']['unit']
 		return float(self.metadata['pixel_scale']['scale'])
 
-	def get_pixel_offset(self, reference_frame, average_pixel_scale_aspp):
+	def get_offset_degrees(self, reference_frame):
 		if reference_frame == self:
 			return (0, 0)
 
 		offset_x_deg = self.center[0] - reference_frame.center[0]
 		offset_y_deg = self.center[1] - reference_frame.center[1]
+		return (offset_x_deg, offset_y_deg)
+
+	def get_pixel_offset(self, reference_frame, average_pixel_scale_aspp):
+		if reference_frame == self:
+			return (0, 0)
+
+		offset_x_deg, offset_y_deg = self.get_offset_degrees(reference_frame)
 
 		c = math.cos(math.radians(self.center[1]))
 

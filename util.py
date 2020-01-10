@@ -3,6 +3,7 @@ import subprocess
 import re
 import os
 import glob
+import itertools
 
 from PIL import Image
 from skimage.filters import laplace, sobel
@@ -143,3 +144,10 @@ def query_offsets(path_prefix):
 	# it will remain influxDBs secret why this is so complicated
 	rows = offsets_result.items()[0][1]
 	return {row['file_path']: (row['ra_image_error'], row['dec_image_error']) for row in rows}
+
+
+def pairwise(iterable):
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    a, b = itertools.tee(iterable)
+    next(b, None)
+    return zip(a, b)

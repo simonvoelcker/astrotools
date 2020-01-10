@@ -70,14 +70,7 @@ class ImageStackNebula:
 
 
 	@classmethod
-	def from_files(cls, files, frame_metadata, color_mode, master_dark, master_flat):
-
-		frames = [
-			Frame(filepath, frame_metadata[os.path.basename(filepath)])
-			for filepath in files
-			if frame_metadata[os.path.basename(filepath)] is not None
-		]
-
+	def stack_frames(cls, frames, color_mode, master_dark, master_flat):
 		# seems to differ a little between frames, must average
 		pixel_scales = [frame.pixel_scale for frame in frames]
 		average_pixel_scale_aspp = sum(pixel_scales) / len(pixel_scales)
@@ -93,7 +86,7 @@ class ImageStackNebula:
 		min_offset_y = int(min(y for _,y in offsets.values()))
 		max_offset_y = int(max(y for _,y in offsets.values()))
 
-		frame_0 = cls._load_frame(files[0], dtype=np.int32, color_mode=color_mode)
+		frame_0 = cls._load_frame(frames[0].filepath, dtype=np.int32, color_mode=color_mode)
 		width, height, channels = frame_0.shape
 
 		output_width = width + abs(min_offset_x) + abs(max_offset_x)
@@ -122,7 +115,7 @@ class ImageStackNebula:
 		return ImageStackNebula(image, samples)
 
 	@classmethod
-	def from_frames(cls, frames, offsets):
+	def from_frames_old(cls, frames, offsets):
 		max_offset_x = int(max(x for x,_ in offsets))
 		min_offset_x = int(min(x for x,_ in offsets))
 		min_offset_y = int(min(y for _,y in offsets))

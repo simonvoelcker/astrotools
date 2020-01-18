@@ -9,7 +9,7 @@ from skimage.transform import rotate
 from frame import Frame
 
 
-class ImageStackNebula:
+class ImageStack:
 
 	def __init__(self, image, samples):
 		self.image = image
@@ -66,8 +66,7 @@ class ImageStackNebula:
 			image[x:x+width, y:y+height, :] += frame
 			samples[x:x+width, y:y+height] += 1
 
-		return ImageStackNebula(image, samples)
-
+		return ImageStack(image, samples)
 
 	@classmethod
 	def stack_frames(cls, frames, color_mode, master_dark, master_flat):
@@ -112,7 +111,7 @@ class ImageStackNebula:
 			image[x:x+width, y:y+height, :] += frame_image
 			samples[x:x+width, y:y+height] += 1
 
-		return ImageStackNebula(image, samples)
+		return ImageStack(image, samples)
 
 	@classmethod
 	def from_frames_old(cls, frames, offsets):
@@ -137,7 +136,7 @@ class ImageStackNebula:
 			image[x:x+width, y:y+height, :] += frame
 			samples[x:x+width, y:y+height] += 1
 
-		return ImageStackNebula(image, samples)
+		return ImageStack(image, samples)
 
 	@staticmethod
 	def _get_sharpness(xyc_image):
@@ -190,73 +189,6 @@ class ImageStackNebula:
 		_w, _h, channels = self.image.shape
 		for channel in range(channels):
 			self.image[:,:,channel] = self.image[:,:,channel] * max_samples / self.samples
-
-	def normalize_histogram(self, num_bins=256):
-		print(f'Normalizing histogram, using {num_bins} bins')
-		unique_values = np.unique(self.image)
-		num_unique_values = len(unique_values)
-		histogram = np.histogram(self.image, bins=num_unique_values)
-
-		# histogram = (<bin sizes>, <color value>)
-		num_values = sum(histogram[0])
-		
-		num_out_bins = num_bins
-		out_bin_size = num_values / num_out_bins
-
-		out_bins = []
-
-		cum_bin_size = 0
-		for bin_size, color_value in zip(*histogram):
-			cum_bin_size += bin_size
-			if cum_bin_size >= out_bin_size:
-				# produce a bin
-				out_bins.append(color_value)
-				cum_bin_size = 0 #-= out_bin_size
-				#print(out_bin_size, cum_bin_size)
-
-		if len(out_bins) != num_out_bins:
-			print(f'Error. Out bins={len(out_bins)}, expected {num_out_bins}')
-			return
-		#if cum_bin_size != 0:
-		#	print(f'Error. Remaining cumulative bin size is {cum_bin_size} after bin creation')
-		#	return
-
-		bin_from_value = dict()
-		for value in unique_values:
-			bin_found = False
-			for bin_index, bin_value in enumerate(out_bins):
-				if bin_value >= value:
-					bin_from_value[value] = bin_index
-					bin_found = True
-					break
-			if not bin_found:
-				bin_from_value[value] = len(out_bins)-1
-
-		def bin_index(value):
-			return bin_from_value[value]
-
-		self.apply_function(bin_index)
-
-	def clamp_outliers(self, shades):
-		# TODO restore this when needed
-
-		unique_values = np.unique(self.image)
-		if len(unique_values) < 2*shades+1:
-			print(f'Not enough different colors in the image to clamp outliers.')
-			return
-		print(f'Clamping outliers. Found {len(unique_values)} unique color values')
-
-		# we will need negative indexing to get the n highest values
-		unique_values = list(unique_values)
-
-		def clamp(value):
-			if value == 0:
-				return 0.5
-			#if value > unique_values[-shades]:
-			#	return unique_values[-shades]
-			return value
-
-		self.apply_function(clamp)
 
 	def crop(self, cx, cy, r):
 		# crop image to a square with center <cx,cy> and radius <>.

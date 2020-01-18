@@ -1,6 +1,6 @@
 import numpy as np
 
-from image_stack_nebula import ImageStackNebula
+from image_stack import ImageStack
 
 
 class Preview:
@@ -15,7 +15,7 @@ class Preview:
 		self.stack_and_save()
 
 	def stack_and_save(self):
-		preview = ImageStackNebula.from_frames(self.frames, self.offsets)
+		preview = ImageStack.from_frames(self.frames, self.offsets)
 		preview.auto_crop(np.amax(preview.samples))
 		preview.convert_to_grayscale()
 		preview.normalize_samples()

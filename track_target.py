@@ -9,7 +9,7 @@ from datetime import datetime
 from simple_pid import PID
 from influxdb import InfluxDBClient
 
-from steer import AxisControl
+from axis_control import AxisControl
 from util import locate_image
 
 

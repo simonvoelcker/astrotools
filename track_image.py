@@ -13,7 +13,7 @@ from influxdb import InfluxDBClient
 
 from preview import Preview
 from util import load_image
-from steer import AxisControl
+from axis_control import AxisControl
 
 config = {
 	'ra_center': -0.0047,

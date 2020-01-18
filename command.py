@@ -4,7 +4,7 @@ import glob
 import os
 import json
 
-from steer import AxisControl
+from axis_control import AxisControl
 from util import locate_image
 from coordinates import Coordinates
 from catalog import Catalog

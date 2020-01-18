@@ -8,7 +8,7 @@ import itertools
 from PIL import Image
 from skimage.filters import laplace, sobel
 from coordinates import Coordinates
-from image_stack_nebula import ImageStackNebula
+from image_stack import ImageStack
 from influxdb import InfluxDBClient
 
 
@@ -32,7 +32,7 @@ def create_average_frame(directory, search_pattern, color_mode):
 	full_search_pattern = os.path.join(directory, search_pattern)
 	files = glob.glob(full_search_pattern)
 	print(f'Found {len(files)} frames in {directory} - Creating an average frame')
-	average_frame = ImageStackNebula.create_average_frame(directory, files, color_mode)
+	average_frame = ImageStack.create_average_frame(directory, files, color_mode)
 	return average_frame
 
 

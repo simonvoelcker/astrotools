@@ -5,7 +5,7 @@ import os
 import json
 import numpy as np
 
-from image_stack_nebula import ImageStackNebula
+from image_stack import ImageStack
 from util import create_average_frame, save_image
 from filter import Filter
 from frame import Frame
@@ -76,7 +76,7 @@ frames = [
 frames = Filter(args.offset_filter or 1.0).apply(frames)
 
 print('Stacking...')
-image = ImageStackNebula.stack_frames(frames, args.color_mode, master_dark,	master_flat)
+image = ImageStack.stack_frames(frames, args.color_mode, master_dark, master_flat)
 
 if args.auto_crop:
 	max_samples = np.amax(image.samples)

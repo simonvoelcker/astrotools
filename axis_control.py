@@ -3,6 +3,7 @@ import sys
 import serial
 import argparse
 import time
+import math
 
 
 class AxisControl:
@@ -11,14 +12,13 @@ class AxisControl:
 	ra_resting_speed = -0.0047
 	dec_resting_speed = 0.0
 
-	ra_max_speed = 0.4
-	dec_max_speed = 0.3
+	max_axis_speed = 0.3
 
 	ra_axis_ratio = 69.0 * 3.0 * 2.0  # 2.0 is magic
 	dec_axis_ratio = 105.6 * 2.0  # 2.0 is magic
 
 	dec_backlash_direction = None  # +1, -1, None
-	dec_backlash_revolutions = 0.2
+	dec_backlash_revolutions = 0.0  # more like 0.5 or 1
 
 	def __init__(self):
 		self.serial = None
@@ -59,44 +59,56 @@ class AxisControl:
 			print(response)
 		return match.group('P1'), match.group('P2')
 
-	def _calc_ra_maneuver(self, ra_from, ra_to):
+	def _calc_ra_maneuver(self, ra_from, ra_to, max_speed_dps):
 		if not ra_from or not ra_to or ra_from == ra_to:
 			return None
 
+		ra_axis_speed = self.max_axis_speed
+		if max_speed_dps is not None:
+			max_speed_override = max_speed_dps / 360.0 * self.ra_axis_ratio
+			print(f'RA speed decision: min({ra_axis_speed:.2f}, {max_speed_override:.2f})')
+			ra_axis_speed = min(ra_axis_speed, max_speed_override)
+
 		ra_revolutions = (ra_to-ra_from) / 360.0 * self.ra_axis_ratio
-		ra_speed = (self.ra_max_speed if ra_revolutions > 0 else -self.ra_max_speed) + self.ra_resting_speed
-		ra_time = abs(ra_revolutions / ra_speed)
+		duration = abs(ra_revolutions / ra_axis_speed)
+		ra_axis_speed = math.copysign(ra_axis_speed, ra_revolutions) + self.ra_resting_speed
 
-		if ra_revolutions > 0 and ra_time < 5:
+		if ra_revolutions > 0 and duration < 5:
 			# just wait at zero speed instead of steering
-			ra_speed = 0
-			ra_time = ra_revolutions / -self.ra_resting_speed
+			ra_axis_speed = 0
+			duration = -ra_revolutions / self.ra_resting_speed
 
-		return ra_speed, ra_time
+		return ra_axis_speed, duration
 		
-	def _calc_dec_maneuver(self, dec_from, dec_to):
+	def _calc_dec_maneuver(self, dec_from, dec_to, max_speed_dps):
 		if not dec_from or not dec_to or dec_from == dec_to:
 			return None
 
-		dec_revolutions = (dec_to-dec_from) / 360.0 * self.dec_axis_ratio
+		dec_axis_speed = self.max_axis_speed
+		if max_speed_dps is not None:
+			max_speed_override = max_speed_dps / 360.0 * self.dec_axis_ratio
+			print(f'Dec speed decision: min({dec_axis_speed:.2f}, {max_speed_override:.2f})')
+			dec_axis_speed = min(dec_axis_speed, max_speed_override)
 
+		dec_revolutions = (dec_to-dec_from) / 360.0 * self.dec_axis_ratio
 		if self.dec_backlash_direction is not None:
 			if self.dec_backlash_direction > 0 and dec_revolutions > 0:
-				print(f'Applying backlash correction due to direction change: {dec_revolutions} revs => {dec_revolutions + self.dec_backlash_revolutions} revs')
 				dec_revolutions += self.dec_backlash_revolutions
 			elif self.dec_backlash_direction < 0 and dec_revolutions < 0:
-				print(f'Applying backlash correction due to direction change: {dec_revolutions} revs => {dec_revolutions - self.dec_backlash_revolutions} revs')
 				dec_revolutions -= self.dec_backlash_revolutions
 
-		dec_speed = -self.dec_max_speed if dec_revolutions > 0 else self.dec_max_speed
-		dec_time = abs(dec_revolutions / dec_speed)
+		duration = abs(dec_revolutions / dec_axis_speed)
+		dec_axis_speed = math.copysign(dec_axis_speed, dec_revolutions)
 
-		return dec_speed, dec_time
+		# beware: magic minus
+		dec_axis_speed = -dec_axis_speed
 
-	def steer(self, here, target):
+		return dec_axis_speed, duration
 
-		ra_maneuver = self._calc_ra_maneuver(here.ra, target.ra)
-		dec_maneuver = self._calc_dec_maneuver(here.dec, target.dec)
+	def steer(self, here, target, max_speed_dps=None):
+
+		ra_maneuver = self._calc_ra_maneuver(here.ra, target.ra, max_speed_dps)
+		dec_maneuver = self._calc_dec_maneuver(here.dec, target.dec, max_speed_dps)
 
 		if ra_maneuver and dec_maneuver:
 			# combined maneuver

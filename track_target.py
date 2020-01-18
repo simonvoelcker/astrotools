@@ -2,6 +2,7 @@ import glob
 import os
 import time
 import shutil
+import math
 import numpy as np
 
 from datetime import datetime
@@ -61,27 +62,49 @@ class Tracking:
 			print(f'Handling new file: {newest_file}')
 			self.on_new_file(newest_file)
 
+	def get_tracking_mode_config(self, ra_error, dec_error):
+		# get the appropriate tracking mode config for the current error
+		total_error = math.hypot(ra_error, dec_error)
+		for mode_config in self.config['modes']:
+			max_error = mode_config['max_error_deg']
+			if max_error is None or total_error <= max_error:
+				print(f'RA err: {ra_error:.2f}, Dec err: {dec_error:.2f}, '\
+					  f'Total err: {total_error:.2f} => Mode: {mode_config["name"]}')
+				return mode_config
+		print(f'Warn: Found no tracking mode config for total err: {total_error}')
+		return None
+
 	def on_new_file(self, file_path):
 		image_coordinates = locate_image(file_path)
 		if not image_coordinates:
 			print(f'Failed to locate: {file_path}. Falling back to resting speed.')
-			self.axis_control.set_motor_speed('A', -0.0047)		
-			self.axis_control.set_motor_speed('B', 0.0)
+			self.axis_control.set_motor_speed('A', AxisControl.ra_resting_speed)		
+			self.axis_control.set_motor_speed('B', AxisControl.dec_resting_speed)
 			return
 
 		ra_error = image_coordinates.ra - self.target.ra
 		dec_error = image_coordinates.dec - self.target.dec
 
-		print(f'image: {image_coordinates} target: {self.target}')
+		mode_config = self.get_tracking_mode_config(ra_error, dec_error)
+
+		if 'Steering' in mode_config['name']:
+			self.axis_control.steer(
+				here=image_coordinates,
+				target=self.target,
+				max_speed_dps=mode_config['max_speed_dps'],
+			)
+			print('Waiting for axes to settle')
+			time.sleep(mode_config['delay_after_maneuver_sec'])
+			return
 
 		ra_speed = self.config['ra']['center'] + self.ra_pid(-ra_error if self.config['ra']['invert'] else ra_error)
 		dec_speed = self.config['dec']['center'] + self.dec_pid(-dec_error if self.config['dec']['invert'] else dec_error)
 
-		self.axis_control.set_motor_speed('A', ra_speed)		
-		self.axis_control.set_motor_speed('B', dec_speed)
-
 		print(f'RA error: {ra_error:8.6f}, DEC error: {dec_error:8.6f}, '\
 			  f'RA speed: {ra_speed:8.6f}, DEC speed: {dec_speed:8.6f}')
+		
+		self.axis_control.set_motor_speed('A', ra_speed)		
+		self.axis_control.set_motor_speed('B', dec_speed)
 
 		if self.influx_client is not None:
 			self.write_frame_stats(

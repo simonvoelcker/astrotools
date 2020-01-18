@@ -16,6 +16,26 @@
 			"pid_p": 0.05,
 			"pid_i": 0.0,
 			"pid_d": 0.0
-		}		
+		},
+		"modes": [
+			{
+				"name": "Continuous Tracking",
+				"max_error_deg": 0.03,
+				"max_speed_dps": 0.0003,
+				"delay_after_maneuver_sec": null
+			},
+			{
+				"name": "Fine Steering",
+				"max_error_deg": 1.0,
+				"max_speed_dps": 0.01,
+				"delay_after_maneuver_sec": 30
+			},
+			{
+				"name": "Steering",
+				"max_error_deg": null,
+				"max_speed_dps": 1.0,
+				"delay_after_maneuver_sec": 30
+			}
+		]
 	}
 }

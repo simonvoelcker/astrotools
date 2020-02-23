@@ -114,6 +114,77 @@ class ImageStack:
 		return ImageStack(image, samples)
 
 	@classmethod
+	def stack_frames_inmem(cls, frames, color_mode, master_dark, master_flat):
+		# pixel scale seems to differ a little between frames, must average
+		pixel_scales = [frame.pixel_scale for frame in frames]
+		average_pixel_scale_aspp = sum(pixel_scales) / len(pixel_scales)
+
+		reference_frame = frames[0]
+		offsets = {
+			frame: frame.get_pixel_offset(reference_frame, average_pixel_scale_aspp)
+			for frame in frames
+		}
+
+		max_offset_x = int(max(x for x,_ in offsets.values()))
+		min_offset_x = int(min(x for x,_ in offsets.values()))
+		min_offset_y = int(min(y for _,y in offsets.values()))
+		max_offset_y = int(max(y for _,y in offsets.values()))
+
+		frame_0 = cls._load_frame(frames[0].filepath, dtype=np.int32, color_mode=color_mode)
+		width, height, channels = frame_0.shape
+
+		output_width = width + abs(min_offset_x) + abs(max_offset_x)
+		output_height = height + abs(min_offset_y) + abs(max_offset_y)
+		num_frames = len(frames)
+
+		stack = np.zeros((num_frames, output_width, output_height, channels), dtype=float)
+		samples = np.zeros((output_width, output_height), dtype=np.int16)
+
+		for frame_index, frame in enumerate(frames):
+			offset_x, offset_y = offsets[frame]
+			frame_image = cls._load_frame(frame.filepath, dtype=float, color_mode=color_mode)
+
+			if master_dark is not None:
+				frame_image -= master_dark
+			if master_flat is not None:
+				frame_image /= master_flat
+
+			frame_image = rotate(frame_image, frame.angle)
+
+			x = int(offset_x) + abs(min_offset_x)
+			y = int(offset_y) + abs(min_offset_y)
+
+			stack[frame_index, x:x+width, y:y+height, :] = frame_image
+			samples[x:x+width, y:y+height] += 1
+
+		# collapse stack of images into a single image
+		med = np.median(stack, axis=0)
+		std = np.std(stack, axis=0)
+
+		for f in range(num_frames):
+			print(f'Frame {f+1}/{num_frames}')
+			for x in range(output_width):
+				for y in range(output_height):
+					if std[x,y,0] > 0:
+						d = abs(stack[f,x,y,0] - med[x,y,0]) / std[x,y,0]
+					else:
+						d = 0
+					if 1.0 > d > 0.0:
+						stack[f,x,y,0] = None
+						samples[x,y] -= 1
+
+		image = np.nansum(stack, axis=0)
+
+#		stack = np.sort(stack, axis=0)
+#		q = 0.1
+#		outliers = int(q * num_frames)
+#		# stack = stack[:num_frames-outliers,:,:,:]
+#		stack = stack[num_frames-outliers:,:,:,:]
+#		image = np.sum(stack, axis=0)
+
+		return ImageStack(image, samples)
+
+	@classmethod
 	def from_frames_old(cls, frames, offsets):
 		max_offset_x = int(max(x for x,_ in offsets))
 		min_offset_x = int(min(x for x,_ in offsets))

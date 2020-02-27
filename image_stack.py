@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import numpy as np
+import numpy.ma as ma
 import math
 
 from PIL import Image
@@ -157,30 +158,23 @@ class ImageStack:
 			stack[frame_index, x:x+width, y:y+height, :] = frame_image
 			samples[x:x+width, y:y+height] += 1
 
-		# collapse stack of images into a single image
-		med = np.median(stack, axis=0)
+		# TODO: create avg and std from sample, as much as fits in memory, and strided
+		# apply mask progressively to all frames after that
+
+		avg = np.average(stack, axis=0)
 		std = np.std(stack, axis=0)
 
+		max_dev = 1
+		mask = np.zeros(stack.shape, dtype=bool)
 		for f in range(num_frames):
-			print(f'Frame {f+1}/{num_frames}')
-			for x in range(output_width):
-				for y in range(output_height):
-					if std[x,y,0] > 0:
-						d = abs(stack[f,x,y,0] - med[x,y,0]) / std[x,y,0]
-					else:
-						d = 0
-					if 1.0 > d > 0.0:
-						stack[f,x,y,0] = None
-						samples[x,y] -= 1
+			mask[f,:,:,:] = (std[:,:,:] * max_dev) < np.abs(stack[f,:,:,:] - avg[:,:,:])
 
-		image = np.nansum(stack, axis=0)
+		stack_ma = ma.array(stack, mask=mask)
+		image = np.sum(stack_ma, axis=0)
 
-#		stack = np.sort(stack, axis=0)
-#		q = 0.1
-#		outliers = int(q * num_frames)
-#		# stack = stack[:num_frames-outliers,:,:,:]
-#		stack = stack[num_frames-outliers:,:,:,:]
-#		image = np.sum(stack, axis=0)
+		# cm = ma.count_masked(stack_ma)
+		# cnm = ma.count(stack_ma)
+		# print(f'Masked: {100*cm/(cm+cnm):.2f}%')
 
 		return ImageStack(image, samples)
 

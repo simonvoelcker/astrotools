@@ -138,10 +138,10 @@ class ImageStack:
 		output_height = height + abs(min_offset_y) + abs(max_offset_y)
 		num_frames = len(frames)
 
+		# create avg and std images based on a sample,
 		stack = np.zeros((num_frames, output_width, output_height, channels), dtype=float)
-		samples = np.zeros((output_width, output_height), dtype=np.int16)
 
-		for frame_index, frame in enumerate(frames):
+		for frame_index, frame in enumerate(frames[:100]):
 			offset_x, offset_y = offsets[frame]
 			frame_image = cls._load_frame(frame.filepath, dtype=float, color_mode=color_mode)
 
@@ -156,25 +156,37 @@ class ImageStack:
 			y = int(offset_y) + abs(min_offset_y)
 
 			stack[frame_index, x:x+width, y:y+height, :] = frame_image
-			samples[x:x+width, y:y+height] += 1
 
-		# TODO: create avg and std from sample, as much as fits in memory, and strided
-		# apply mask progressively to all frames after that
+		average_image = np.average(stack, axis=0)
+		stddev_image = np.std(stack, axis=0)
+		stack = None
 
-		avg = np.average(stack, axis=0)
-		std = np.std(stack, axis=0)
+		# load all frames, apply average/stddev filter, and build output image progressively
+		image = np.zeros((output_width, output_height, channels), dtype=float)
+		samples = np.zeros((output_width, output_height), dtype=np.int16)
 
-		max_dev = 1
-		mask = np.zeros(stack.shape, dtype=bool)
-		for f in range(num_frames):
-			mask[f,:,:,:] = (std[:,:,:] * max_dev) < np.abs(stack[f,:,:,:] - avg[:,:,:])
+		for frame_index, frame in enumerate(frames):
+			offset_x, offset_y = offsets[frame]
+			frame_image = cls._load_frame(frame.filepath, dtype=float, color_mode=color_mode)
+			frame_samples = np.ones((width, height), dtype=np.int16)
 
-		stack_ma = ma.array(stack, mask=mask)
-		image = np.sum(stack_ma, axis=0)
+			if master_dark is not None:
+				frame_image -= master_dark
+			if master_flat is not None:
+				frame_image /= master_flat
 
-		# cm = ma.count_masked(stack_ma)
-		# cnm = ma.count(stack_ma)
-		# print(f'Masked: {100*cm/(cm+cnm):.2f}%')
+			frame_image = rotate(frame_image, frame.angle)
+			frame_samples = rotate(frame_samples, frame.angle)
+
+			x = int(offset_x) + abs(min_offset_x)
+			y = int(offset_y) + abs(min_offset_y)
+
+			max_dev = 3
+			mask = (stddev_image * max_dev) < np.abs(frame_image - average_image)
+			frame_image_ma = ma.array(frame_image, mask=mask)
+
+			image[x:x+width, y:y+height, :] += frame_image_ma
+			samples[x:x+width, y:y+height] += frame_samples.astype(np.int16)
 
 		return ImageStack(image, samples)
 
@@ -242,18 +254,6 @@ class ImageStack:
 			normalized = (self.image - min_value)
 
 		self.image = normalized
-
-	def normalize_samples(self):
-		min_samples = np.amin(self.samples)
-		max_samples = np.amax(self.samples)
-		if min_samples == 0:
-			print('Not normalizing image: There are pixels without samples.')
-			return
-		print(f'Normalizing by number of samples, min={min_samples}, max={max_samples}')
-
-		_w, _h, channels = self.image.shape
-		for channel in range(channels):
-			self.image[:,:,channel] = self.image[:,:,channel] * max_samples / self.samples
 
 	def crop(self, cx, cy, r):
 		# crop image to a square with center <cx,cy> and radius <>.

@@ -20,14 +20,14 @@
 		"modes": [
 			{
 				"name": "Continuous Tracking",
-				"max_error_deg": 0.03,
+				"max_error_deg": 0.05,
 				"max_speed_dps": 0.0003,
 				"delay_after_maneuver_sec": null
 			},
 			{
 				"name": "Fine Steering",
 				"max_error_deg": 1.0,
-				"max_speed_dps": 0.01,
+				"max_speed_dps": 0.003,
 				"delay_after_maneuver_sec": 30
 			},
 			{

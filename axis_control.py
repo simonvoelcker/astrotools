@@ -18,7 +18,7 @@ class AxisControl:
 	dec_axis_ratio = 105.6 * 2.0  # 2.0 is magic
 
 	dec_backlash_direction = None  # +1, -1, None
-	dec_backlash_revolutions = 0.0  # more like 0.5 or 1
+	dec_backlash_revolutions = 0.5  # more like 0.5 or 1
 
 	def __init__(self):
 		self.serial = None
@@ -66,17 +66,11 @@ class AxisControl:
 		ra_axis_speed = self.max_axis_speed
 		if max_speed_dps is not None:
 			max_speed_override = max_speed_dps / 360.0 * self.ra_axis_ratio
-			print(f'RA speed decision: min({ra_axis_speed:.2f}, {max_speed_override:.2f})')
 			ra_axis_speed = min(ra_axis_speed, max_speed_override)
 
 		ra_revolutions = (ra_to-ra_from) / 360.0 * self.ra_axis_ratio
 		duration = abs(ra_revolutions / ra_axis_speed)
 		ra_axis_speed = math.copysign(ra_axis_speed, ra_revolutions) + self.ra_resting_speed
-
-		if ra_revolutions > 0 and duration < 5:
-			# just wait at zero speed instead of steering
-			ra_axis_speed = 0
-			duration = -ra_revolutions / self.ra_resting_speed
 
 		return ra_axis_speed, duration
 		
@@ -87,7 +81,6 @@ class AxisControl:
 		dec_axis_speed = self.max_axis_speed
 		if max_speed_dps is not None:
 			max_speed_override = max_speed_dps / 360.0 * self.dec_axis_ratio
-			print(f'Dec speed decision: min({dec_axis_speed:.2f}, {max_speed_override:.2f})')
 			dec_axis_speed = min(dec_axis_speed, max_speed_override)
 
 		dec_revolutions = (dec_to-dec_from) / 360.0 * self.dec_axis_ratio

@@ -85,7 +85,6 @@ if args.auto_crop:
 	print(f'Cropping image to region with at least {min_samples} samples')
 	image.auto_crop(min_samples)
 
-image.normalize_samples()
 image.normalize()
 
 if args.gamma:

@@ -1,68 +1,19 @@
-import glob
-import os
-import time
-import shutil
 import math
-import numpy as np
+import time
 
-from datetime import datetime
-
-from simple_pid import PID
-from influxdb import InfluxDBClient
-
-from axis_control import AxisControl
-from util import locate_image
+from lib.tracker import Tracker
+from lib.util import locate_image
 
 
-class Tracking:
+class TargetTracker(Tracker):
 	def __init__(self, config, image_search_pattern, axis_control):
-		self.config = config
-		self.image_search_pattern = image_search_pattern
-
+		super().__init__(config, image_search_pattern, axis_control)
 		self.target = None
-		self.axis_control = axis_control
-		self.influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
 
-		self.ra_pid = PID(self.config['ra']['pid_p'], self.config['ra']['pid_i'], self.config['ra']['pid_d'], setpoint=0)
-		self.ra_pid.output_limits = (-self.config['ra']['range'], self.config['ra']['range'])
-		self.ra_pid.sample_time = self.config['sample_time']
-
-		self.dec_pid = PID(self.config['dec']['pid_p'], self.config['dec']['pid_i'], self.config['dec']['pid_d'], setpoint=0)
-		self.dec_pid.output_limits = (-self.config['dec']['range'], self.config['dec']['range'])
-		self.dec_pid.sample_time = self.config['sample_time']
-
-	def write_frame_stats(self, **kwargs):
-		time = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
-		body = [
-		    {
-		        'measurement': 'axis_log',
-		        'tags': {
-		            'source': 'track.py',
-		        },
-		        'time': time,
-		        'fields': kwargs, 
-		    }
-		]
-		self.influx_client.write_points(body)
-
-	def track_target(self, target):
+	def set_target(self, target):
 		self.target = target
-		known_files = set(glob.glob(self.image_search_pattern))
 
-		while True:
-			all_files = set(glob.glob(self.image_search_pattern))
-			new_files = all_files - known_files
-			time.sleep(0.5)  # wait here, not above, to be sure the new file is complete on disk
-			if not new_files:
-				continue
-			known_files = all_files
-			if len(new_files) > 1:
-				print(f'WARN: Found {len(new_files)} new images at once')
-			newest_file = max(new_files, key=os.path.getctime)
-			print(f'Handling new file: {newest_file}')
-			self.on_new_file(newest_file)
-
-	def get_tracking_mode_config(self, ra_error, dec_error):
+	def _get_tracking_mode_config(self, ra_error, dec_error):
 		# get the appropriate tracking mode config for the current error
 		total_error = math.hypot(ra_error, dec_error)
 		for mode_config in self.config['modes']:
@@ -85,7 +36,7 @@ class Tracking:
 		ra_error = image_coordinates.ra - self.target.ra
 		dec_error = image_coordinates.dec - self.target.dec
 
-		mode_config = self.get_tracking_mode_config(ra_error, dec_error)
+		mode_config = self._get_tracking_mode_config(ra_error, dec_error)
 
 		if 'Steering' in mode_config['name']:
 			self.axis_control.steer(

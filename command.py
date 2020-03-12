@@ -1,14 +1,15 @@
 import cmd
-import sys
 import glob
-import os
 import json
+import os
+import sys
 
-from axis_control import AxisControl
-from util import locate_image
-from coordinates import Coordinates
-from catalog import Catalog
-from track_target import Tracking
+from lib.axis_control import AxisControl
+from lib.catalog import Catalog
+from lib.coordinates import Coordinates
+from lib.track_image import ImageTracker
+from lib.track_target import TargetTracker
+from lib.util import locate_image
 
 
 class CommandShell(cmd.Cmd):
@@ -125,19 +126,32 @@ class CommandShell(cmd.Cmd):
 		print(f'Setting target coordinates: {coordinates}')
 		self.target = coordinates
 
-	def do_track(self, arg):
+	def do_tracktarget(self, arg):
 		if self.target is None:
 			print('No target set')
 			return
 
-		config_file = arg or 'config.json'
+		config_file = arg or 'track_target_config.json'
 		with open(config_file, 'r') as f:
 			config = json.load(f)
 
-		tracking = Tracking(config['tracking'], self.image_source_pattern, self.axis_control)
+		tracker = TargetTracker(config, self.image_source_pattern, self.axis_control)
+		tracker.set_target(self.target)
 		try:
 			print(f'Tracking {self.target}')
-			tracking.track_target(self.target)
+			tracker.track()
+		except KeyboardInterrupt:
+			print('Tracking aborted')
+
+	def do_trackimage(self, arg):
+		config_file = arg or 'track_image_config.json'
+		with open(config_file, 'r') as f:
+			config = json.load(f)
+
+		tracker = ImageTracker(config, self.image_source_pattern, self.axis_control)
+		try:
+			print(f'Tracking based on next image')
+			tracker.track()
 		except KeyboardInterrupt:
 			print('Tracking aborted')
 

@@ -1,6 +1,6 @@
 import numpy as np
 
-from image_stack import ImageStack
+from lib.image_stack import ImageStack
 
 
 class Preview:

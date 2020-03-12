@@ -1,11 +1,11 @@
+import argparse
+import glob
+import numpy as np
 import os
 import sys
-import glob
-import argparse
-import numpy as np
 
-from skimage.transform import resize
 from PIL import Image
+from skimage.transform import resize
 
 
 parser = argparse.ArgumentParser()

@@ -1,7 +1,7 @@
-import os
 import math
-import subprocess
+import os
 import re
+import subprocess
 
 
 class Frame:

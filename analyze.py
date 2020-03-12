@@ -1,10 +1,10 @@
+import argparse
+import glob
 import os
 import sys
-import glob
-import argparse
 
-from analyzer import Analyzer
-from frame import Frame
+from lib.analyzer import Analyzer
+from lib.frame import Frame
 
 
 parser = argparse.ArgumentParser()

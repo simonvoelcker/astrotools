@@ -1,14 +1,14 @@
-import sys
-import glob
 import argparse
-import os
+import glob
 import json
 import numpy as np
+import os
+import sys
 
-from image_stack import ImageStack
-from util import create_average_frame, save_image
-from filter import Filter
-from frame import Frame
+from lib.filter import Filter
+from lib.frame import Frame
+from lib.image_stack import ImageStack
+from lib.util import create_average_frame, save_image
 
 
 parser = argparse.ArgumentParser()

@@ -1,15 +1,16 @@
-import numpy as np
-import subprocess
-import re
-import os
 import glob
 import itertools
+import numpy as np
+import os
+import re
+import subprocess
 
 from PIL import Image
-from skimage.filters import laplace, sobel
-from coordinates import Coordinates
-from image_stack import ImageStack
 from influxdb import InfluxDBClient
+from skimage.filters import laplace, sobel
+
+from lib.coordinates import Coordinates
+from lib.image_stack import ImageStack
 
 
 def load_image(filename, dtype=np.int16):

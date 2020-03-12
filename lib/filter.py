@@ -1,6 +1,6 @@
 import math
 
-from util import pairwise
+from lib.util import pairwise
 
 
 class Filter:

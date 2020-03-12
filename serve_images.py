@@ -1,9 +1,9 @@
-import sys
-import glob
 import argparse
+import glob
 import os
-import time
 import shutil
+import sys
+import time
 
 
 parser = argparse.ArgumentParser()

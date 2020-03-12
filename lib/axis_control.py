@@ -1,9 +1,9 @@
-import re
-import sys
-import serial
 import argparse
-import time
 import math
+import re
+import serial
+import sys
+import time
 
 
 class AxisControl:

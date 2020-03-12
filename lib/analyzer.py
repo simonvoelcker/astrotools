@@ -1,17 +1,17 @@
+import datetime
+import json
+import math
+import matplotlib.pyplot as plt
+import numpy as np
 import os
 import sys
-import math
-import json
-import datetime
-import numpy as np
-import matplotlib.pyplot as plt
 
+from influxdb import InfluxDBClient
 from PIL import Image
 from skimage.feature import register_translation
-from influxdb import InfluxDBClient
 
-from frame import Frame
-from util import load_image_greyscale
+from lib.frame import Frame
+from lib.util import load_image_greyscale
 
 
 class Analyzer:

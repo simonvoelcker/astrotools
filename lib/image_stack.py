@@ -1,13 +1,14 @@
 import json
-import os
-import sys
+import math
 import numpy as np
 import numpy.ma as ma
-import math
+import os
+import sys
 
 from PIL import Image
 from skimage.transform import rotate 
-from frame import Frame
+
+from lib.frame import Frame
 
 
 class ImageStack:

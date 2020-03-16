@@ -40,11 +40,13 @@ class AxisControl:
 	def connected(self):
 		return self.serial is not None
 
-	def set_motor_speed(self, motor, speed):
+	def set_motor_speed(self, motor, speed, quiet=False):
 		if self.serial is None:
-			print(f'Setting motor {motor} speed to {speed:9.6f} U/s (DRYRUN)')
+			if not quiet:
+				print(f'Setting motor {motor} speed to {speed:9.6f} U/s (DRYRUN)')
 		else:
-			print(f'Setting motor {motor} speed to {speed:9.6f} U/s')
+			if not quiet:
+				print(f'Setting motor {motor} speed to {speed:9.6f} U/s')
 			msg = f'{motor}{speed:9.6f}'
 			self.serial.write(msg.encode())
 		if motor == 'B':

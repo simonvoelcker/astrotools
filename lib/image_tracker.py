@@ -2,11 +2,15 @@ import numpy as np
 
 from skimage.feature import register_translation
 
+from lib.axis_control import AxisControl
 from lib.util import load_image
 from lib.tracker import Tracker
 
 
 class ImageTracker(Tracker):
+
+	# TODO move image_sear_pattern to config as well
+
 	def __init__(self, config, image_search_pattern, axis_control):
 		super().__init__(config, image_search_pattern, axis_control)
 		self.reference_image = None
@@ -31,20 +35,26 @@ class ImageTracker(Tracker):
 		(ra_error, dec_error), _, __ = register_translation(self.reference_image, image_for_offset_detection)
 		
 		if ra_error == 0 and dec_error == 0:
-			print(f'Image errors are (0,0) in {file_path}. Falling back to resting speed.')
-			self.axis_control.set_motor_speed('A', AxisControl.ra_resting_speed)		
-			self.axis_control.set_motor_speed('B', AxisControl.dec_resting_speed)
+			print(f'Image errors are (0,0) in {filepath}. Falling back to resting speed.')
+			self.axis_control.set_motor_speed('A', AxisControl.ra_resting_speed, quiet=True)		
+			self.axis_control.set_motor_speed('B', AxisControl.dec_resting_speed, quiet=True)
 			return
+
+		if abs(ra_error) > self.config['offset_outlier_threshold'] or abs(dec_error) > self.config['offset_outlier_threshold']:
+			print(f'Image errors are ({ra_error},{dec_error}) in {filepath}. Outlier -> Falling back to resting speed.')
+			self.axis_control.set_motor_speed('A', AxisControl.ra_resting_speed, quiet=True)		
+			self.axis_control.set_motor_speed('B', AxisControl.dec_resting_speed, quiet=True)
+			return			
 
 		ra_speed = self.config['ra']['center'] + self.ra_pid(-ra_error if self.config['ra']['invert'] else ra_error)
 		dec_speed = self.config['dec']['center'] + self.dec_pid(-dec_error if self.config['dec']['invert'] else dec_error)
 
-		print(f'RA error: {ra_error:8.6f}, DEC error: {dec_error:8.6f}, '\
-			  f'RA speed: {ra_speed:8.6f}, DEC speed: {dec_speed:8.6f}')
+		print(f'RA error: {ra_error:8.6f}, RA speed: {ra_speed:8.6f}, '\
+			  f'DEC error: {dec_error:8.6f}, DEC speed: {dec_speed:8.6f}')
 		
 		if self.axis_control is not None:
-			self.axis_control.set_motor_speed('A', ra_speed)		
-			self.axis_control.set_motor_speed('B', dec_speed)
+			self.axis_control.set_motor_speed('A', ra_speed, quiet=True)
+			self.axis_control.set_motor_speed('B', dec_speed, quiet=True)
 
 		if self.influx_client is not None:
 			self.write_frame_stats(

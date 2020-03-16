@@ -7,8 +7,8 @@ import sys
 from lib.axis_control import AxisControl
 from lib.catalog import Catalog
 from lib.coordinates import Coordinates
-from lib.track_image import ImageTracker
-from lib.track_target import TargetTracker
+from lib.image_tracker import ImageTracker
+from lib.target_tracker import TargetTracker
 from lib.util import locate_image
 
 

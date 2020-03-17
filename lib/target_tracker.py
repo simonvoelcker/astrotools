@@ -17,7 +17,7 @@ class TargetTracker(Tracker):
 		# get the appropriate tracking mode config for the current error
 		for mode_config in self.config['modes']:
 			max_error = mode_config['max_error_deg']
-			if max_error is None or abs(ra_error) > max_error or abs(dec_error) > max_error:
+			if max_error is None or (abs(ra_error) < max_error and abs(dec_error) < max_error):
 				print(f'RA err: {ra_error:.2f}, Dec err: {dec_error:.2f} => Mode: {mode_config["name"]}')
 				return mode_config
 		raise RuntimeError(f'Found no tracking mode config for given error: RA={ra_error}, Dec={dec_error}')

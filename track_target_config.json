@@ -19,7 +19,7 @@
 	"modes": [
 		{
 			"name": "Continuous Tracking",
-			"max_error_deg": 0.05,
+			"max_error_deg": 0.075,
 			"max_speed_dps": 0.0003,
 			"delay_after_maneuver_sec": null
 		},
@@ -33,7 +33,7 @@
 			"name": "Steering",
 			"max_error_deg": null,
 			"max_speed_dps": 1.0,
-			"delay_after_maneuver_sec": 30
+			"delay_after_maneuver_sec": 45
 		}
 	]
 }

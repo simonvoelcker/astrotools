@@ -102,8 +102,17 @@ class AxisControl:
 
 	def steer(self, here, target, max_speed_dps=None):
 
-		ra_maneuver = self._calc_ra_maneuver(here.ra, target.ra, max_speed_dps)
-		dec_maneuver = self._calc_dec_maneuver(here.dec, target.dec, max_speed_dps)
+		if abs(target.ra - here.ra) > 0.075:
+			ra_maneuver = self._calc_ra_maneuver(here.ra, target.ra, max_speed_dps)
+		else:
+			print('Skipping RA maneuver, error is small')
+			ra_maneuver = None
+
+		if abs(target.dec - here.dec) > 0.075:
+			dec_maneuver = self._calc_dec_maneuver(here.dec, target.dec, max_speed_dps)
+		else:
+			print('Skipping Dec maneuver, error is small')
+			dec_maneuver = None
 
 		if ra_maneuver and dec_maneuver:
 			# combined maneuver
@@ -122,12 +131,14 @@ class AxisControl:
 			self.set_motor_speed('A', self.ra_resting_speed)
 			self.set_motor_speed('B', self.dec_resting_speed)
 		elif ra_maneuver:
+			self.set_motor_speed('B', self.dec_resting_speed)
 			ra_speed, ra_time = ra_maneuver
 			self.set_motor_speed('A', ra_speed)
 			print(f'Waiting {ra_time:6.3f} seconds')
 			time.sleep(ra_time)
 			self.set_motor_speed('A', self.ra_resting_speed)
 		elif dec_maneuver:
+			self.set_motor_speed('A', self.ra_resting_speed)
 			dec_speed, dec_time = dec_maneuver
 			self.set_motor_speed('B', dec_speed)
 			print(f'Waiting {dec_time:6.3f} seconds')

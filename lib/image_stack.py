@@ -236,7 +236,7 @@ class ImageStack:
 		elif color_mode == 'b':
 			xyc_image = np.expand_dims(xyc_image[:,:,2], axis=2)
 		elif color_mode == 'grey':
-			grayscale_image = xyc_image[:,:,0] / 3 + xyc_image[:,:,1] / 3 + xyc_image[:,:,2] / 3 
+			grayscale_image = xyc_image[:,:,0] * 0.21 + xyc_image[:,:,1] * 0.72 + xyc_image[:,:,2] * 0.07 
 			xyc_image = np.expand_dims(grayscale_image, axis=2)
 
 		return xyc_image

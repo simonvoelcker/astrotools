@@ -7,8 +7,8 @@ from lib.solver import Solver
 
 
 class TargetTracker(Tracker):
-	def __init__(self, config, image_search_pattern, axis_control):
-		super().__init__(config, image_search_pattern, axis_control)
+	def __init__(self, config, axis_control):
+		super().__init__(config, axis_control)
 		self.target = None
 
 	def set_target(self, target):
@@ -24,9 +24,6 @@ class TargetTracker(Tracker):
 		raise RuntimeError(f'Found no tracking mode config for given error: RA={ra_error}, Dec={dec_error}')
 
 	def on_new_file(self, file_path):
-
-		# image_coordinates = locate_image(file_path)
-
 		image_coordinates = Solver().locate_image(file_path)
 
 		if not image_coordinates:

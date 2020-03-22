@@ -1,6 +1,5 @@
 {
-	"image_amplification": 1.0,
-	"image_threshold": 128.0,
+	"image_search_pattern": "../beute/**/*.tif",
 	"sigma_threshold": 5.0,
 	"sample_time": 10.0,
 	"ra": {

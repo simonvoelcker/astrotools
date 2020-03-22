@@ -11,9 +11,9 @@ from lib.axis_control import AxisControl
 
 
 class Tracker:
-	def __init__(self, config, image_search_pattern, axis_control):
+	def __init__(self, config, axis_control):
 		self.config = config
-		self.image_search_pattern = image_search_pattern
+		self.image_search_pattern = self.config['image_search_pattern']
 
 		self.axis_control = axis_control
 		self.influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')

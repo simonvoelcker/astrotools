@@ -3,13 +3,11 @@ import itertools
 import numpy as np
 import os
 import re
-import subprocess
 
 from PIL import Image
 from influxdb import InfluxDBClient
 from skimage.filters import laplace, sobel
 
-from lib.coordinates import Coordinates
 from lib.image_stack import ImageStack
 
 
@@ -98,37 +96,6 @@ def get_sharpness_vol(frame):
 def get_sharpness_sobel(frame):
 	# variance of sobel
 	return sobel(frame).var()
-
-def locate_image(filepath, cpulimit=5):
-	solve_command = [
-		'/usr/local/astrometry/bin/solve-field',
-		filepath,
-		'--scale-units', 'arcsecperpix',
-		'--scale-low', '0.8',
-		'--scale-high', '1.0',
-		'--cpulimit', str(cpulimit),
-		'--overwrite',
-		'--no-plots',
-		'--parity', 'pos',
-		'--temp-axy',
-		'--solved', 'none',
-		'--corr', 'none',
-		'--new-fits', 'none',
-		'--index-xyls', 'none',
-		'--match', 'none',
-		'--rdls', 'none',
-		'--wcs', 'none',
-	]
-	try:
-		output = subprocess.check_output(solve_command, timeout=cpulimit, stderr=subprocess.DEVNULL).decode()
-	except subprocess.TimeoutExpired:
-		print('Timed out trying to solve field')
-		return None
-	astrometry_coordinates_rx = re.compile(r'^.*RA,Dec = \((?P<ra>[\d\.]+),(?P<dec>[\d\.]+)\).*$', re.DOTALL)
-	match = astrometry_coordinates_rx.match(output)
-	if not match:
-		return None
-	return Coordinates(float(match.group('ra')), float(match.group('dec')))
 
 
 def query_offsets(path_prefix):

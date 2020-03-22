@@ -10,27 +10,17 @@ from lib.tracker import Tracker
 
 class ImageTracker(Tracker):
 
-	# TODO move image_sear_pattern to config as well
-
-	def __init__(self, config, image_search_pattern, axis_control):
-		super().__init__(config, image_search_pattern, axis_control)
+	def __init__(self, config, axis_control):
+		super().__init__(config, axis_control)
 		self.reference_image = None
-		# parameters that help with image offset detection in bad conditions
-		self.amplification = config['image_amplification']
-		self.threshold = config['image_threshold']
 		self.sigma_threshold = config['sigma_threshold']
 
-	def _filter_image(self, image):
-		# greyscale frame, only width and height
-		image_greyscale = np.mean(image, axis=2)
-		# stretch and clip
-		return np.clip(image_greyscale * self.amplification, self.threshold, 255)
-
-	def _filter_image_sigma_threshold(self, image, threshold):
+	def _clean_image_for_offset_detection(self, image):
 		# greyscale frame, only width and height
 		image_greyscale = np.mean(image, axis=2)
 		stddev = np.std(image_greyscale)
 		average = np.average(image_greyscale)
+		threshold = self.sigma_threshold
 		# clip away background noise, as indicated by stddev and average
 		cleaned = np.clip(image_greyscale, average + threshold * stddev, 255)
 		# print(f'avg={average:.1f}, stddev={stddev:.1f}, thresh={threshold} => clipping {(average + threshold * stddev):.1f}-255')
@@ -38,7 +28,7 @@ class ImageTracker(Tracker):
 
 	def on_new_file(self, filepath):
 		image = load_image(filepath, dtype=np.int16)
-		image_for_offset_detection = self._filter_image_sigma_threshold(image, threshold=self.sigma_threshold)
+		image_for_offset_detection = self._clean_image_for_offset_detection(image)
 
 		if self.reference_image is None:
 			print(f'Using reference image: {filepath}')

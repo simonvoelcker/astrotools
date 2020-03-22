@@ -9,7 +9,6 @@ from lib.catalog import Catalog
 from lib.coordinates import Coordinates
 from lib.image_tracker import ImageTracker
 from lib.target_tracker import TargetTracker
-from lib.util import locate_image
 from lib.solver import Solver
 
 
@@ -23,8 +22,6 @@ class CommandShell(cmd.Cmd):
 
 	here = None
 	target = None
-
-	image_source_pattern = os.path.join('..', 'beute', '**', '*.tif')
 
 	catalog = Catalog()
 
@@ -80,17 +77,10 @@ class CommandShell(cmd.Cmd):
 			print('Maneuver aborted')
 			self.do_rest(arg=None)
 
-	def do_set_image_source_pattern(self, arg):
-		self.image_source_pattern = arg
-
-	def do_list_images(self, args):
-		for f in glob.glob(self.image_source_pattern):
-			print(f)
-
 	def do_sync(self, arg):
 		# update self.here to match what's in the latest image
 
-		all_images = glob.glob(self.image_source_pattern)
+		all_images = glob.glob('../beute/**/*.tif')
 		if not all_images:
 			print('No images')
 			return
@@ -99,8 +89,6 @@ class CommandShell(cmd.Cmd):
 
 		try:
 			self.here = Solver().locate_image(latest_image)
-
-			#self.here = locate_image(latest_image)
 		except KeyboardInterrupt:
 			print('Sync aborted')
 			return
@@ -138,7 +126,7 @@ class CommandShell(cmd.Cmd):
 		with open(config_file, 'r') as f:
 			config = json.load(f)
 
-		tracker = TargetTracker(config, self.image_source_pattern, self.axis_control)
+		tracker = TargetTracker(config, self.axis_control)
 		tracker.set_target(self.target)
 		try:
 			print(f'Tracking {self.target}')
@@ -151,7 +139,7 @@ class CommandShell(cmd.Cmd):
 		with open(config_file, 'r') as f:
 			config = json.load(f)
 
-		tracker = ImageTracker(config, self.image_source_pattern, self.axis_control)
+		tracker = ImageTracker(config, self.axis_control)
 		try:
 			print(f'Tracking based on next image')
 			tracker.track()

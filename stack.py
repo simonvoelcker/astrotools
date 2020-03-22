@@ -10,6 +10,8 @@ from lib.frame import Frame
 from lib.image_stack import ImageStack
 from lib.util import create_average_frame, save_image
 
+from skimage.filters import gaussian
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('directory', type=str)
@@ -36,6 +38,9 @@ average_flat = create_average_frame(args.flats, args.filename_pattern, args.colo
 
 if average_flat is not None:
 	master_flat = average_flat / np.average(average_flat)
+	# blur
+	master_flat = gaussian(master_flat, sigma=4)
+
 	save_image((master_flat - 1.0) * 1500.0 + 128.0, 'master_flat.png')
 else:
 	master_flat = None

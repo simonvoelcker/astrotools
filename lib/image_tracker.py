@@ -1,9 +1,10 @@
 import numpy as np
+import numpy.ma as ma
 
 from skimage.feature import register_translation
 
 from lib.axis_control import AxisControl
-from lib.util import load_image
+from lib.util import load_image, save_image_greyscale
 from lib.tracker import Tracker
 
 
@@ -17,15 +18,27 @@ class ImageTracker(Tracker):
 		# parameters that help with image offset detection in bad conditions
 		self.amplification = config['image_amplification']
 		self.threshold = config['image_threshold']
+		self.sigma_threshold = config['sigma_threshold']
 
-	def on_new_file(self, filepath):
-
-		# original frame - all color channels
-		image = load_image(filepath, dtype=np.int16)
+	def _filter_image(self, image):
 		# greyscale frame, only width and height
 		image_greyscale = np.mean(image, axis=2)
-		# the same, but optimized for offset-detection
-		image_for_offset_detection = np.clip(image_greyscale * self.amplification, self.threshold, 255)
+		# stretch and clip
+		return np.clip(image_greyscale * self.amplification, self.threshold, 255)
+
+	def _filter_image_sigma_threshold(self, image, threshold):
+		# greyscale frame, only width and height
+		image_greyscale = np.mean(image, axis=2)
+		stddev = np.std(image_greyscale)
+		average = np.average(image_greyscale)
+		# clip away background noise, as indicated by stddev and average
+		cleaned = np.clip(image_greyscale, average + threshold * stddev, 255)
+		# print(f'avg={average:.1f}, stddev={stddev:.1f}, thresh={threshold} => clipping {(average + threshold * stddev):.1f}-255')
+		return cleaned
+
+	def on_new_file(self, filepath):
+		image = load_image(filepath, dtype=np.int16)
+		image_for_offset_detection = self._filter_image_sigma_threshold(image, threshold=self.sigma_threshold)
 
 		if self.reference_image is None:
 			print(f'Using reference image: {filepath}')
@@ -39,12 +52,6 @@ class ImageTracker(Tracker):
 			self.axis_control.set_motor_speed('A', AxisControl.ra_resting_speed, quiet=True)		
 			self.axis_control.set_motor_speed('B', AxisControl.dec_resting_speed, quiet=True)
 			return
-
-		if abs(ra_error) > self.config['offset_outlier_threshold'] or abs(dec_error) > self.config['offset_outlier_threshold']:
-			print(f'Image errors are ({ra_error},{dec_error}) in {filepath}. Outlier -> Falling back to resting speed.')
-			self.axis_control.set_motor_speed('A', AxisControl.ra_resting_speed, quiet=True)		
-			self.axis_control.set_motor_speed('B', AxisControl.dec_resting_speed, quiet=True)
-			return			
 
 		ra_speed = self.config['ra']['center'] + self.ra_pid(-ra_error if self.config['ra']['invert'] else ra_error)
 		dec_speed = self.config['dec']['center'] + self.dec_pid(-dec_error if self.config['dec']['invert'] else dec_error)

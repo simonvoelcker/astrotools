@@ -64,30 +64,3 @@ class Coordinates:
 		dec_degrees = sign * (float(degrees) + arcmin / 60.0 + arcsec / 3600.0)
 
 		return Coordinates(ra_degrees, dec_degrees)
-
-	def format(self):
-		# format coordinates from angles to my ghetto format: __h__m__s:__d__m__s
-		ra_degrees_f = self.ra
-		dec_degrees_f = self.dec
-		
-		ra_hours_f = ra_degrees_f / 15.0
-		ra_hours = int(ra_hours_f)
-		ra_hours_remain = ra_hours_f - ra_hours
-		ra_minutes_f = 60.0 * ra_hours_remain
-		ra_minutes = int(ra_minutes_f)
-		ra_minutes_remain = ra_minutes_f - ra_minutes
-		ra_seconds_f = 60.0 * ra_minutes_remain
-		ra_seconds = int(ra_seconds_f)
-
-		dec_sign = '-' if dec_degrees_f < 0 else '+'
-		dec_degrees_f = abs(dec_degrees_f)
-		dec_degrees = int(dec_degrees_f)
-		dec_degrees_remain = dec_degrees_f - dec_degrees
-		dec_moa_f = 60.0 * dec_degrees_remain
-		dec_moa = int(dec_moa_f)
-		dec_moa_remain = dec_moa_f - dec_moa
-		dec_soa_f = 60.0 * dec_moa_remain
-		dec_soa = int(dec_soa_f)
-
-		return f'{ra_hours:2}h{ra_minutes:2}m{ra_seconds:2}s:{dec_sign}{dec_degrees}d{dec_moa:2}m{dec_soa:2}s'
-

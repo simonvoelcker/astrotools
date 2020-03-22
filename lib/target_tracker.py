@@ -3,6 +3,7 @@ import time
 from lib.axis_control import AxisControl
 from lib.tracker import Tracker
 from lib.util import locate_image
+from lib.solver import Solver
 
 
 class TargetTracker(Tracker):
@@ -23,7 +24,11 @@ class TargetTracker(Tracker):
 		raise RuntimeError(f'Found no tracking mode config for given error: RA={ra_error}, Dec={dec_error}')
 
 	def on_new_file(self, file_path):
-		image_coordinates = locate_image(file_path)
+
+		# image_coordinates = locate_image(file_path)
+
+		image_coordinates = Solver().locate_image(file_path)
+
 		if not image_coordinates:
 			print(f'Failed to locate: {file_path}. Falling back to resting speed.')
 			self.axis_control.set_motor_speed('A', AxisControl.ra_resting_speed)		

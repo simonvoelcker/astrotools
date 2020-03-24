@@ -33,7 +33,7 @@ args = parser.parse_args()
 
 master_dark = create_average_frame(args.darks, args.filename_pattern, args.color_mode)
 if master_dark is not None:
-	save_image(master_dark * 64.0, 'master_dark.png')
+	save_image(master_dark * 64.0, 'out/master_dark.png')
 average_flat = create_average_frame(args.flats, args.filename_pattern, args.color_mode)
 
 if average_flat is not None:
@@ -41,7 +41,7 @@ if average_flat is not None:
 	# blur
 	master_flat = gaussian(master_flat, sigma=4)
 
-	save_image((master_flat - 1.0) * 1500.0 + 128.0, 'master_flat.png')
+	save_image((master_flat - 1.0) * 1500.0 + 128.0, 'out/master_flat.png')
 else:
 	master_flat = None
 
@@ -110,5 +110,5 @@ if args.apply_function:
 if args.invert:
 	image.invert()
 
-image.save(args.out)
-image.save_samples_map('samples_map.png')
+image.save(f'out/{args.out}')
+image.save_samples_map('out/samples_map.png')

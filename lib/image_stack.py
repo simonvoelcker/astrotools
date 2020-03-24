@@ -94,11 +94,12 @@ class ImageStack:
 		output_height = height + abs(min_offset_y) + abs(max_offset_y)
 
 		image = np.zeros((output_width, output_height, channels), dtype=float)
-		samples = np.zeros((output_width, output_height), dtype=np.int16)
+		samples = np.zeros((output_width, output_height), dtype=float)
 
 		for frame in frames:
 			offset_x, offset_y = offsets[frame]
 			frame_image = cls._load_frame(frame.filepath, dtype=float, color_mode=color_mode)
+			samples_image = np.ones((width, height), dtype=float)
 
 			if master_dark is not None:
 				frame_image -= master_dark
@@ -106,13 +107,17 @@ class ImageStack:
 				frame_image /= master_flat
 
 			frame_image = rotate(frame_image, frame.angle)
+			samples_image = rotate(samples_image, frame.angle)
 
 			x = int(offset_x) + abs(min_offset_x)
 			y = int(offset_y) + abs(min_offset_y)
 
 			image[x:x+width, y:y+height, :] += frame_image
-			samples[x:x+width, y:y+height] += 1
+			samples[x:x+width, y:y+height] += samples_image
 
+		for channel in range(channels):
+			c = image[:,:,channel]
+			image[:,:,channel] = np.divide(c, samples, out=np.zeros_like(c), where=samples!=0)
 		return ImageStack(image, samples)
 
 	@classmethod
@@ -247,7 +252,7 @@ class ImageStack:
 		if max_value == 0:
 			print('Not normalizing image: It is all black.')		
 			return
-		print(f'Normalizing brightness, min={min_value}, max={max_value}')
+		print(f'Normalizing brightness, min={min_value:.1f}, max={max_value:.1f}')
 
 		if max_value > min_value:
 			normalized = (self.image - min_value) / (max_value - min_value)
@@ -272,12 +277,6 @@ class ImageStack:
 					max_x = max(max_x or x, x)
 					min_y = min(min_y or y, y)
 					max_y = max(max_y or y, y)
-
-		inset = 50
-		min_x += inset
-		max_x -= inset
-		min_y += inset
-		max_y -= inset
 
 		print(f'Cropping image to x=[{min_x},{max_x}], y=[{min_y},{max_y}]')
 		self.image = self.image[min_x:max_x+1, min_y:max_y+1, :]

@@ -2,20 +2,20 @@
 	"image_search_pattern": "../beute/**/*.tif",
 	"sample_time": 10.0,
 	"ra": {
-		"center": -0.0047,
-		"range": 0.001,
+		"center": -0.00475,
+		"range": 0.0005,
 		"invert": false,
-		"pid_p": 0.002,
+		"pid_p": 0.008,
 		"pid_i": 0.0,
-		"pid_d": 0.0
+		"pid_d": 0.10
 	},
 	"dec": {
 		"center": 0.0005,
 		"range": 0.0005,
 		"invert": true,
-		"pid_p": 0.05,
+		"pid_p": 0.0004,
 		"pid_i": 0.0,
-		"pid_d": 0.0
+		"pid_d": 0.002
 	},
 	"modes": [
 		{

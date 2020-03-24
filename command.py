@@ -17,7 +17,7 @@ class CommandShell(cmd.Cmd):
 	prompt = '>>> '
 
 	axis_control = AxisControl()
-	ra_resting_speed = -0.0047
+	ra_resting_speed = -0.00475
 	dec_resting_speed = 0.0
 
 	here = None
@@ -116,6 +116,13 @@ class CommandShell(cmd.Cmd):
 		coordinates = Coordinates.parse_csvformat(entry['RA'], entry['Dec'])
 		print(f'Setting target coordinates: {coordinates}')
 		self.target = coordinates
+
+	def do_trackhere(self, arg):
+		if self.here is None:
+			print('Where am I?')
+			return
+		self.target = self.here
+		self.do_tracktarget(arg)
 
 	def do_tracktarget(self, arg):
 		if self.target is None:

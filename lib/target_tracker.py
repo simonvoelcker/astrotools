@@ -2,7 +2,6 @@ import time
 
 from lib.axis_control import AxisControl
 from lib.tracker import Tracker
-from lib.util import locate_image
 from lib.solver import Solver
 
 

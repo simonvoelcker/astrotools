@@ -18,13 +18,18 @@ class Tracker:
 		self.axis_control = axis_control
 		self.influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
 
-		self.ra_pid = PID(self.config['ra']['pid_p'], self.config['ra']['pid_i'], self.config['ra']['pid_d'], setpoint=0)
-		self.ra_pid.output_limits = (-self.config['ra']['range'], self.config['ra']['range'])
-		self.ra_pid.sample_time = self.config['sample_time']
+		self.ra_pid = None
+		self.dec_pid = None
 
-		self.dec_pid = PID(self.config['dec']['pid_p'], self.config['dec']['pid_i'], self.config['dec']['pid_d'], setpoint=0)
-		self.dec_pid.output_limits = (-self.config['dec']['range'], self.config['dec']['range'])
-		self.dec_pid.sample_time = self.config['sample_time']
+		if 'ra' in self.config:
+			self.ra_pid = PID(self.config['ra']['pid_p'], self.config['ra']['pid_i'], self.config['ra']['pid_d'], setpoint=0)
+			self.ra_pid.output_limits = (-self.config['ra']['range'], self.config['ra']['range'])
+			self.ra_pid.sample_time = self.config['sample_time']
+
+		if 'dec' in self.config:
+			self.dec_pid = PID(self.config['dec']['pid_p'], self.config['dec']['pid_i'], self.config['dec']['pid_d'], setpoint=0)
+			self.dec_pid.output_limits = (-self.config['dec']['range'], self.config['dec']['range'])
+			self.dec_pid.sample_time = self.config['sample_time']
 
 	def track(self):
 		known_files = set(glob.glob(self.image_search_pattern))

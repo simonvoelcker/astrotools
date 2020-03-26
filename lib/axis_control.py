@@ -9,8 +9,8 @@ import time
 class AxisControl:
 	control_response_rx = re.compile(r'\s*M(?P<motor>[12])\s+S=(?P<speed>\-?\d+\.\d+)\s+P1=(?P<P1>\-?\d+)\s+P2=(?P<P2>\-?\d+)\s*')
 
-	ra_resting_speed = -0.00475
-	dec_resting_speed = 0.0
+	ra_resting_speed = -0.004725
+	dec_resting_speed = 0.000075
 
 	max_axis_speed = 0.3
 

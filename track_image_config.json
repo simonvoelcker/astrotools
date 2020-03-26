@@ -3,19 +3,19 @@
 	"sigma_threshold": 5.0,
 	"sample_time": 10.0,
 	"ra": {
-		"center": -0.00475,
-		"range": 0.001,
-		"invert": true,
-		"pid_p": 0.00002,
-		"pid_i": 0.0,
-		"pid_d": 0.00010
-	},
-	"dec": {
-		"center": 0.0,
-		"range": 0.001,
+		"center": -0.004725,
+		"range":   0.000500,
 		"invert": true,
 		"pid_p": 0.00001,
 		"pid_i": 0.0,
-		"pid_d": 0.00005
+		"pid_d": 0.0
+	},
+	"dec": {
+		"center": 0.000060,
+		"range":  0.000060,
+		"invert": true,
+		"pid_p": 0.00001,
+		"pid_i": 0.0,
+		"pid_d": 0.0
 	}
 }

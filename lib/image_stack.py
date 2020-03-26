@@ -278,6 +278,12 @@ class ImageStack:
 					min_y = min(min_y or y, y)
 					max_y = max(max_y or y, y)
 
+		inset = 50
+		min_x += inset
+		min_y += inset
+		max_x -= inset
+		max_y -= inset
+
 		print(f'Cropping image to x=[{min_x},{max_x}], y=[{min_y},{max_y}]')
 		self.image = self.image[min_x:max_x+1, min_y:max_y+1, :]
 		self.samples = self.samples[min_x:max_x+1, min_y:max_y+1]

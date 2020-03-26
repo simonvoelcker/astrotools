@@ -9,6 +9,7 @@ from lib.catalog import Catalog
 from lib.coordinates import Coordinates
 from lib.image_tracker import ImageTracker
 from lib.target_tracker import TargetTracker
+from lib.passive_tracker import PassiveTracker
 from lib.solver import Solver
 
 
@@ -17,8 +18,8 @@ class CommandShell(cmd.Cmd):
 	prompt = '>>> '
 
 	axis_control = AxisControl()
-	ra_resting_speed = -0.00475
-	dec_resting_speed = 0.0
+	ra_resting_speed = -0.004725
+	dec_resting_speed = 0.000075
 
 	here = None
 	target = None
@@ -152,6 +153,19 @@ class CommandShell(cmd.Cmd):
 			tracker.track()
 		except KeyboardInterrupt:
 			print('Tracking aborted')
+
+	def do_trackpassively(self, arg):
+		config_file = arg or 'track_passively_config.json'
+		with open(config_file, 'r') as f:
+			config = json.load(f)
+
+		tracker = PassiveTracker(config)
+		try:
+			print(f'Tracking based on next image, passively')
+			tracker.track()
+		except KeyboardInterrupt:
+			print('Tracking aborted')
+
 
 if __name__ == '__main__':
 	CommandShell().cmdloop()

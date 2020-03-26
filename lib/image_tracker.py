@@ -4,12 +4,12 @@ import numpy.ma as ma
 from skimage.feature import register_translation
 
 from lib.axis_control import AxisControl
-from lib.util import load_image, save_image_greyscale
+from lib.util import load_image
 from lib.tracker import Tracker
 
 
 class ImageTracker(Tracker):
-
+ 
 	def __init__(self, config, axis_control):
 		super().__init__(config, axis_control)
 		self.reference_image = None

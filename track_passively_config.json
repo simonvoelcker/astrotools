@@ -1,0 +1,4 @@
+{
+	"image_search_pattern": "../beute/**/*.tif",
+	"sigma_threshold": 5.0
+}

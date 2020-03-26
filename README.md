@@ -2,7 +2,10 @@
 
 Python tools for astrophotography. Strongly tied to my personal setup.
 
-Requires:
+![M3](m3.jpg?raw=true "M3 - Globular Cluster")
+
+## Requirements
+
  - Python 3.6+
  - numpy and Pillow for image processing
  - skimage, simple-pid and PySerial for tracking and motor control

@@ -102,7 +102,7 @@ class Frame:
 			'center_deg': r'^.*Field center: \(RA,Dec\) = \((?P<ra>[\d\.]*), (?P<dec>[\d\.]*)\) deg\..*$',
 			'center': r'^.*Field center: \(RA H:M:S, Dec D:M:S\) = \((?P<ra>[\d\.\:]*), (?P<dec>[\d\.\:\+\-]*)\)\..*$',
 			'size': r'^.*Field size: (?P<width>[\d\.]*) x (?P<height>[\d\.]*) (?P<unit>\w*).*$',
-			'rotation': r'^.*Field rotation angle: up is (?P<angle>[\d\.]*) degrees (?P<direction>[WE]) of N.*$',
+			'rotation': r'^.*Field rotation angle: up is (?P<angle>[\-\d\.]*) degrees (?P<direction>[WE]) of N.*$',
 			'parity': r'^.*Field parity: (?P<parity>pos|neg).*$',
 		}
 
@@ -111,6 +111,7 @@ class Frame:
 			rx = re.compile(metadata_regex, re.DOTALL)
 			match = rx.match(output)
 			if not match:
+				print(output)
 				print(f'WARN: No match found for "{metadata_key}" in output of solve-field of file {filepath}.')
 				print('Field may not have been solved or the output of the solver could not be parsed.')
 				return None

@@ -18,7 +18,7 @@ class AxisControl:
 	dec_axis_ratio = 105.6 * 2.0  # 2.0 is magic
 
 	dec_backlash_direction = None  # +1, -1, None
-	dec_backlash_revolutions = 0.5  # more like 0.5 or 1
+	dec_backlash_revolutions = 0.55		# /2? *2?
 
 	def __init__(self):
 		self.serial = None

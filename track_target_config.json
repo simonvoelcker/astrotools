@@ -2,20 +2,20 @@
 	"image_search_pattern": "../beute/**/*.tif",
 	"sample_time": 10.0,
 	"ra": {
-		"center": -0.00475,
-		"range": 0.0005,
+		"center": -0.004725,
+		"range":   0.000500,
 		"invert": false,
-		"pid_p": 0.008,
+		"pid_p": 0.003,
 		"pid_i": 0.0,
-		"pid_d": 0.10
+		"pid_d": 0.0
 	},
 	"dec": {
-		"center": 0.0005,
-		"range": 0.0005,
+		"center": 0.000060,
+		"range":  0.000060,
 		"invert": true,
-		"pid_p": 0.0004,
+		"pid_p": 0.003,
 		"pid_i": 0.0,
-		"pid_d": 0.002
+		"pid_d": 0.0
 	},
 	"modes": [
 		{
@@ -27,7 +27,7 @@
 		{
 			"name": "Fine Steering",
 			"max_error_deg": 1.0,
-			"max_speed_dps": 0.003,
+			"max_speed_dps": 0.01,
 			"delay_after_maneuver_sec": 30
 		},
 		{

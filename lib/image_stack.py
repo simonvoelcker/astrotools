@@ -71,7 +71,7 @@ class ImageStack:
 		return ImageStack(image, samples)
 
 	@classmethod
-	def stack_frames(cls, frames, color_mode, master_dark, master_flat):
+	def stack_frames(cls, frames, color_mode, master_dark, master_flat, custom_offset=None):
 		# seems to differ a little between frames, must average
 		pixel_scales = [frame.pixel_scale for frame in frames]
 		average_pixel_scale_aspp = sum(pixel_scales) / len(pixel_scales)
@@ -81,6 +81,13 @@ class ImageStack:
 			frame: frame.get_pixel_offset(reference_frame, average_pixel_scale_aspp)
 			for frame in frames
 		}
+
+		if custom_offset is not None:
+			tx, ty = custom_offset.split(',')
+			for index, frame in enumerate(frames):
+				fx = float(index)/float(len(frames)-1) * int(tx)
+				fy = float(index)/float(len(frames)-1) * int(ty)
+				offsets[frame] = (offsets[frame][0]+fx, offsets[frame][1]+fy)
 
 		max_offset_x = int(max(x for x,_ in offsets.values()))
 		min_offset_x = int(min(x for x,_ in offsets.values()))

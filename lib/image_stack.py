@@ -247,26 +247,25 @@ class ImageStack:
 		return xyc_image
 
 	def normalize(self):
-		min_value = np.amin(self.image)
-		max_value = np.amax(self.image)
-		if max_value == 0:
-			print('Not normalizing image: It is all black.')		
-			return
-		print(f'Normalizing brightness, min={min_value:.1f}, max={max_value:.1f}')
+		for channel in range(self.image.shape[2]):		
+			min_value = np.amin(self.image[:,:,channel])
+			max_value = np.amax(self.image[:,:,channel])
+			if max_value == 0:
+				print(f'Skipping channel {channel} in normalization')		
+				continue
+			print(f'Normalizing channel {channel}, min={min_value:.1f}, max={max_value:.1f}')
 
-		if max_value > min_value:
-			normalized = (self.image - min_value) / (max_value - min_value)
-		else:
-			normalized = (self.image - min_value)
-
-		self.image = normalized
+			if max_value > min_value:
+				self.image[:,:,channel] = (self.image[:,:,channel] - min_value) / (max_value - min_value)
+			else:
+				self.image[:,:,channel] = (self.image[:,:,channel] - min_value)
 
 	def crop(self, cx, cy, r):
 		# crop image to a square with center <cx,cy> and radius <>.
 		self.image = self.image[cx-r:cx+r, cy-r:cy+r, :]
 		self.samples = self.samples[cx-r:cx+r, cy-r:cy+r]
 
-	def auto_crop(self, min_samples=None):
+	def auto_crop(self, min_samples=None, inset=50):
 		width, height = self.samples.shape
 		
 		min_x, max_x, min_y, max_y = None, None, None, None
@@ -278,7 +277,6 @@ class ImageStack:
 					min_y = min(min_y or y, y)
 					max_y = max(max_y or y, y)
 
-		inset = 50
 		min_x += inset
 		min_y += inset
 		max_x -= inset

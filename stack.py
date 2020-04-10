@@ -27,6 +27,7 @@ parser.add_argument('--flats', type=str, default=None, help='Where to find flat 
 parser.add_argument('--apply-function', action='store_true', help='Apply custom function to output image')
 parser.add_argument('--color-mode', type=str, default='rgb', help='Options: grey, r, g, b, rgb')
 parser.add_argument('--offset-filter', type=float, default=None, help='Filter out frames more than <angle> apart')
+parser.add_argument('--custom-offset', type=str, default=None, help='Apply additional offset after alignment. Format: int,int')
 
 
 args = parser.parse_args()
@@ -81,7 +82,7 @@ frames = [
 frames = Filter(args.offset_filter or 1.0).apply(frames)
 
 print('Stacking...')
-image = ImageStack.stack_frames(frames, args.color_mode, master_dark, master_flat)
+image = ImageStack.stack_frames(frames, args.color_mode, master_dark, master_flat, args.custom_offset)
 
 if args.auto_crop:
 	max_samples = np.amax(image.samples)

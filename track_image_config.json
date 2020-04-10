@@ -1,19 +1,19 @@
 {
 	"image_search_pattern": "../beute/**/*.tif",
 	"sigma_threshold": 5.0,
-	"sample_time": 10.0,
+	"sample_time": 2.0,
 	"ra": {
 		"center": -0.004725,
 		"range":   0.000500,
-		"invert": false,
-		"pid_p": 0.00001,
-		"pid_i": 0.0,
-		"pid_d": 0.0
+		"invert": true,
+		"pid_p": 0.0000100,
+		"pid_i": 0.0000020,
+		"pid_d": 0.0000400
 	},
 	"dec": {
-		"center": 0.000060,
-		"range":  0.000060,
-		"invert": false,
+		"center": 0.000100,
+		"range":  0.000100,
+		"invert": true,
 		"pid_p": 0.00001,
 		"pid_i": 0.0,
 		"pid_d": 0.0

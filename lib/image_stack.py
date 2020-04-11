@@ -71,40 +71,20 @@ class ImageStack:
 		return ImageStack(image, samples)
 
 	@classmethod
-	def stack_frames(cls, frames, color_mode, master_dark, master_flat, custom_offset=None):
-		# seems to differ a little between frames, must average
-		pixel_scales = [frame.pixel_scale for frame in frames]
-		average_pixel_scale_aspp = sum(pixel_scales) / len(pixel_scales)
-
-		reference_frame = frames[0]
-		offsets = {
-			frame: frame.get_pixel_offset(reference_frame, average_pixel_scale_aspp)
-			for frame in frames
-		}
-
-		if custom_offset is not None:
-			tx, ty = custom_offset.split(',')
-			for index, frame in enumerate(frames):
-				fx = float(index)/float(len(frames)-1) * int(tx)
-				fy = float(index)/float(len(frames)-1) * int(ty)
-				offsets[frame] = (offsets[frame][0]+fx, offsets[frame][1]+fy)
-
-		max_offset_x = int(max(x for x,_ in offsets.values()))
-		min_offset_x = int(min(x for x,_ in offsets.values()))
-		min_offset_y = int(min(y for _,y in offsets.values()))
-		max_offset_y = int(max(y for _,y in offsets.values()))
+	def stack_frames(cls, frames, color_mode, master_dark, master_flat):
+		max_offset_x = max(frame.pixel_offset[0] for frame in frames)
+		max_offset_y = max(frame.pixel_offset[1] for frame in frames)
 
 		frame_0 = cls._load_frame(frames[0].filepath, dtype=np.int32, color_mode=color_mode)
 		width, height, channels = frame_0.shape
 
-		output_width = width + abs(min_offset_x) + abs(max_offset_x)
-		output_height = height + abs(min_offset_y) + abs(max_offset_y)
+		output_width = width + max_offset_x
+		output_height = height + max_offset_y
 
 		image = np.zeros((output_width, output_height, channels), dtype=float)
 		samples = np.zeros((output_width, output_height), dtype=float)
 
 		for frame in frames:
-			offset_x, offset_y = offsets[frame]
 			frame_image = cls._load_frame(frame.filepath, dtype=float, color_mode=color_mode)
 			samples_image = np.ones((width, height), dtype=float)
 
@@ -116,9 +96,7 @@ class ImageStack:
 			frame_image = rotate(frame_image, frame.angle)
 			samples_image = rotate(samples_image, frame.angle)
 
-			x = int(offset_x) + abs(min_offset_x)
-			y = int(offset_y) + abs(min_offset_y)
-
+			x, y = frame.pixel_offset
 			image[x:x+width, y:y+height, :] += frame_image
 			samples[x:x+width, y:y+height] += samples_image
 

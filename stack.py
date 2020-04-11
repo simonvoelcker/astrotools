@@ -81,8 +81,13 @@ frames = [
 
 frames = Filter(args.offset_filter or 1.0).apply(frames)
 
+# bake pixel offsets into frames
+Frame.compute_frame_offsets(frames, args.custom_offset)
+# interpolate angles 
+Frame.interpolate_angles(frames)
+
 print('Stacking...')
-image = ImageStack.stack_frames(frames, args.color_mode, master_dark, master_flat, args.custom_offset)
+image = ImageStack.stack_frames(frames, args.color_mode, master_dark, master_flat)
 
 if args.auto_crop:
 	max_samples = np.amax(image.samples)

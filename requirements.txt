@@ -1,3 +1,4 @@
+astropy==4.0.1.post1
 influxdb==5.2.3
 matplotlib==3.1.1
 numpy==1.16.3

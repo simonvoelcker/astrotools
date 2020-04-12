@@ -11,6 +11,7 @@ Python tools for astrophotography. Strongly tied to my personal setup.
  - skimage, simple-pid and PySerial for tracking and motor control
  - matplotlib and influxdb for analytics
  - astrometry.net image calibration CLI tools (specifically solve-field)
+ - astropy for FITS files, but propably much more later
 
 # the tools
 

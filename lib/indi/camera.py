@@ -24,7 +24,8 @@ class INDICamera:
   def output_prefix(self):
     return property('UPLOAD_SETTINGS', 'UPLOAD_PREFIX')
 
-  def shoot(self, exposure):
+  def shoot(self, exposure, gain):
+    self.set_property('CCD_CONTROLS', 'Gain', gain)
     self.set_property('CCD_EXPOSURE', 'CCD_EXPOSURE_VALUE', exposure, exposure + 2)
 
   def set_output(self, path, prefix):

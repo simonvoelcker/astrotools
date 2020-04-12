@@ -12,7 +12,7 @@ from astropy.io import fits
 
 def convert_fits_image(fits_filepath, out_filepath):
 	with fits.open(fits_filepath) as fits_file:
-		fits_file.info()
+		# Useful: fits_file.info()
 		numpy_image = numpy.transpose(fits_file[0].data, (1, 2, 0))
 		pil_image = Image.fromarray(numpy_image, mode='RGB')
 		pil_image.save(out_filepath)
@@ -20,7 +20,8 @@ def convert_fits_image(fits_filepath, out_filepath):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--exposure', type=float, default=1.0, help='Exposure time')
+parser.add_argument('--exposure', type=float, default=0.1, help='Exposure time')
+parser.add_argument('--gain', type=float, default=1000.0, help='Analog gain')
 args = parser.parse_args()
 
 ####################
@@ -44,7 +45,11 @@ png_path = os.path.join(workdir, 'png')
 basename = datetime.datetime.now().isoformat()
 
 camera.set_output(path=fits_path, prefix=basename)
-camera.shoot(exposure=args.exposure)
+camera.shoot(exposure=args.exposure, gain=args.gain)
 camera.disconnect()
 
-convert_fits_image(os.path.join(fits_path, f'{basename}.fits'), os.path.join(png_path, f'{basename}.png'))
+fits_file = os.path.join(fits_path, f'{basename}.fits')
+png_file = os.path.join(png_path, f'{basename}.png')
+convert_fits_image(fits_file, png_file)
+
+print(f'Wrote {png_file}')

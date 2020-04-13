@@ -1,13 +1,13 @@
-from flask import Flask, render_template, g, request, session, Response
+import argparse
+import json
+import queue
+import threading
+
+from flask import Flask, render_template, request, Response
 from flask.json import jsonify
 
 from lib.indi.controller import INDIController
 
-import queue
-import threading
-import json
-import argparse
-import subprocess
 
 app = Flask(__name__)
 app.config['bootstrap_version']='3.3.7'
@@ -20,7 +20,7 @@ indi_controller = None
 def get_indi_controller():
     global indi_controller
     if indi_controller is None:
-        indi_controller = INDIController(app)
+        indi_controller = INDIController(workdir=os.path.join(app.static_folder, 'images'))
     return indi_controller
 
 def put_event(event):
@@ -62,7 +62,12 @@ def image_event(image_filepath):
     })
 
 def notification(level, title, message):
-    put_event({'type': 'notification', 'level': level, 'title': title, 'message': message})
+    put_event({
+        'type': 'notification',
+        'level': level,
+        'title': title,
+        'message': message
+    })
 
 @app.route('/status')
 def status():
@@ -104,8 +109,7 @@ def events():
         subscriptions.append(q)
         while(True):
             data = q.get()
-            app.logger.debug('Sending event: {0}'.format(data['type']))
-            yield("data: {0}\n\n".format(json.dumps(data)))
+            yield(f'data: {json.dumps(data)}\n\n')
     return Response(gen(), mimetype="text/event-stream")
 
 @app.route('/shutdown')

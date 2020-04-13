@@ -11,7 +11,13 @@ var INDIDevice = function(devicename, properties) {
     };
 
     this.set = function(property, value, callback) {
-        json_request(this.__url(['properties', property]), {value: value}, {success: this.__got_property.bind(this, callback)});
+        let request_options = {
+            method: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({value: value}),
+            success: this.__got_property.bind(this, callback)
+        }
+        $.ajax(this.__url(['properties', property]), request_options)
     };
 
     this.filter_properties = function(property, element) {

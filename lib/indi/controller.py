@@ -24,11 +24,9 @@ def convert_fits_image(fits_filepath, out_filepath):
 class INDIController:
     _status = {'shooting': False}
     
-    def __init__(self, app):
-        self.app = app
+    def __init__(self, workdir):
         self.client = INDIClient()
-
-        self.workdir = app.static_folder + '/images'
+        self.workdir = workdir 
         if not os.path.isdir(self.workdir):
             os.makedirs(self.workdir)
 

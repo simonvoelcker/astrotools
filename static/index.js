@@ -1,19 +1,6 @@
-var json_request = function(url, data, options) {
-    var request_options = {
-        method: 'PUT',
-        data: JSON.stringify(data),
-        contentType: 'application/json'
-    }
-    if (options !== undefined) {
-        $.extend(request_options, options)
-    }
-    $.ajax(url, request_options)
-}
-
 var indi = new INDI()
 indi.get_devices()
 var previewPage = new PreviewPage(indi)
-
 
 var event_handlers = {
     image: function(event) {

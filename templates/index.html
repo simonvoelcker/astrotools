@@ -20,13 +20,14 @@
 		<div class="container-fluid">
 		    <form class="form-inline"> 
 		        <div class="form-group">
-		            <label for="exposure" class="control-label">Exposure</label>
+		            <label for="exposure" class="control-label">Exposure, Gain</label>
 		            <div class="input-group">
-		                <input type="number" class="form-control" id="exposure" placeholder="1" value="1">
+		                <input type="number" class="form-control" id="exposure" placeholder="0.2" value="0.2">
+		                <input type="number" class="form-control" id="gain" placeholder="100" value="100">
 		                <div class="input-group-btn">
-		                    <button type="button" id="preview" class="btn btn-default">Preview</button>
-		                    <button type="button" id="framing" class="btn btn-default">Framing</button>
-		                    <button type="button" id="stop-framing" class="btn btn-default">Stop Framing</button>
+		                    <button type="button" id="capture" class="btn btn-default">Capture</button>
+		                    <button type="button" id="start-sequence" class="btn btn-default">Sequence</button>
+		                    <button type="button" id="stop-sequence" class="btn btn-default">Stop</button>
 		                </div>
 		            </div>
 		        </div>
@@ -37,7 +38,6 @@
 		</div>
 
 		<script src="static/indi.js"></script>
-		<script src="static/localsettings.js"></script>
 		<script src="static/preview_page.js"></script>
 		<script src="static/index.js"></script>
 	</body>

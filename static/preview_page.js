@@ -1,59 +1,35 @@
-this.PreviewPage = function(localsettings, indi) {
-    this.localsettings = localsettings;
-    this.indi = indi;
-    PreviewPage.SETTING_EXPOSURE='setting_exposure';
+this.PreviewPage = function(indi) {
+    this.indi = indi
 
     this.setImage = function(url) {
-        $('#ccd-preview-image').attr('src', url);
-    };
-
-    this.preview = function() {
-        this.set_exposure();
-        let device = indi.devices[current_indi_device()]
-        let exposure = this.exposure()
-        device.capture(exposure, 10);
-    };
-
-    this.framing = function() {
-        this.set_exposure();
-        current_indi_device().framing(this.exposure());
-        $('#framing').hide();
-        $('#stop-framing').show();
-
-    };
-
-    this.stop_framing = function() {
-        current_indi_device().stop_framing();
-        $('#framing').show();
-        $('#stop-framing').hide();
+        $('#ccd-preview-image').attr('src', url)
     }
 
-    this.exposure = function() {
-        return this.localsettings.get(PreviewPage.SETTING_EXPOSURE, 1);
-    };
+    this.capture = function() {
+        let device = indi.devices[current_indi_device()]
+        let exposure = $('#exposure').val()
+        let gain = $('#gain').val()
+        device.capture(exposure, gain)
+    }
 
-    this.set_exposure = function(value) {
-        if(value === undefined)
-            value = $('#exposure').val();
-        this.localsettings.set(PreviewPage.SETTING_EXPOSURE, value);
-        $('#exposure').val(this.exposure());
-    };
+    this.start_sequence = function() {
+        let device = indi.devices[current_indi_device()]
+        let exposure = $('#exposure').val()
+        let gain = $('#gain').val()
+        device.start_sequence(exposure, gain)
+        $('#start-sequence').hide()
+        $('#stop-sequence').show()
+    }
 
-    this.onDisplay = function() {
-        if(this.localsettings.getJSON('preview_page_first_run', true) == true ) {
-            var firstRunCompleted = function(){
-                this.localsettings.setJSON('preview_page_first_run', false);
-            };
-        };
-    };
+    this.stop_sequence = function() {
+        let device = indi.devices[current_indi_device()]
+        device.stop_sequence()
+        $('#start-sequence').show()
+        $('#stop-sequence').hide()
+    }
 
-    $('#ccd-preview-image').click(function() {
-        $('#ccd-preview-image').toggleClass('img-responsive');
-    });
-
-    this.set_exposure(this.exposure());
-    $('#preview').click(this.preview.bind(this));
-    $('#framing').click(this.framing.bind(this));
-    $('#stop-framing').click(this.stop_framing.bind(this));
-    $('#stop-framing').hide();
-};
+    $('#capture').click(this.capture.bind(this))
+    $('#start-sequence').click(this.start_sequence.bind(this))
+    $('#stop-sequence').click(this.stop_sequence.bind(this))
+    $('#stop-sequence').hide()
+}

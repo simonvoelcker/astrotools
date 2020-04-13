@@ -2,6 +2,7 @@ import os
 import glob
 import time
 import numpy as np
+import datetime
 
 from lib.indi.camera import INDICamera
 from lib.indi.client import INDIClient
@@ -65,7 +66,7 @@ class INDIController:
             raise RuntimeError('Device {0} is not an INDI CCD Camera'.format(device))
         INDIController._status = {'shooting': True, 'exposure': exposure, 'started': time.time() }
         
-        image_name = f'image_e{exposure}_g{gain}'
+        image_name = datetime.datetime.now().isoformat()
         imager.set_output(self.workdir, image_name)
         imager.shoot(exposure, gain)
         INDIController._status = {'shooting': False, 'last_exposure': exposure, 'last_ended': time.time() }

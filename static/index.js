@@ -8,7 +8,7 @@ var json_request = function(url, data, options) {
         $.extend(request_options, options)
     }
     $.ajax(url, request_options)
-};
+}
 
 var indi = new INDI()
 indi.get_devices()

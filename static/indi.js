@@ -29,12 +29,12 @@ var INDIDevice = function(devicename, properties) {
         $.ajax(this.__url(['capture', exposure, gain]));
     }; 
 
-    this.start_sequence = function(exposure) {
-        $.ajax(this.__url(['framing', exposure]));
+    this.start_sequence = function(exposure, gain) {
+        $.ajax(this.__url(['start_sequence', exposure, gain]));
     }; 
 
     this.stop_sequence = function() {
-        $.ajax(this.__url(['framing', 'stop']));
+        $.ajax(this.__url(['stop_sequence']));
     };
 
     this.__got_properties = function(callback, data) {

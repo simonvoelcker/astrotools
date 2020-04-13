@@ -79,21 +79,23 @@ def capture(devicename, exposure, gain):
     threading.Thread(target=exp).start()
     return ('', 204)
 
-@app.route('/device/<devicename>/framing/<exposure>')
-def framing(devicename, exposure):
+@app.route('/device/<devicename>/start_sequence/<exposure>/<gain>')
+def start_sequence(devicename, exposure, gain):
     def exp():
         try:
             while(app.config['framing']):
-                image_event( get_indi_controller().preview(devicename, float(exposure) ) )
+                image_event( get_indi_controller().capture_image(devicename, float(exposure), float(gain)))
         except Exception as e:
-            app.logger.error('Error on framing', exc_info = e)
-            notification('warning', 'Error', e.args[0])
+            app.logger.error('Capture error', exc_info=e)
 
-    app.config['framing'] = exposure != 'stop'
-    if app.config['framing']:
-        t = threading.Thread(target = exp)
-        t.start()
+    app.config['framing'] = True
+    threading.Thread(target = exp).start()
     return('', 204)
+
+@app.route('/device/<devicename>/stop_sequence')
+def stop_sequence(devicename):
+    app.config['framing'] = False
+    return('', 200)
 
 @app.route('/events')
 def events():

@@ -5,7 +5,7 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-		<title>INDI Preview</title>
+		<title>HTI</title>
 
 		<!-- Bootstrap -->
 		<link href="static/bootstrap-{{config.bootstrap_version}}-dist/css/bootstrap.min.css" rel="stylesheet">
@@ -29,11 +29,15 @@
 		                    <button type="button" id="start-sequence" class="btn btn-default">Sequence</button>
 		                    <button type="button" id="stop-sequence" class="btn btn-default">Stop</button>
 		                </div>
+	                    <button type="button" id="calibrate" class="btn btn-default">Run Calibration</button>
 		            </div>
 		        </div>
 		    </form>
-		    <div id="ccd-preview-container" style="margin-top: 10px">
-		        <img id="ccd-preview-image" class='img-responsive'> 
+		    <div id="calibration-area" style="display: inline-block; margin: 10px; width: 300px; height: 300px; background-color: #ff0000; border: 1px; border-style: solid;"></div>
+		    <div id="calibration-area-g" style="display: inline-block; margin: 10px; width: 300px; height: 300px; background-color: #00ff00; border: 1px; border-style: solid;"></div>
+		    <div id="calibration-area-b" style="display: inline-block; margin: 10px; width: 300px; height: 300px; background-color: #0000ff; border: 1px; border-style: solid;"></div>
+		    <div id="ccd-preview-container" style="margin: 10px; width: 640px; height: 360px; border: 1px; border-style: solid;">
+		        <img id="ccd-preview-image" style="width: 100%; height: 100%;"> 
 		    </div>
 		</div>
 

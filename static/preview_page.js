@@ -28,8 +28,16 @@ this.PreviewPage = function(indi) {
         $('#stop-sequence').hide()
     }
 
+    this.run_calibration = function() {
+        let colors = ['ff0000', '00ff00', '0000ff', 'ffff00', '00ffff', 'ff00ff'] //, '000000', 'ffffff']
+        for (var i=0; i<colors.length; i++) {
+            $('#calibration_area').css("background-color", colors[i])
+        }
+    }
+
     $('#capture').click(this.capture.bind(this))
     $('#start-sequence').click(this.start_sequence.bind(this))
     $('#stop-sequence').click(this.stop_sequence.bind(this))
     $('#stop-sequence').hide()
+    $('#calibrate').click(this.run_calibration.bind(this))
 }

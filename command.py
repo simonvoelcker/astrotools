@@ -88,17 +88,23 @@ class CommandShell(cmd.Cmd):
 
 		latest_image = max(all_images, key=os.path.getctime)
 
+		image_metadata = None
 		try:
-			self.here = Solver().locate_image(latest_image)
+			image_metadata = Solver().analyze_image(latest_image)
 		except KeyboardInterrupt:
 			print('Sync aborted')
 			return
 
-		if self.here is None:
+		if image_metadata is None:
 			print(f'Failed to determine coordinates from image {latest_image}')
 			return
 
-		print(f'Current coordinates: {self.here} (using image {latest_image})')
+		ra, dec = float(image_metadata['center_deg']['ra']), float(image_metadata['center_deg']['dec'])
+		angle, direction = float(image_metadata['rotation']['angle']), image_metadata['rotation']['direction']
+
+		self.here = Coordinates(ra, dec)
+
+		print(f'Current coordinates: {self.here}. Rotation angle: {angle:.1f}°{direction}. (from {latest_image})')
 
 		if self.target:
 			diff = Coordinates(self.target.ra - self.here.ra, self.target.dec - self.here.dec)

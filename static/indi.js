@@ -1,27 +1,29 @@
-var INDIDevice = function(devicename, properties) {
-    this.name = devicename
-    this.properties = properties
-
-    this.reload = function(callback, devicename) {
-        $.ajax(this.__url(['properties']), {success: this.__got_properties.bind(this, callback)})
+class INDIDevice {
+    constructor(devicename, properties) {
+        this.name = devicename
+        this.properties = properties
     }
 
-    this.get = function(property, callback) {
-        $.ajax(this.__url(['properties', property]), {success: this.__got_property.bind(this, callback)})
+    reload(callback, devicename) {
+        $.ajax(this._url(['properties']), {success: this._got_properties.bind(this, callback)})
     }
 
-    this.set = function(property, value, callback) {
+    get(property, callback) {
+        $.ajax(this._url(['properties', property]), {success: this._got_property.bind(this, callback)})
+    }
+
+    set(property, value, callback) {
         let request_options = {
             method: 'PUT',
             contentType: 'application/json',
             data: JSON.stringify({value: value}),
-            success: this.__got_property.bind(this, callback)
+            success: this._got_property.bind(this, callback)
         }
-        $.ajax(this.__url(['properties', property]), request_options)
+        $.ajax(this._url(['properties', property]), request_options)
     }
 
-    this.filter_properties = function(property, element) {
-        return properties.filter(function(each) {
+    filter_properties(property, element) {
+        return properties.filter((each) => {
             var matches = true
             if (property !== undefined)
                 matches &= each['property'] == property
@@ -31,11 +33,11 @@ var INDIDevice = function(devicename, properties) {
         })
     }
 
-    this.capture = function(exposure, gain) {
-        $.ajax(this.__url(['capture', exposure, gain]))
+    capture(exposure, gain) {
+        $.ajax(this._url(['capture', exposure, gain]))
     } 
 
-    this.start_sequence = function(pathprefix, exposure, gain) {
+    start_sequence(pathprefix, exposure, gain) {
         let request_options = {
             method: 'POST',
             contentType: 'application/json',
@@ -45,46 +47,47 @@ var INDIDevice = function(devicename, properties) {
                 gain: gain
             })
         }
-        $.ajax(this.__url(['start_sequence']), request_options)
+        $.ajax(this._url(['start_sequence']), request_options)
     }
 
-    this.stop_sequence = function() {
-        $.ajax(this.__url(['stop_sequence']))
+    stop_sequence() {
+        $.ajax(this._url(['stop_sequence']))
     }
 
-    this.__got_properties = function(callback, data) {
+    _got_properties(callback, data) {
         this.properties = data['properties']
         if (callback !== undefined)
             callback(this)
     }
 
-    this.__got_property = function(callback, data) {
+    _got_property(callback, data) {
         if (callback !== undefined)
             callback(data, this)
     }
 
-    this.__url = function(suburl) {
+    _url(suburl) {
         if (suburl === undefined)
             suburl = []
         return ['/device', this.name].concat(suburl).join('/')
     }
 }
 
-var INDI = function() {
-
-    this.devices = {}
-
-    this.get_devices = function(callback) {
-        $.ajax('/devices', {success: this.__got_devices.bind(this, callback)})
+class INDI {
+    constructor() {
+        this.devices = {}
     }
 
-    this.device_names = function() {
+    get_devices(callback) {
+        $.ajax('/devices', {success: this._got_devices.bind(this, callback)})
+    }
+
+    device_names() {
         return Object.keys(this.devices)
     }
 
-    this.__got_devices = function(callback, data) {
+    _got_devices(callback, data) {
         this.devices = {}
-        Object.keys(data).forEach(function(name) {
+        Object.keys(data).forEach((name) => {
             this.devices[name] = new INDIDevice(name, data[name])
         }, this)
         if (callback)

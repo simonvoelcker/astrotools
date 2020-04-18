@@ -37,7 +37,7 @@ def index():
 def devices():
 
     # TODO sim mode
-    return jsonify(["hallo"])
+    # return jsonify(["hallo"])
 
     return jsonify(get_indi_controller().devices())
 
@@ -83,8 +83,8 @@ def status():
 def capture(devicename, exposure, gain):
 
     # TODO sim mode
-    time.sleep(1)
-    return ('', 204)
+    # time.sleep(1)
+    # return ('', 204)
 
     def exp():
         try:
@@ -95,42 +95,40 @@ def capture(devicename, exposure, gain):
     threading.Thread(target=exp).start()
     return ('', 204)
 
-@app.route('/device/<devicename>/start_sequence/<exposure>/<gain>')
-def start_sequence(devicename, exposure, gain):
+@app.route('/device/<devicename>/start_sequence', methods=['POST'])
+def start_sequence(devicename):
+    body = request.json
+    exposure = float(body['exposure'])
+    gain = float(body['gain'])
+    pathprefix = body['pathprefix']
+
     def exp():
         try:
-            while(app.config['framing']):
-                image_event( get_indi_controller().capture_image(devicename, float(exposure), float(gain)))
+            controller = get_indi_controller()
+            while (app.config['framing']):
+                image_filepath = controller.capture_image(devicename, exposure, gain) 
+                image_event(image_filepath)
         except Exception as e:
             app.logger.error('Capture error', exc_info=e)
 
     app.config['framing'] = True
     threading.Thread(target = exp).start()
-    return('', 204)
+    return ('', 204)
 
 @app.route('/device/<devicename>/stop_sequence')
 def stop_sequence(devicename):
     app.config['framing'] = False
-    return('', 200)
+    return ('', 200)
 
 @app.route('/events')
 def events():
     def gen():
         q = queue.Queue()
         subscriptions.append(q)
-        while(True):
+        while True:
             data = q.get()
-            yield(f'data: {json.dumps(data)}\n\n')
+            yield f'data: {json.dumps(data)}\n\n'
     return Response(gen(), mimetype="text/event-stream")
-
-@app.route('/shutdown')
-def shutdown():
-    func = request.environ.get('werkzeug.server.shutdown')
-    if func is None:
-        notification('warning', 'Error', 'unable to shutdown the server')
-        return('', 500)
-    func()
-    return ('', 204)
 
 @app.route('/clean-cache')
 def clean_cache():

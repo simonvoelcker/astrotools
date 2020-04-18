@@ -19,24 +19,24 @@
 
 		<div class="container-fluid">
 		    <form class="form-inline"> 
-		        <div class="form-group">
-		            <label for="exposure" class="control-label">Exposure, Gain</label>
-		            <div class="input-group">
-		                <input type="number" class="form-control" id="exposure" placeholder="0.2" value="0.2">
-		                <input type="number" class="form-control" id="gain" placeholder="100" value="100">
-		                <div class="input-group-btn">
-		                    <button type="button" id="capture" class="btn btn-default">Capture</button>
-		                    <button type="button" id="start-sequence" class="btn btn-default">Sequence</button>
-		                    <button type="button" id="stop-sequence" class="btn btn-default">Stop</button>
-		                </div>
-	                    <button type="button" id="calibrate" class="btn btn-default">Run Calibration</button>
-		            </div>
+		        <div class="form-group" style="margin: 10px;">
+		            <label for="exposure" class="control-label">Exposure</label>
+	                <input type="number" class="form-control" id="exposure" placeholder="0.2" value="0.2">
+		            
+		            <label for="gain" class="control-label">Gain</label>
+	                <input type="number" class="form-control" id="gain" placeholder="100" value="100">
+                    
+                    <button type="button" id="capture" class="btn btn-default">Capture Single</button>	
+
+		            <label for="pathprefix" class="control-label">Path Prefix</label>
+	                <input type="string" class="form-control" id="pathprefix" placeholder="Images" value="Ímages">
+                    <button type="button" id="start-sequence" class="btn btn-default">Sequence</button>
+                    <button type="button" id="stop-sequence" class="btn btn-default">Stop</button>
+                    <!-- <button type="button" id="calibrate" class="btn btn-default">Run Calibration</button> -->
 		        </div>
 		    </form>
-		    <div id="calibration-area" style="display: inline-block; margin: 10px; width: 300px; height: 300px; background-color: #888888; border: 1px; border-style: solid;"></div>
-		    <div id="ccd-preview-container" style="margin: 10px; width: 640px; height: 360px; border: 1px; border-style: solid;">
-		        <img id="ccd-preview-image" style="width: 100%; height: 100%;"> 
-		    </div>
+		    <!--<div id="calibration-area" style="display: inline-block; margin: 10px; width: 300px; height: 300px; background-color: #888888; border: 1px; border-style: solid;"></div>-->
+	        <img id="ccd-preview-image" style="width: 960px; height: 540px; margin: 5px; border: 1px; border-style: solid;"> 
 		</div>
 
 		<script src="static/indi.js"></script>

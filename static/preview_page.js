@@ -5,18 +5,19 @@ this.PreviewPage = function(indi) {
         $('#ccd-preview-image').attr('src', url)
     }
 
-    this.capture = function(exposure=null, gain=null) {
+    this.capture = function() {
         let device = indi.devices[current_indi_device()]
-        let exp = exposure || $('#exposure').val()
-        let gn = gain || $('#gain').val()
-        device.capture(exp, gn)
+        let exposure = $('#exposure').val()
+        let gain = $('#gain').val()
+        device.capture(exposure, gain)
     }
 
     this.start_sequence = function() {
         let device = indi.devices[current_indi_device()]
         let exposure = $('#exposure').val()
         let gain = $('#gain').val()
-        device.start_sequence(exposure, gain)
+        let pathprefix = $('#pathprefix').val()
+        device.start_sequence(pathprefix, exposure, gain)
         $('#start-sequence').hide()
         $('#stop-sequence').show()
     }
@@ -29,13 +30,14 @@ this.PreviewPage = function(indi) {
     }
 
     this.run_calibration = function() {
+        let device = indi.devices[current_indi_device()]
         let colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'] //, '000000', 'ffffff']
         for (var i=0; i<colors.length; i++) {
             $('#calibration-area').css("background-color", colors[i])
-            this.capture(0.2, 100)
+            device.capture(0.2, 100)
 
-            # TODO (FS): need promises to queue these up properly.
-
+            // # TODO (FS): need promises to queue these up properly.
+            // # async, await
         }
     }
 

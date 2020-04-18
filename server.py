@@ -3,6 +3,7 @@ import json
 import queue
 import os
 import threading
+import time
 
 from flask import Flask, render_template, request, Response
 from flask.json import jsonify
@@ -34,6 +35,10 @@ def index():
 
 @app.route('/devices')
 def devices():
+
+    # TODO sim mode
+    return jsonify(["hallo"])
+
     return jsonify(get_indi_controller().devices())
 
 @app.route('/device_names')
@@ -76,6 +81,11 @@ def status():
 
 @app.route('/device/<devicename>/capture/<exposure>/<gain>')
 def capture(devicename, exposure, gain):
+
+    # TODO sim mode
+    time.sleep(1)
+    return ('', 204)
+
     def exp():
         try:
             image_event(get_indi_controller().capture_image(devicename, float(exposure), float(gain)))

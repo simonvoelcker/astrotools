@@ -5,11 +5,11 @@ this.PreviewPage = function(indi) {
         $('#ccd-preview-image').attr('src', url)
     }
 
-    this.capture = function() {
+    this.capture = function(exposure=null, gain=null) {
         let device = indi.devices[current_indi_device()]
-        let exposure = $('#exposure').val()
-        let gain = $('#gain').val()
-        device.capture(exposure, gain)
+        let exp = exposure || $('#exposure').val()
+        let gn = gain || $('#gain').val()
+        device.capture(exp, gn)
     }
 
     this.start_sequence = function() {
@@ -29,9 +29,13 @@ this.PreviewPage = function(indi) {
     }
 
     this.run_calibration = function() {
-        let colors = ['ff0000', '00ff00', '0000ff', 'ffff00', '00ffff', 'ff00ff'] //, '000000', 'ffffff']
+        let colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'] //, '000000', 'ffffff']
         for (var i=0; i<colors.length; i++) {
-            $('#calibration_area').css("background-color", colors[i])
+            $('#calibration-area').css("background-color", colors[i])
+            this.capture(0.2, 100)
+
+            # TODO (FS): need promises to queue these up properly.
+
         }
     }
 

@@ -1,0 +1,86 @@
+.scene-progress
+    position: absolute
+    width: 100%
+    height: 100%
+    align-items: center
+    justify-content: center
+
+    .centered
+        position: relative
+        height: 90%
+        width: 90%  // will be overridden in js
+        display: flex
+        align-items: center
+        justify-content: center
+
+    .centered-floating
+        position: absolute
+        height: 100%
+        width: 100%
+        display: flex
+        align-items: center
+        justify-content: center
+
+
+.panel-modelprogress
+    position: absolute
+    top: 0
+    width: 100%
+    height: 100%
+    display: flex
+    align-items: center
+
+    #renderCanvas
+        width: 100%
+        height: 100%
+
+    #renderCanvas:focus
+        outline: none !important
+
+    .centered
+        width: 80%
+        height: 80%
+        margin: 0 auto
+
+
+.panel-circularprogressindicator
+    position: relative
+    width: 100%
+    height: 100%
+
+    .progress-shadow
+        position: absolute
+        height: calc(100% - 40px)
+        top: 20px
+        left: 18px
+        z-index: -1
+        width: calc(100% - 40px)
+
+        img
+            width: 100%
+            height: 100%
+
+    .printer-states
+        position: absolute
+        height: calc(100% - 0px)
+        top: 0px
+        left: 0px
+        z-index: -1
+        width: calc(100% - 0px)
+        margin: 0
+        padding: 0
+
+    .printer-states
+
+        li
+            position: absolute
+            list-style: none
+            margin: 0
+            padding: 0
+            line-height: 1em
+
+    h2
+        margin-top: -336px
+        position: absolute
+        width: 100%
+        text-align: left

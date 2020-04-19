@@ -8,7 +8,7 @@ var event_handlers = {
     }
 }
 
-var events_listener = new EventSource('/events')
+var events_listener = new EventSource('/api/camera/events')
 events_listener.onmessage = (e) => {
     event = JSON.parse(e.data)
     event_handlers[event['type']](event)

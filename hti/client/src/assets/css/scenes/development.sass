@@ -1,0 +1,58 @@
+.axis-move-panel
+    height: 3 * $ctrl-button-height + 4 * $ctrl-button-spacing
+    background: $panelBackgroundColor
+    position: relative
+    margin-bottom: 14px
+    display: flex
+    justify-content: space-between
+
+    .btn
+        position: absolute
+        width: $ctrl-button-width
+        height: $ctrl-button-height
+
+    .move-x-neg
+        top: $ctrl-button-height + 2 * $ctrl-button-spacing
+        left: $ctrl-button-spacing
+    .move-x-pos
+        top: $ctrl-button-height + 2 * $ctrl-button-spacing
+        left: 2 * $ctrl-button-width + 3 * $ctrl-button-spacing
+    .move-y-pos
+        top: $ctrl-button-spacing
+        left: $ctrl-button-width + 2 * $ctrl-button-spacing
+    .move-y-neg
+        top: 2 * $ctrl-button-height + 3 * $ctrl-button-spacing
+        left: $ctrl-button-width + 2 * $ctrl-button-spacing
+    .move-z-pos
+        top: 0.5 * $ctrl-button-height + 1.5 * $ctrl-button-spacing
+        left: 3.5 * $ctrl-button-width + 2 * $ctrl-button-spacing
+    .move-z-neg
+        top: 1.5 * $ctrl-button-height + 2.5 * $ctrl-button-spacing
+        left: 3.5 * $ctrl-button-width + 2 * $ctrl-button-spacing
+
+    .move-amount
+        display: flex
+        flex-direction: column
+        justify-content: space-around
+        padding: 10px
+
+        .btn
+            position: relative
+            width: 122px
+
+
+.bed-map
+    display: flex
+    flex-direction: column
+    justify-content: space-between
+    border: 1px solid #00CDFF
+    height: 520px
+    width: 100%
+    margin-top: 10px
+    padding: 10px
+
+    .bed-map-rows
+        display: flex
+        flex-direction: row
+        justify-content: space-between
+        width: 100%

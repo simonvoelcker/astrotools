@@ -68,7 +68,7 @@ class INDIDevice {
     _url(suburl) {
         if (suburl === undefined)
             suburl = []
-        return ['/device', this.name].concat(suburl).join('/')
+        return ['/api/camera/device', this.name].concat(suburl).join('/')
     }
 }
 
@@ -78,7 +78,7 @@ class INDI {
     }
 
     get_devices(callback) {
-        $.ajax('/devices', {success: this._got_devices.bind(this, callback)})
+        $.ajax('/api/camera/devices', {success: this._got_devices.bind(this, callback)})
     }
 
     device_names() {

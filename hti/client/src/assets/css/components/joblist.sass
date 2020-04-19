@@ -1,0 +1,30 @@
+.job-item
+    background-color: $jobItemColor
+
+.input_file
+    display: none
+
+.started-job-item
+    background-color: $startedJobItemColor
+
+.update-job-item
+    background-color: $updateJobItemColor
+
+.upload-job-item
+    background-color: $uploadJobItemColor
+
+.panel-scroll
+    @include custom-scroll-bar()
+    overflow: hidden overlay
+    position: absolute
+    white-space: nowrap
+    text-overflow: ellipsis
+    ul
+        padding: 14px 24px
+
+.file_list_text
+    display: block
+    text-overflow: ellipsis
+    overflow: hidden
+    margin-left: 10px
+    font-weight: 300

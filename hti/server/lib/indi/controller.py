@@ -4,8 +4,8 @@ import time
 import numpy as np
 import datetime
 
-from lib.indi.camera import INDICamera
-from lib.indi.client import INDIClient
+from .camera import INDICamera
+from .client import INDIClient
 
 
 from PIL import Image
@@ -58,7 +58,7 @@ class INDIController:
 
     def capture_image(self, device, exposure, gain):
         if INDIController._status['shooting']:
-            raise RuntimeError('Anoter exposure is already in progress')
+            raise RuntimeError('Another exposure is already in progress')
         imager = INDICamera(device, self.client)
         if not imager.is_camera():
             raise RuntimeError('Device {0} is not an INDI CCD Camera'.format(device))
@@ -69,8 +69,8 @@ class INDIController:
         imager.shoot(exposure, gain)
         INDIController._status = {'shooting': False, 'last_exposure': exposure, 'last_ended': time.time() }
 
-        convert_fits_image(os.path.join(self.workdir, f'{image_name}.fits'), os.path.join(self.workdir, f'{image_name}.jpg'))
-        return f'{image_name}.jpg'
+        convert_fits_image(os.path.join(self.workdir, f'{image_name}.fits'), os.path.join(self.workdir, f'{image_name}.png'))
+        return f'{image_name}.png'
 
     def clean_cache(self):
         for file in glob(self.workdir + '/*'):

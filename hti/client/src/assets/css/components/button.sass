@@ -1,0 +1,100 @@
+// override the default bootstrap style
+button.btn-secondary.disabled,
+button:disabled
+    opacity: 0.4 !important
+    border: 2px solid $buttonBorderColor
+    background-color: transparent
+
+.btn-secondary,
+.btn
+    width: 100%
+    height: 48px
+    background: none
+    color: white
+    margin-bottom: 5px
+    font-size: $buttonFontSize
+    text-transform: uppercase
+    letter-spacing: 5px
+    border: 2px solid $buttonBorderColor
+    cursor: 'pointer'
+
+    &.progressbar
+        animation: progress-bar-stripes 1s linear infinite
+        animation-duration: 2s
+        animation-timing-function: linear
+        animation-delay: 0s
+        animation-iteration-count: infinite
+        animation-direction: normal
+        animation-fill-mode: none
+        animation-play-state: running
+        animation-name: progress-bar-stripes
+        background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent)
+        background-size: 1rem 1rem
+        background-color: #0f6c84 !important
+
+    &:hover,
+    &:active
+        background-color: transparent !important
+
+    &:focus
+        box-shadow: none !important
+
+    &.upload-button 
+        border: 2px solid $buttonBorderColor
+        padding-top: 10px
+
+// override the default bootstrap style
+.btn:hover
+    color: white
+
+// override the default bootstrap style
+button
+    .spinner-border
+        border: 0.15rem solid $buttonBorderColor
+        border-right-color: transparent
+        margin-bottom: 2px
+
+.scene-selector-btn
+    margin: 15px 3px
+    height: 74px
+    width: 74px
+    display: flex
+    align-content: center
+    justify-content: center
+    cursor: pointer
+
+    &.selected
+        background: $sceneSelectedColor
+        border-radius: 50%
+
+.button-holder
+    display: flex
+    justify-content: space-between
+    flex-direction: column
+
+.button-pair
+    button
+        width: 48%
+
+.btn-selected
+    background: #273c42 !important
+    &.btn-secondary:hover, 
+    &.btn-secondary:active, 
+    &.btn:hover,
+    &.btn:active,
+        background: #273c42 !important
+
+.form-check-input
+    margin-left: -2.25rem !important
+    width: 28px
+    height: 28px
+
+.tab-link
+    color: gray !important
+
+.nav-link
+    border: 0 none !important
+    &:focus,
+    &:active 
+        border: 0 none !important
+        background-color: transparent

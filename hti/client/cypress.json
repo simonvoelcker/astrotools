@@ -1,0 +1,7 @@
+{
+  "pluginsFile": "integration_tests/e2e/plugins/index.js",
+  "viewportWidth": 1024,
+  "viewportHeight": 768,
+  "video": false,
+  "baseUrl": "http://localhost:5000/"
+}

@@ -97,6 +97,13 @@ def get_sharpness_sobel(frame):
 	# variance of sobel
 	return sobel(frame).var()
 
+def sigma_clip_dark_end(image, sigma):
+	# clip darkest pixels to given multiple of standard deviations above average
+	image_greyscale = np.mean(image, axis=2)
+	stddev = np.std(image_greyscale)
+	average = np.average(image_greyscale)
+	# clip away background noise, as indicated by stddev and average
+	return np.clip(image_greyscale, average + sigma * stddev, 255)
 
 def query_offsets(path_prefix):
 	# WIP and maybe a bad idea.

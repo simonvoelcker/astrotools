@@ -2,6 +2,7 @@ import argparse
 import glob
 import os
 import sys
+import datetime
 
 from lib.analyzer import Analyzer
 from lib.frame import Frame
@@ -11,8 +12,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('directory', type=str)
 parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Pattern to use when searching for input images')
 parser.add_argument('--range', type=str, default=None, help='Stack only given range of images, not all')
-parser.add_argument('--amplification', type=int, default=1, help='Multiply images by this number before offset detection')
-parser.add_argument('--threshold', type=int, default=128, help='Clip images by this brightness value after amplification')
+parser.add_argument('--sigma-clip', type=int, default=None, help='Apply sigma clipping with given sigma before offset detection')
 
 args = parser.parse_args()
 
@@ -31,16 +31,17 @@ if args.range is not None:
 	files = files[int(image_range[0]):int(image_range[1])]
 	print(f'Only {len(files)} files selected')
 
-analyzer = Analyzer(args.amplification, args.threshold)
+analyzer = Analyzer(args.sigma_clip)
 
 for frame_index, filepath in enumerate(files):
-	frame = Frame(filepath)
-	analyzer.analyze(frame)
-	print(f'Processed frame {frame_index+1}/{len(files)}: {frame.filepath}')
+	before = datetime.datetime.now()
+	analyzer.analyze(Frame(filepath))
+	after = datetime.datetime.now()
+	print(f'Processed frame {frame_index+1}/{len(files)}: {filepath}. Took {(after-before).seconds}s')
 
 analyzer.write_astrometric_metadata(args.directory)
 analyzer.write_offsets_file(args.directory)
-analyzer.create_offsets_plot()
+analyzer.create_offsets_plot('out/offsets_plot.png')
 analyzer.write_to_influx()
 
 print('Done')

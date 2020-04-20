@@ -4,7 +4,7 @@ import numpy.ma as ma
 from skimage.feature import register_translation
 
 from lib.axis_control import AxisControl
-from lib.util import load_image
+from lib.util import load_image, sigma_clip_dark_end
 from lib.tracker import Tracker
 
 
@@ -15,20 +15,9 @@ class ImageTracker(Tracker):
 		self.reference_image = None
 		self.sigma_threshold = config['sigma_threshold']
 
-	def _clean_image_for_offset_detection(self, image):
-		# greyscale frame, only width and height
-		image_greyscale = np.mean(image, axis=2)
-		stddev = np.std(image_greyscale)
-		average = np.average(image_greyscale)
-		threshold = self.sigma_threshold
-		# clip away background noise, as indicated by stddev and average
-		cleaned = np.clip(image_greyscale, average + threshold * stddev, 255)
-		# print(f'avg={average:.1f}, stddev={stddev:.1f}, thresh={threshold} => clipping {(average + threshold * stddev):.1f}-255')
-		return cleaned
-
 	def on_new_file(self, filepath):
 		image = load_image(filepath, dtype=np.int16)
-		image_for_offset_detection = self._clean_image_for_offset_detection(image)
+		image_for_offset_detection = sigma_clip_dark_end(image, self.sigma_threshold)
 
 		if self.reference_image is None:
 			print(f'Using reference image: {filepath}')

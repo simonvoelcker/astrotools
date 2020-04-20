@@ -21,16 +21,13 @@ class Solver:
 	(2) subprocess.check_output accepts a timeout. Not effective.
 	(3) check_output runs in a thread which is killed. Very effective.
 	"""
-	def __init__(self):
-		super().__init__()
+	SOLVE_BINARY = '/usr/local/astrometry/bin/solve-field'
 
-	def get_locate_command(self, filepath, timeout):
+	def get_common_parameters(self, timeout=60.0, scale_low=0.8, scale_high=1.0):
 		return [
-			'/usr/local/astrometry/bin/solve-field',
-			filepath,
 			'--scale-units', 'arcsecperpix',
-			'--scale-low', '0.8',
-			'--scale-high', '1.0',
+			'--scale-low', str(scale_low),
+			'--scale-high', str(scale_high),
 			'--cpulimit', str(timeout),
 			'--overwrite',
 			'--no-plots',
@@ -42,36 +39,20 @@ class Solver:
 			'--index-xyls', 'none',
 			'--match', 'none',
 			'--rdls', 'none',
-			'--wcs', 'none',
+			'--wcs', 'temp/last_match.wcs',  # must be non-none so the detailed output is available
 		]
 
-	def get_analyze_command(self, filepath, timeout, hint):
-		solve_command = [
-			'/usr/local/astrometry/bin/solve-field',
-			filepath,
-			'--scale-units', 'arcsecperpix',
-			'--scale-low', '0.8',
-			'--scale-high', '1.0',
-			'--cpulimit', str(timeout),
-			'--overwrite',
-			'--no-plots',
-			'--parity', 'pos',
-			'--temp-axy',
-			'--solved', 'none',
-			'--corr', 'none',
-			'--new-fits', 'none',
-			'--index-xyls', 'none',
-			'--match', 'none',
-			'--rdls', 'none',
-			'--wcs', 'last_match.wcs',  # must be non-none so the detailed output is available
+	def get_hint_parameters(self, hint):
+		if hint is None:
+			return []
+		return [
+			'--ra', str(hint['ra']),
+			'--dec', str(hint['dec']),
+			'--radius', str(hint['radius']),
 		]
-		if hint is not None:
-			solve_command += [
-				'--ra', str(hint['ra']),
-				'--dec', str(hint['dec']),
-				'--radius', str(hint['radius']),
-			]
-		return solve_command
+
+	def get_analyze_command(self, filepath, timeout, hint=None):
+		return [self.SOLVE_BINARY, filepath] + self.get_common_parameters(timeout) + self.get_hint_parameters(hint)
 
 	def run_in_thread(self, command, timeout):
 		result = dict()
@@ -80,6 +61,8 @@ class Solver:
 		thread.join(timeout=timeout)
 		if 'output' in result:
 			return result['output']
+
+		# TODO kill process
 
 		print('Timed out trying to solve field')
 		return None
@@ -121,15 +104,3 @@ class Solver:
 			metadata[metadata_key] = match.groupdict() if match else None
 
 		return metadata
-
-	def locate_image(self, filepath, timeout=10):
-		command = self.get_locate_command(filepath, timeout)
-		output = self.run_in_thread(command, timeout)
-		if not output:
-			return None
-
-		astrometry_coordinates_rx = re.compile(r'^.*RA,Dec = \((?P<ra>[\d\.]+),(?P<dec>[\d\.]+)\).*$', re.DOTALL)
-		match = astrometry_coordinates_rx.match(output)
-		if not match:
-			return None
-		return Coordinates(float(match.group('ra')), float(match.group('dec')))

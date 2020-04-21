@@ -3,9 +3,11 @@ import glob
 import os
 import sys
 import datetime
+import sys
 
 from lib.analyzer import Analyzer
 from lib.frame import Frame
+from lib.solver import Solver
 
 
 parser = argparse.ArgumentParser()
@@ -13,6 +15,8 @@ parser.add_argument('directory', type=str)
 parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Pattern to use when searching for input images')
 parser.add_argument('--range', type=str, default=None, help='Stack only given range of images, not all')
 parser.add_argument('--sigma-clip', type=int, default=None, help='Apply sigma clipping with given sigma before offset detection')
+parser.add_argument('--batch', action='store_true', help='Run the solver in batch mode. Use only with easy-to-solve images.')
+
 
 args = parser.parse_args()
 
@@ -32,13 +36,7 @@ if args.range is not None:
 	print(f'Only {len(files)} files selected')
 
 analyzer = Analyzer(args.sigma_clip)
-
-for frame_index, filepath in enumerate(files):
-	before = datetime.datetime.now()
-	analyzer.analyze(Frame(filepath))
-	after = datetime.datetime.now()
-	print(f'Processed frame {frame_index+1}/{len(files)}: {filepath}. Took {(after-before).seconds}s')
-
+analyzer.analyze(files, args.batch)
 analyzer.write_astrometric_metadata(args.directory)
 analyzer.write_offsets_file(args.directory)
 analyzer.create_offsets_plot('out/offsets_plot.png')

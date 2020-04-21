@@ -10,6 +10,7 @@ from skimage.feature import register_translation
 
 from lib.frame import Frame
 from lib.util import load_image_greyscale
+from lib.solver import Solver
 
 
 class Analyzer:
@@ -33,7 +34,20 @@ class Analyzer:
 				}
 		return None
 
-	def analyze(self, frame):
+	def analyze(self, files, batch_mode):
+		if batch_mode:
+			# TODO this is incomplete, in case it wasn't obvious
+			print('Batch mode is incomplete')
+			results = Solver().analyze_images(files)
+			print(results)
+		else:
+			for frame_index, filepath in enumerate(files):
+				before = datetime.datetime.now()
+				self.analyze_frame(Frame(filepath))
+				after = datetime.datetime.now()
+				print(f'Processed frame {frame_index+1}/{len(files)}: {filepath}. Took {(after-before).seconds}s')
+
+	def analyze_frame(self, frame):
 		hint = self.get_astrometric_metadata_hint()
 		self.astrometric_metadata[frame] = frame.compute_astrometric_metadata(hint)
 		image_greyscale = load_image_greyscale(frame.filepath, dtype=np.int16)

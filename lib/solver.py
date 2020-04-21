@@ -13,6 +13,15 @@ def run_command(command, timeout, result):
 		result['timeout'] = True
 
 
+class CalibrationData:
+	def __init__(self, pixel_scale, ra_deg, dec_deg, angle, direction, parity, **kwargs):
+		self.pixel_scale = float(pixel_scale)
+		self.center_deg = Coordinates(float(ra_deg), float(dec_deg))
+		self.rotation_angle = float(angle)
+		self.rotation_direction = direction
+		self.parity = parity
+
+
 class Solver:
 	"""
 	The timeout is used in 3 (!) different ways here, only one of which actually works.
@@ -51,8 +60,9 @@ class Solver:
 			'--radius', str(hint['radius']),
 		]
 
-	def get_analyze_command(self, filepath, timeout, hint=None):
-		return [self.SOLVE_BINARY, filepath] + self.get_common_parameters(timeout) + self.get_hint_parameters(hint)
+	def get_analyze_command(self, filepaths, timeout, hint=None):
+		batch_arg = ['--batch'] if len(filepaths) > 1 else []
+		return [self.SOLVE_BINARY] + filepaths + batch_arg + self.get_common_parameters(timeout) + self.get_hint_parameters(hint)
 
 	def run_in_thread(self, command, timeout):
 		result = dict()
@@ -68,7 +78,7 @@ class Solver:
 		return None
 
 	def analyze_image(self, filepath, timeout=10, hint=None):
-		command = self.get_analyze_command(filepath, timeout, hint)
+		command = self.get_analyze_command([filepath], timeout, hint)
 		output = self.run_in_thread(command, timeout)
 		if not output:
 			return None
@@ -77,6 +87,7 @@ class Solver:
 		#
 		# [...] pixel scale 0.907073 arcsec/pix.
 		# [...]
+		# Field: touchstuff/s10212.tif
 		# Field center: (RA,Dec) = (114.133515, 65.594210) deg.
 		# Field center: (RA H:M:S, Dec D:M:S) = (07:36:32.044, +65:35:39.156).
 		# Field size: 28.9649 x 16.3092 arcminutes
@@ -104,3 +115,44 @@ class Solver:
 			metadata[metadata_key] = match.groupdict() if match else None
 
 		return metadata
+
+	def analyze_images(self, filepaths, timeout=60, hint=None):	
+		command = self.get_analyze_command(filepaths, timeout, hint)
+		print(f'Command:\n{" ".join(command)}')
+		output = self.run_in_thread(command, timeout)
+		if not output:
+			return None
+
+		# Output example:
+		#
+		# [...] pixel scale 0.907073 arcsec/pix.
+		# [...]
+		# Field: touchstuff/s10212.tif
+		# Field center: (RA,Dec) = (114.133515, 65.594210) deg.
+		# Field center: (RA H:M:S, Dec D:M:S) = (07:36:32.044, +65:35:39.156).
+		# Field size: 28.9649 x 16.3092 arcminutes
+		# Field rotation angle: up is 1.76056 degrees E of N
+		# Field parity: pos
+		# [...]
+
+		pixel_scale_rx = re.compile(r'pixel scale (?P<scale>[\d\.]*) (?P<unit>[\w\/]*)\.')
+		pixel_scales = [match.group('scale') for match in pixel_scale_rx.finditer(output)]
+
+		frame_data_rx = re.compile(
+			r'Field: (?P<path>.*)\n' \
+			r'Field center: \(RA,Dec\) = \((?P<ra_deg>[\d\.]*), (?P<dec_deg>[\d\.]*)\) deg\.\n' \
+			r'Field center: \(RA H:M:S, Dec D:M:S\) = \((?P<ra>[\d\.\:]*), (?P<dec>[\d\.\:\+\-]*)\)\.\n' \
+			r'Field size: (?P<width>[\d\.]*) x (?P<height>[\d\.]*) (?P<unit>\w*)\n' \
+			r'Field rotation angle: up is (?P<angle>[\-\d\.]*) degrees (?P<direction>[WE]) of N\n' \
+			r'Field parity: (?P<parity>pos|neg)'
+		)
+		frame_datas = [match.groupdict() for match in frame_data_rx.finditer(output)]
+		
+		if len(pixel_scales) != len(frame_datas):
+			print('WARN: solve-field output could not be parsed or does not make sense')
+			return dict()
+
+		return {
+			frame_data['path']: CalibrationData(pixel_scale, **frame_data)
+			for pixel_scale, frame_data in zip(pixel_scales, frame_datas)
+		}

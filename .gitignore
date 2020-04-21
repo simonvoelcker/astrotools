@@ -7,3 +7,4 @@ __pycache__
 *.csv
 viewer/images
 static/images
+temp

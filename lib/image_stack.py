@@ -1,14 +1,9 @@
-import json
-import math
 import numpy as np
 import numpy.ma as ma
 import os
-import sys
 
 from PIL import Image
 from skimage.transform import rotate 
-
-from lib.frame import Frame
 
 
 class ImageStack:
@@ -36,10 +31,10 @@ class ImageStack:
 	def from_files(cls, directory, files, offsets, color_mode, master_dark, master_flat):
 		# old method which is using a dict mapping file basename to x,y offsets (pixels)
 
-		max_offset_x = int(max(x for x,_ in offsets.values()))
-		min_offset_x = int(min(x for x,_ in offsets.values()))
-		min_offset_y = int(min(y for _,y in offsets.values()))
-		max_offset_y = int(max(y for _,y in offsets.values()))
+		max_offset_x = int(max(x for x, _ in offsets.values()))
+		min_offset_x = int(min(x for x, _ in offsets.values()))
+		min_offset_y = int(min(y for _, y in offsets.values()))
+		max_offset_y = int(max(y for _, y in offsets.values()))
 
 		frame_0 = cls._load_frame(files[0], dtype=np.int32, color_mode=color_mode)
 		width, height, channels = frame_0.shape
@@ -101,8 +96,8 @@ class ImageStack:
 			samples[x:x+width, y:y+height] += samples_image
 
 		for channel in range(channels):
-			c = image[:,:,channel]
-			image[:,:,channel] = np.divide(c, samples, out=np.zeros_like(c), where=samples!=0)
+			c = image[:, :, channel]
+			image[:, :, channel] = np.divide(c, samples, out=np.zeros_like(c), where=samples != 0)
 		return ImageStack(image, samples)
 
 	@classmethod
@@ -117,10 +112,10 @@ class ImageStack:
 			for frame in frames
 		}
 
-		max_offset_x = int(max(x for x,_ in offsets.values()))
-		min_offset_x = int(min(x for x,_ in offsets.values()))
-		min_offset_y = int(min(y for _,y in offsets.values()))
-		max_offset_y = int(max(y for _,y in offsets.values()))
+		max_offset_x = int(max(x for x, _ in offsets.values()))
+		min_offset_x = int(min(x for x, _ in offsets.values()))
+		min_offset_y = int(min(y for _, y in offsets.values()))
+		max_offset_y = int(max(y for _, y in offsets.values()))
 
 		frame_0 = cls._load_frame(frames[0].filepath, dtype=np.int32, color_mode=color_mode)
 		width, height, channels = frame_0.shape
@@ -150,7 +145,6 @@ class ImageStack:
 
 		average_image = np.average(stack, axis=0)
 		stddev_image = np.std(stack, axis=0)
-		stack = None
 
 		# load all frames, apply average/stddev filter, and build output image progressively
 		image = np.zeros((output_width, output_height, channels), dtype=float)
@@ -183,10 +177,10 @@ class ImageStack:
 
 	@classmethod
 	def from_frames_old(cls, frames, offsets):
-		max_offset_x = int(max(x for x,_ in offsets))
-		min_offset_x = int(min(x for x,_ in offsets))
-		min_offset_y = int(min(y for _,y in offsets))
-		max_offset_y = int(max(y for _,y in offsets))
+		max_offset_x = int(max(x for x, _ in offsets))
+		min_offset_x = int(min(x for x, _ in offsets))
+		min_offset_y = int(min(y for _, y in offsets))
+		max_offset_y = int(max(y for _, y in offsets))
 		
 		width, height, channels = frames[0].shape
 	
@@ -196,7 +190,7 @@ class ImageStack:
 		image = np.zeros((output_width, output_height, channels), dtype=float)
 		samples = np.zeros((output_width, output_height), dtype=np.int16)
 
-		for frame, (offset_x,offset_y) in zip(frames, offsets):
+		for frame, (offset_x, offset_y) in zip(frames, offsets):
 
 			x = int(offset_x)+abs(min_offset_x)
 			y = int(offset_y)+abs(min_offset_y)
@@ -220,30 +214,30 @@ class ImageStack:
 		xyc_image = np.transpose(yxc_image, (1, 0, 2))
 
 		if color_mode == 'r':
-			xyc_image = np.expand_dims(xyc_image[:,:,0], axis=2)
+			xyc_image = np.expand_dims(xyc_image[:, :, 0], axis=2)
 		elif color_mode == 'g':
-			xyc_image = np.expand_dims(xyc_image[:,:,1], axis=2)
+			xyc_image = np.expand_dims(xyc_image[:, :, 1], axis=2)
 		elif color_mode == 'b':
-			xyc_image = np.expand_dims(xyc_image[:,:,2], axis=2)
+			xyc_image = np.expand_dims(xyc_image[:, :, 2], axis=2)
 		elif color_mode == 'grey':
-			grayscale_image = xyc_image[:,:,0] * 0.21 + xyc_image[:,:,1] * 0.72 + xyc_image[:,:,2] * 0.07 
+			grayscale_image = xyc_image[:, :, 0] * 0.21 + xyc_image[:, :, 1] * 0.72 + xyc_image[:, :, 2] * 0.07
 			xyc_image = np.expand_dims(grayscale_image, axis=2)
 
 		return xyc_image
 
 	def normalize(self):
 		for channel in range(self.image.shape[2]):		
-			min_value = np.amin(self.image[:,:,channel])
-			max_value = np.amax(self.image[:,:,channel])
+			min_value = np.amin(self.image[:, :, channel])
+			max_value = np.amax(self.image[:, :, channel])
 			if max_value == 0:
 				print(f'Skipping channel {channel} in normalization')		
 				continue
 			print(f'Normalizing channel {channel}, min={min_value:.1f}, max={max_value:.1f}')
 
 			if max_value > min_value:
-				self.image[:,:,channel] = (self.image[:,:,channel] - min_value) / (max_value - min_value)
+				self.image[:, :, channel] = (self.image[:, :, channel] - min_value) / (max_value - min_value)
 			else:
-				self.image[:,:,channel] = (self.image[:,:,channel] - min_value)
+				self.image[:, :, channel] = (self.image[:, :, channel] - min_value)
 
 	def crop(self, cx, cy, r):
 		# crop image to a square with center <cx,cy> and radius <>.
@@ -288,9 +282,9 @@ class ImageStack:
 		if yxc_image.shape[2] == 1:
 			# expand image to three equal channels
 			expanded_image = np.zeros((yxc_image.shape[0], yxc_image.shape[1], 3), dtype=np.int8)
-			expanded_image[:,:,0] = yxc_image[:,:,0]
-			expanded_image[:,:,1] = yxc_image[:,:,0]
-			expanded_image[:,:,2] = yxc_image[:,:,0]
+			expanded_image[:, :, 0] = yxc_image[:, :, 0]
+			expanded_image[:, :, 1] = yxc_image[:, :, 0]
+			expanded_image[:, :, 2] = yxc_image[:, :, 0]
 			yxc_image = expanded_image
 
 		pil_image = Image.fromarray(yxc_image, mode='RGB')
@@ -302,4 +296,3 @@ class ImageStack:
 		yx_image = yx_image.astype(np.uint8)
 		pil_image = Image.fromarray(yx_image, mode='L')
 		pil_image.save(filename)
-		

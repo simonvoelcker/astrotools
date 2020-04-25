@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template
 from flask_restplus import Api
 
-from server.api.camera_api import api as camera_api
+from hti.server.api.camera_api import api as camera_api
 
 client_blueprint = Blueprint(
     'client_app',
@@ -12,9 +12,11 @@ client_blueprint = Blueprint(
     template_folder='templates',
 )
 
+
 @client_blueprint.route('/')
 def index():
     return render_template('index.html')
+
 
 api_blueprint = Blueprint(
     'api',

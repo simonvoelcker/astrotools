@@ -2,7 +2,6 @@ import cmd
 import glob
 import json
 import os
-import sys
 
 from lib.axis_control import AxisControl
 from lib.catalog import Catalog

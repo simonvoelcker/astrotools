@@ -3,12 +3,11 @@ import queue
 import threading
 import json
 
-from flask import Flask, render_template, request, Response
-from flask import current_app as app
+from flask import request, Response, current_app as app
 from flask.json import jsonify
 from flask_restplus import Namespace, Resource
 
-from server.lib.indi.controller import INDIController
+from hti.server.lib.indi.controller import INDIController
 from .util import subscribe_for_events, image_event
 
 api = Namespace('Control', description='Machine control API endpoints')
@@ -45,6 +44,7 @@ class StatusApi(Resource):
     def get(self):
         return jsonify(get_indi_controller().status())
 
+
 @api.route('/clean-cache')
 class CleanCacheApi(Resource):
     @api.doc(
@@ -56,6 +56,7 @@ class CleanCacheApi(Resource):
     def get(self):
         numfiles = get_indi_controller().clean_cache()
         return jsonify({'files': numfiles})
+
 
 @api.route('/events')
 class EventsApi(Resource):
@@ -74,6 +75,7 @@ class EventsApi(Resource):
                 yield f'data: {json.dumps(data)}\n\n'
         return Response(gen(), mimetype="text/event-stream")
 
+
 @api.route('/devices')
 class DevicesApi(Resource):
     @api.doc(
@@ -84,6 +86,7 @@ class DevicesApi(Resource):
     )
     def get(self):
         return jsonify(get_indi_controller().devices())
+
 
 @api.route('/device_names')
 class DeviceNamesApi(Resource):
@@ -96,6 +99,7 @@ class DeviceNamesApi(Resource):
     def get(self):
         return jsonify({'devices': get_indi_controller().device_names()})
 
+
 @api.route('/device/<devicename>/properties')
 class DevicePropertiesListApi(Resource):
     @api.doc(
@@ -106,6 +110,7 @@ class DevicePropertiesListApi(Resource):
     )
     def get(self, devicename):
         return jsonify(get_indi_controller().properties(devicename))
+
 
 @api.route('/device/<devicename>/properties/<property>')
 class DevicePropertyApi(Resource):
@@ -127,6 +132,7 @@ class DevicePropertyApi(Resource):
     def put(self, devicename, property):
         return jsonify(get_indi_controller().set_property(devicename, property, request.json['value']))
 
+
 @api.route('/device/<devicename>/capture/<exposure>/<gain>')
 class CaptureImageApi(Resource):
     @api.doc(
@@ -142,7 +148,8 @@ class CaptureImageApi(Resource):
             except Exception as e:
                 print('Capture error', e)
         threading.Thread(target=exp).start()
-        return ('', 204)
+        return '', 204
+
 
 @api.route('/device/<devicename>/start_sequence')
 class StartSequenceApi(Resource):
@@ -170,6 +177,7 @@ class StartSequenceApi(Resource):
         get_app_state()['running_sequence'] = True
         threading.Thread(target=exp).start()
         return '', 204
+
 
 @api.route('/device/<devicename>/stop_sequence')
 class StopSequenceApi(Resource):

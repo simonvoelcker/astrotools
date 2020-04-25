@@ -1,5 +1,4 @@
 import numpy as np
-import numpy.ma as ma
 
 from skimage.feature import register_translation
 

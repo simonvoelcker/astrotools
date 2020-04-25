@@ -1,10 +1,9 @@
-import os
 import argparse
 
-from flask import Flask, render_template
+from flask import Flask
 
-from server.config import Production
-from server.client import api_blueprint, client_blueprint
+from hti.server.config import Production
+from hti.server.client import api_blueprint, client_blueprint
 
 
 app = Flask(__name__)
@@ -14,8 +13,8 @@ app.register_blueprint(api_blueprint)
 app.register_blueprint(client_blueprint)
 app.config.from_object(config)
 
-app.config['bootstrap_version']='3.3.7'
-app.config['jquery_version']='3.1.1'
+app.config['bootstrap_version'] = '3.3.7'
+app.config['jquery_version'] = '3.1.1'
 
 app.secret_key = app.config['FLASK_SECRET_KEY']
 

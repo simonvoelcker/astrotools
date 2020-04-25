@@ -6,10 +6,10 @@ class Coordinates:
 	# TODO make the seconds/arcseconds part optional
 	string_format_rx = re.compile(r'(?P<ra>.+):(?P<dec>.+)')
 	ra_string_format_rx = re.compile(r'(?P<h>\d+)h(?P<m>\d+)m(?P<s>\d+)s')
-	dec_string_format_rx = re.compile(r'(?P<sign>[\+\-]?)(?P<d>\d+)d(?P<m>\d+)m(?P<s>\d+)s')
+	dec_string_format_rx = re.compile(r'(?P<sign>[+\-]?)(?P<d>\d+)d(?P<m>\d+)m(?P<s>\d+)s')
 	# format found in the catalog CSV file 
-	csv_ra_format_rx = re.compile(r'(?P<h>\d+):(?P<m>\d+):(?P<s>[\d\.]+)')
-	csv_dec_format_rx = re.compile(r'(?P<sign>[\+\-]?)(?P<d>\d+):(?P<m>\d+):(?P<s>[\d\.]+)')
+	csv_ra_format_rx = re.compile(r'(?P<h>\d+):(?P<m>\d+):(?P<s>[\d.]+)')
+	csv_dec_format_rx = re.compile(r'(?P<sign>[+\-]?)(?P<d>\d+):(?P<m>\d+):(?P<s>[\d.]+)')
 
 	def __init__(self, ra, dec):
 		# the canonical representation of RA and DEC shall be in degrees, as float

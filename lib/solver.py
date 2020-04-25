@@ -1,5 +1,4 @@
 import threading
-import time
 import subprocess
 import re
 
@@ -32,7 +31,8 @@ class Solver:
 	"""
 	SOLVE_BINARY = '/usr/local/astrometry/bin/solve-field'
 
-	def get_common_parameters(self, timeout=60.0, scale_low=0.8, scale_high=1.0):
+	@staticmethod
+	def get_common_parameters(timeout=60.0, scale_low=0.8, scale_high=1.0):
 		return [
 			'--scale-units', 'arcsecperpix',
 			'--scale-low', str(scale_low),
@@ -51,7 +51,8 @@ class Solver:
 			'--wcs', 'temp/last_match.wcs',  # must be non-none so the detailed output is available
 		]
 
-	def get_hint_parameters(self, hint):
+	@staticmethod
+	def get_hint_parameters(hint):
 		if hint is None:
 			return []
 		return [
@@ -64,7 +65,8 @@ class Solver:
 		batch_arg = ['--batch'] if len(filepaths) > 1 else []
 		return [self.SOLVE_BINARY] + filepaths + batch_arg + self.get_common_parameters(timeout) + self.get_hint_parameters(hint)
 
-	def run_in_thread(self, command, timeout):
+	@staticmethod
+	def run_in_thread(command, timeout):
 		result = dict()
 		thread = threading.Thread(target=run_command, args=(command, timeout, result))
 		thread.start()
@@ -88,7 +90,7 @@ class Solver:
 		#
 		# [...] pixel scale 0.907073 arcsec/pix.
 		# [...]
-		# Field: touchstuff/s10212.tif
+		# Field: toughstuff/s10212.tif
 		# Field center: (RA,Dec) = (114.133515, 65.594210) deg.
 		# Field center: (RA H:M:S, Dec D:M:S) = (07:36:32.044, +65:35:39.156).
 		# Field size: 28.9649 x 16.3092 arcminutes
@@ -144,15 +146,15 @@ class Solver:
 		# Field parity: pos
 		# [...]
 
-		pixel_scale_rx = re.compile(r'pixel scale (?P<scale>[\d\.]*) (?P<unit>[\w\/]*)\.')
+		pixel_scale_rx = re.compile(r'pixel scale (?P<scale>[\d.]*) (?P<unit>[\w/]*)\.')
 		pixel_scales = [match.group('scale') for match in pixel_scale_rx.finditer(output)]
 
 		frame_data_rx = re.compile(
-			r'Field: (?P<path>.*)\n' \
-			r'Field center: \(RA,Dec\) = \((?P<ra_deg>[\d\.]*), (?P<dec_deg>[\d\.]*)\) deg\.\n' \
-			r'Field center: \(RA H:M:S, Dec D:M:S\) = \((?P<ra>[\d\.\:]*), (?P<dec>[\d\.\:\+\-]*)\)\.\n' \
-			r'Field size: (?P<width>[\d\.]*) x (?P<height>[\d\.]*) (?P<unit>\w*)\n' \
-			r'Field rotation angle: up is (?P<angle>[\-\d\.]*) degrees (?P<direction>[WE]) of N\n' \
+			r'Field: (?P<path>.*)\n'
+			r'Field center: \(RA,Dec\) = \((?P<ra_deg>[\d.]*), (?P<dec_deg>[\d.]*)\) deg\.\n'
+			r'Field center: \(RA H:M:S, Dec D:M:S\) = \((?P<ra>[\d.:]*), (?P<dec>[\d.:+\-]*)\)\.\n'
+			r'Field size: (?P<width>[\d.]*) x (?P<height>[\d.]*) (?P<unit>\w*)\n'
+			r'Field rotation angle: up is (?P<angle>[\-\d.]*) degrees (?P<direction>[WE]) of N\n'
 			r'Field parity: (?P<parity>pos|neg)'
 		)
 		frame_datas = [match.groupdict() for match in frame_data_rx.finditer(output)]

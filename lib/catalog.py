@@ -41,8 +41,3 @@ class Catalog:
 		if entry is None:
 			return None
 		return {key: value for key, value in zip(self._header, entry)}
-
-if __name__ == '__main__':
-	catalog = Catalog()
-	import pdb; pdb.set_trace()
-	pass

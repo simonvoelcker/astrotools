@@ -69,7 +69,6 @@ if args.range is not None:
 # 	frame_offsets = json.load(f)
 
 print('Loading frame metadata')
-frame_metadata = None
 metadata_file = os.path.join(args.directory, 'astrometric_metadata.json')
 with open(metadata_file, 'r') as f:
 	frame_metadata = json.load(f)
@@ -101,6 +100,7 @@ image.normalize()
 if args.gamma:
 	image.apply_gamma(args.gamma)
 
+
 def f(p):
 	low = 40.0/255.0
 	high = 100.0/255.0
@@ -109,6 +109,7 @@ def f(p):
 	if p >= high:
 		return 1.0
 	return (p-low) / (high-low)
+
 
 if args.apply_function:
 	image.apply_function(f)

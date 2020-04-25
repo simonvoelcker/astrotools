@@ -3,8 +3,8 @@ import os
 import datetime
 import numpy
 
-from lib.indi.client import INDIClient
-from lib.indi.camera import INDICamera
+from hti.server.lib.indi.client import INDIClient
+from hti.server.lib.indi.camera import INDICamera
 
 from PIL import Image
 from astropy.io import fits

@@ -45,7 +45,7 @@ class INDIController:
         return devices
 
     def properties(self, device):
-       return self.client.get_properties(device) 
+        return self.client.get_properties(device)
 
     def property(self, device, property):
         property_element = property.split('.')
@@ -73,11 +73,11 @@ class INDIController:
         return f'{image_name}.png'
 
     def clean_cache(self):
-        for file in glob(self.workdir + '/*'):
+        for file in glob.glob(self.workdir + '/*'):
             os.remove(file)
-        return len( [f for f in os.listdir(self.workdir) if os.isfile(f)] )    
+        return len([f for f in os.listdir(self.workdir) if os.path.isfile(f)])
 
     def status(self):
-        status ={'now': time.time()}
+        status = {'now': time.time()}
         status.update(INDIController._status)
         return status

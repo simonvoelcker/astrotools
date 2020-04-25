@@ -9,11 +9,6 @@ import Operate from './components/views/Operate'
 
 class App extends Component {
   render () {
-    // TODO move to template
-    const meta = document.createElement('meta')
-    meta.name = 'google'
-    meta.content = 'notranslate'
-    document.getElementsByTagName('head')[0].appendChild(meta)
     return (
       <AppProvider value={this.state}>
         <Router>

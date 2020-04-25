@@ -31,8 +31,6 @@ export default class ManualAxisControl extends Component {
               {this.axisButton('X+', 'move-x-pos')}
               {this.axisButton('Y-', 'move-y-neg')}
               {this.axisButton('Y+', 'move-y-pos')}
-              {this.axisButton('Z-', 'move-z-neg')}
-              {this.axisButton('Z+', 'move-z-pos')}
             </div>
           </div>
         )}

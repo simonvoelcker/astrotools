@@ -13,7 +13,7 @@ $axios.interceptors.request.use((config) => {
 })
 
 export default {
-  getSomething () {
-    return $axios.get('something')
+  getAxisSpeed (axis) {
+    return $axios.get('/axes/' + axis + '/speed')
   }
 }

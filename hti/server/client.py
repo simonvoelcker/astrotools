@@ -2,6 +2,7 @@ from flask import Blueprint, render_template
 from flask_restplus import Api
 
 from hti.server.api.camera_api import api as camera_api
+from hti.server.api.axes_api import api as axes_api
 
 client_blueprint = Blueprint(
     'client_app',
@@ -24,5 +25,6 @@ api_blueprint = Blueprint(
     url_prefix='/api'
 )
 
-api = Api(api_blueprint, title='Camera API', version='1.0.0', description='API of the camera', doc='/doc/')
+api = Api(api_blueprint, title='Telescope API', version='1.0.0', description='Telescope API', doc='/doc/')
 api.add_namespace(camera_api, path='/camera')
+api.add_namespace(axes_api, path='/axes')

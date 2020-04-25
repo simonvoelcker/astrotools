@@ -10,12 +10,12 @@ export class AppProvider extends Component {
     }
 
     this.mutations = {
-      getSomething: () => {
-        $backend.getSomething()
+      getAxisSpeed: (axis) => {
+        $backend.getAxisSpeed(axis)
           .then(response => {
-            // success
+            console.log('Success, ' + response)
           }).catch(error => {
-            // failure
+            console.log('Error, ' + error)
           })
       }
     }

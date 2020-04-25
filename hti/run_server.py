@@ -1,12 +1,14 @@
 import argparse
 
 from flask import Flask
+from flask_cors import CORS
 
 from hti.server.config import Production
 from hti.server.client import api_blueprint, client_blueprint
 
 
 app = Flask(__name__)
+CORS(app)
 
 config = Production
 app.register_blueprint(api_blueprint)

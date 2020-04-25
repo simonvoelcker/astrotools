@@ -14,7 +14,7 @@ export default class ManualAxisControl extends Component {
       <StandardButton
         className={cssClass}
         disabled={false}
-        onClick={() => { console.log("moving axis " + axis) }}>
+        onClick={() => { this.context.mutations.getAxisSpeed('RA') }}>
         { axis }
       </StandardButton>
     )
@@ -27,10 +27,10 @@ export default class ManualAxisControl extends Component {
           <div>
             <div>Manual Axis Control</div>
             <div className='axis-move-panel'>
-              {this.axisButton('X-', 'move-x-neg')}
-              {this.axisButton('X+', 'move-x-pos')}
-              {this.axisButton('Y-', 'move-y-neg')}
-              {this.axisButton('Y+', 'move-y-pos')}
+              {this.axisButton('R-', 'move-x-neg')}
+              {this.axisButton('R+', 'move-x-pos')}
+              {this.axisButton('D-', 'move-y-neg')}
+              {this.axisButton('D+', 'move-y-pos')}
             </div>
           </div>
         )}

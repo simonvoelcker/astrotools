@@ -9,3 +9,6 @@ __pycache__
 viewer/images
 static/images
 temp
+in
+out
+

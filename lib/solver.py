@@ -72,7 +72,8 @@ class Solver:
 		if 'output' in result:
 			return result['output']
 
-		# TODO kill process
+		# TODO kill process?
+		# or try: -C / --cancel <filename>: filename whose creation signals the process to stop
 
 		print('Timed out trying to solve field')
 		return None
@@ -115,6 +116,14 @@ class Solver:
 			metadata[metadata_key] = match.groupdict() if match else None
 
 		return metadata
+
+	def locate_image(self, filepath, timeout=10, hint=None):
+		metadata = self.analyze_image(filepath, timeout, hint)
+		if metadata is None:
+			return None
+		ra = float(metadata['center_deg']['ra'])
+		dec = float(metadata['center_deg']['dec'])
+		return Coordinates(ra, dec)
 
 	def analyze_images(self, filepaths, timeout=60, hint=None):	
 		command = self.get_analyze_command(filepaths, timeout, hint)

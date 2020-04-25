@@ -1,85 +1,11 @@
 .operate
-    position: fixed
-    width: 1024px
-    height: 768px
     display: flex
     flex-direction: column
 
     .scene
         display: flex
 
-    .column
-        justify-content: space-around
-        flex-direction: column
-        display: flex
-        height: 100%
-        margin: 0
-
-    .column-left
-        width: 80px
-        margin-left: 20px
-
-    .column-center
-        flex-grow: 1
-        margin-left: 24px
-        position: relative
-
-    .footer
-        background: #1a282c
-        height: 50px
-        padding-left: 130px
-        z-index: 10
-
 .panel
     background: $panelBackgroundColor
     padding: 20px
-    margin: 15px 15px 0 0
-    ul
-        padding-inline-start: 0
-
-.status-panel
-    margin-right: 5px
-    width: 110px
-    height: 100%
-    display: flex
-    flex-direction: row
-    justify-content: space-around
-    align-items: center
-    float: right
-
-.static-icon > path
-    color: #aaaaaa
-
-.blinking-icon > path
-    color: #ffffff
-    animation-name: blink
-    animation-duration: 1000ms
-    animation-iteration-count: infinite
-    animation-direction: normal
-    animation-timing-function: steps(2, start)
-    @keyframes blink
-        from
-            opacity: 1
-        to
-            opacity: 0
-
-.syslog-popover
-    @include custom-scroll-bar()
-    background-color: $panelBackgroundColor
-    overflow: hidden overlay
-    position: absolute
-    white-space: nowrap
-    text-overflow: ellipsis
-    width: 774px
-    height: 300px
-    z-index: 1000
-    outline: black solid 1px
-    ul
-        padding: 14px 24px
-    .static-icon
-        margin: 14px 3px
-
-.temp-sensor-warning
-    color: red
-    font-weight: bold
-    padding: 36px 10px
+    margin: 10px

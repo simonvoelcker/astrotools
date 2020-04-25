@@ -9,7 +9,7 @@ export default class StandardButton extends Component {
         {({ store }) => (
           <button
             style={style}
-            className={'btn ' + className}
+            className={className || 'btn'}
             disabled={disabled}
             color={color}
             onClick={onClick}

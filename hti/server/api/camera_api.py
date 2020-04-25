@@ -7,7 +7,7 @@ from flask import request, Response, current_app as app
 from flask.json import jsonify
 from flask_restplus import Namespace, Resource
 
-from hti.server.lib.indi.controller import INDIController
+from lib.indi.controller import INDIController
 from .util import subscribe_for_events, image_event
 
 api = Namespace('Control', description='Machine control API endpoints')

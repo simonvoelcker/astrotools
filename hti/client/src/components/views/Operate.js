@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
 
-import ManualAxisControl from '../panels/ManualAxisControl'
+import CameraView from '../panels/CameraView'
+import CaptureControl from '../panels/CaptureControl'
+import AxisControl from '../panels/AxisControl'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 
 export default class Operate extends Component {
@@ -9,7 +11,9 @@ export default class Operate extends Component {
       <AppConsumer>
         {({ store, mutations }) => (
           <div className='operate'>
-            <ManualAxisControl />
+            <CameraView />
+            <CaptureControl />
+            <AxisControl />
           </div>
         )}
       </AppConsumer>

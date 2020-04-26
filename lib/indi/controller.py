@@ -59,15 +59,20 @@ class INDIController:
     def capture_image(self, device, exposure, gain):
         if INDIController._status['shooting']:
             raise RuntimeError('Another exposure is already in progress')
+
         imager = INDICamera(device, self.client)
+        imager.connect()
+
         if not imager.is_camera():
             raise RuntimeError('Device {0} is not an INDI CCD Camera'.format(device))
-        INDIController._status = {'shooting': True, 'exposure': exposure, 'started': time.time() }
+
+        INDIController._status = {'shooting': True, 'exposure': exposure, 'started': time.time()}
         
         image_name = datetime.datetime.now().isoformat()
         imager.set_output(self.workdir, image_name)
         imager.shoot(exposure, gain)
-        INDIController._status = {'shooting': False, 'last_exposure': exposure, 'last_ended': time.time() }
+        imager.disconnect()
+        INDIController._status = {'shooting': False, 'last_exposure': exposure, 'last_ended': time.time()}
 
         convert_fits_image(os.path.join(self.workdir, f'{image_name}.fits'), os.path.join(self.workdir, f'{image_name}.png'))
         return f'{image_name}.png'

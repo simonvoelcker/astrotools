@@ -3,7 +3,7 @@ import queue
 import threading
 import json
 
-from flask import request, Response, current_app as app
+from flask import request, Response
 from flask.json import jsonify
 from flask_restplus import Namespace, Resource
 
@@ -27,9 +27,9 @@ def get_app_state():
 def get_indi_controller():
     global indi_controller
     if indi_controller is None:
-        with app.app_context():
-            # TODO could try a relative path here, or abspath
-            indi_controller = INDIController(workdir=os.path.join(app.static_folder, 'images'))
+        here = os.path.dirname(os.path.abspath(__file__))
+        workdir = os.path.join(here, '..', '..', 'static', 'images')
+        indi_controller = INDIController(workdir)
     return indi_controller
 
 
@@ -143,10 +143,13 @@ class CaptureImageApi(Resource):
     )
     def get(self, devicename, exposure, gain):
         def exp():
+            controller = get_indi_controller()
             try:
-                image_event(get_indi_controller().capture_image(devicename, float(exposure), float(gain)))
+                image_filename = controller.capture_image(devicename, float(exposure), float(gain))
+                print(f'Captured image: {image_filename}')
+                image_event(image_filename)
             except Exception as e:
-                print('Capture error', e)
+                print('Capture error:', e)
         threading.Thread(target=exp).start()
         return '', 204
 

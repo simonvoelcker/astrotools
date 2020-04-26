@@ -10,7 +10,7 @@ class INDICamera:
         self.set_property('CONNECTION', 'DISCONNECT', 'On')
 
     def is_connected(self):
-        return property('CONNECTION', 'CONNECT') == 'On'
+        return self.property('CONNECTION', 'CONNECT') == 'On'
 
     def is_camera(self):
         if not self.is_connected():
@@ -18,11 +18,10 @@ class INDICamera:
         return len(self.properties('CCD_EXPOSURE', 'CCD_EXPOSURE_VALUE')) > 0
 
     def output_dir(self):
-        # TODO missing self?
-        return property('UPLOAD_SETTINGS', 'UPLOAD_DIR')
+        return self.property('UPLOAD_SETTINGS', 'UPLOAD_DIR')
 
     def output_prefix(self):
-        return property('UPLOAD_SETTINGS', 'UPLOAD_PREFIX')
+        return self.property('UPLOAD_SETTINGS', 'UPLOAD_PREFIX')
 
     def shoot(self, exposure, gain):
         self.set_property('CCD_CONTROLS', 'Gain', gain)
@@ -40,7 +39,8 @@ class INDICamera:
         return self._client.get_properties(self._cameraname, property, element)
 
     def property(self, property, element):
-        return self.properties(property, element)[0]['value']
+        pp = self.properties(property, element)
+        return pp[0]['value']
 
     @staticmethod
     def list(client):

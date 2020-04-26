@@ -12,11 +12,10 @@ def put_event(event):
         subscription.put(event)
 
 
-def image_event(image_filepath):
+def image_event(image_filename):
     put_event({
         'type': 'image',
-        'image_url': os.path.join('static', 'images', image_filepath) ,
-        'image_id': '6174'
+        'image_url': os.path.join('static', 'images', image_filename)
     })
 
 

@@ -2,18 +2,12 @@ import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 
 export default class CameraView extends Component {
-  constructor (props) {
-    super(props)
-    this.state = {
-    }
-  }
-
   render () {
     return (
       <AppConsumer>
         {({ store }) => (
           <div>
-            <img id="camera-image" className='camera-image' alt='' />
+            <img id="camera-image" className='camera-image' alt='' src={store.imageUrl} />
           </div>
         )}
       </AppConsumer>

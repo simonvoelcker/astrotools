@@ -15,5 +15,30 @@ $axios.interceptors.request.use((config) => {
 export default {
   getAxisSpeed (axis) {
     return $axios.get('/axes/' + axis + '/speed')
+  },
+
+  getDevices () {
+    return $axios.get('/camera/devices')
+  },
+
+  capture (deviceName, exposure, gain) {
+    return $axios.get('/camera/device/' + deviceName + '/capture/' + exposure + '/' + gain)
+  },
+
+  startSequence (deviceName, pathPrefix, exposure, gain) {
+
+     // TODO
+     //       contentType: 'application/json',
+     //       data: JSON.stringify({
+     //           pathprefix: pathprefix,
+     //           exposure: exposure,
+     //           gain: gain
+     //       })
+
+    return $axios.post('/camera/device/' + deviceName + '/start_sequence')
+  },
+
+  stopSequence (deviceName) {
+    return $axios.get('/camera/device/' + deviceName + '/stop_sequence')
   }
 }

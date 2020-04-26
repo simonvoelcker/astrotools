@@ -26,16 +26,11 @@ export default {
   },
 
   startSequence (deviceName, pathPrefix, exposure, gain) {
-
-     // TODO
-     //       contentType: 'application/json',
-     //       data: JSON.stringify({
-     //           pathprefix: pathprefix,
-     //           exposure: exposure,
-     //           gain: gain
-     //       })
-
-    return $axios.post('/camera/device/' + deviceName + '/start_sequence')
+    return $axios.post('/camera/device/' + deviceName + '/start_sequence', {
+        pathPrefix: pathPrefix,
+        exposure: exposure,
+        gain: gain
+    })
   },
 
   stopSequence (deviceName) {

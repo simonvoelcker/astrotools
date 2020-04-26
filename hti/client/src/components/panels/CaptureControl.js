@@ -9,7 +9,9 @@ export default class CameraView extends Component {
 
     this.state = {
       exposure: 0.2,
-      gain: 100
+      gain: 100,
+      pathPrefix: '',
+      capturing: false
     }
   }
 
@@ -21,14 +23,26 @@ export default class CameraView extends Component {
     this.setState({gain: event.target.value})
   }
 
+  onChangePathPrefix (event) {
+    this.setState({pathPrefix: event.target.value})
+  }
+
   capture () {
-    this.context.mutations.capture(this.state.exposure, this.state.gain)
+    this.setState({capturing: true})
+    this.context.mutations.capture(this.state.exposure, this.state.gain).then(() => {
+      this.setState({capturing: false})
+    })
   }
 
   startSequence () {
+    this.setState({capturing: true})
+    this.context.mutations.startSequence(this.state.pathPrefix, this.state.exposure, this.state.gain)
   }
 
   stopSequence () {
+    this.context.mutations.stopSequence().then(() => {
+      this.setState({capturing: false})
+    })
   }
 
   render () {
@@ -55,7 +69,9 @@ export default class CameraView extends Component {
                         onChange={(event) => this.onChangeGain(event)} />
               </Col>
               <Col style={{ maxWidth: '180px' }}>
-                <StandardButton id="capture" onClick={this.capture.bind(this)}>Capture</StandardButton>
+                <StandardButton id="capture"
+                        disabled={!store.initialized || this.state.capturing}
+                        onClick={this.capture.bind(this)}>Capture</StandardButton>
               </Col>
               <Col style={{ width: '400px' }}>
                 <Label style={{width: '120px'}} className='spitzmarke' for="pathprefix">Path Prefix</Label>
@@ -63,13 +79,17 @@ export default class CameraView extends Component {
                         className='number-input'
                         type="string"
                         id="pathprefix"
-                        placeholder="Images"
-                        value="Ímages"
-                        onChange={() => {}} />
+                        placeholder={this.state.pathPrefix}
+                        value={this.state.pathPrefix}
+                        onChange={(event) => this.onChangePathPrefix(event)} />
               </Col>
               <Col style={{ maxWidth: '200px' }}>
-                <StandardButton id="start-sequence" onClick={this.startSequence}>Sequence</StandardButton>
-                <StandardButton id="stop-sequence" onClick={this.stopSequence}>Stop</StandardButton>
+                <StandardButton id="start-sequence"
+                        disabled={!store.initialized || this.state.capturing}
+                        onClick={this.startSequence.bind(this)}>Sequence</StandardButton>
+                <StandardButton id="stop-sequence"
+                        disabled={!store.initialized || !this.state.capturing}
+                        onClick={this.stopSequence.bind(this)}>Stop</StandardButton>
               </Col>
             </Row>
           </div>

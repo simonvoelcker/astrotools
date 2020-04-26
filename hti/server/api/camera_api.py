@@ -31,18 +31,6 @@ def get_indi_controller():
     return indi_controller
 
 
-@api.route('/status')
-class StatusApi(Resource):
-    @api.doc(
-        description='Get controller status',
-        response={
-            200: 'Success'
-        }
-    )
-    def get(self):
-        return jsonify(get_indi_controller().status())
-
-
 @api.route('/clean-cache')
 class CleanCacheApi(Resource):
     @api.doc(
@@ -125,7 +113,7 @@ class CaptureImageApi(Resource):
         def exp():
             controller = get_indi_controller()
             try:
-                image_filename = controller.capture_image(devicename, float(exposure), float(gain))
+                image_filename = controller.capture_image(devicename, 'singleCapture', float(exposure), float(gain))
                 image_event(image_filename)
             except Exception as e:
                 print('Capture error:', e)
@@ -145,13 +133,13 @@ class StartSequenceApi(Resource):
         body = request.json
         exposure = float(body['exposure'])
         gain = float(body['gain'])
-        pathprefix = body['pathprefix']
+        path_prefix = body['pathPrefix']
 
         def exp():
             try:
                 controller = get_indi_controller()
                 while get_app_state().get('running_sequence'):
-                    image_filepath = controller.capture_image(devicename, exposure, gain) 
+                    image_filepath = controller.capture_image(devicename, path_prefix, exposure, gain)
                     image_event(image_filepath)
             except Exception as e:
                 print('Capture error', e)

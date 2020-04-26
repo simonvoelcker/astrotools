@@ -11,7 +11,8 @@ export class AppProvider extends Component {
     this.initialize()
 
     this.state = {
-        imageUrl: null
+        imageUrl: null,
+        initialized: false
     }
 
     this.mutations = {
@@ -51,7 +52,10 @@ export class AppProvider extends Component {
   initialize () {
     $backend.getDevices().then((response) => {
       let deviceNames = Object.keys(response.data)
-      this.camera = (deviceNames.length > 0) ? deviceNames[0] : null
+      if (deviceNames.length > 0) {
+        this.camera = deviceNames[0]
+        this.setState({initialized: true})
+      }
     })
 
     let eventListener = new EventSource('http://localhost:5000/api/info/events')

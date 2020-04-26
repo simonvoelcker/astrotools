@@ -10,17 +10,8 @@ export class AppProvider extends Component {
     this.camera = null
     this.initialize()
 
-    // this.events_listener = new EventSource('/api/camera/events')
-    // events_listener.onmessage = (e) => {
-    //     event = JSON.parse(e.data)
-    //     if (event['type'] === 'image') {
-    //         this.previewPage.setImage(event['image_url'])
-    //     }
-    // }
-
     this.state = {
-        imageUrl: null,
-        initialized: false
+        imageUrl: null
     }
 
     this.mutations = {
@@ -62,6 +53,14 @@ export class AppProvider extends Component {
       let deviceNames = Object.keys(response.data)
       this.camera = (deviceNames.length > 0) ? deviceNames[0] : null
     })
+
+    let eventListener = new EventSource('http://localhost:5000/api/info/events')
+    eventListener.onmessage = (event) => {
+      event = JSON.parse(event.data)
+      if (event['type'] === 'image') {
+        this.setState({imageUrl: 'http://localhost:5000/' + event['image_url']})
+      }
+    }
   }
 
   render () {

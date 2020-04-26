@@ -1,14 +1,12 @@
 import os
-import queue
 import threading
-import json
 
-from flask import request, Response
+from flask import request
 from flask.json import jsonify
 from flask_restplus import Namespace, Resource
 
 from lib.indi.controller import INDIController
-from .util import subscribe_for_events, image_event
+from .util import image_event
 
 api = Namespace('Control', description='Machine control API endpoints')
 
@@ -56,24 +54,6 @@ class CleanCacheApi(Resource):
     def get(self):
         numfiles = get_indi_controller().clean_cache()
         return jsonify({'files': numfiles})
-
-
-@api.route('/events')
-class EventsApi(Resource):
-    @api.doc(
-        description='Start to get server events',
-        response={
-            200: 'Success'
-        }
-    )
-    def get(self):
-        def gen():
-            q = queue.Queue()
-            subscribe_for_events(q)
-            while True:
-                data = q.get()
-                yield f'data: {json.dumps(data)}\n\n'
-        return Response(gen(), mimetype="text/event-stream")
 
 
 @api.route('/devices')
@@ -146,7 +126,6 @@ class CaptureImageApi(Resource):
             controller = get_indi_controller()
             try:
                 image_filename = controller.capture_image(devicename, float(exposure), float(gain))
-                print(f'Captured image: {image_filename}')
                 image_event(image_filename)
             except Exception as e:
                 print('Capture error:', e)

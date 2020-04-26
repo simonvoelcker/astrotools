@@ -3,7 +3,9 @@ import React, { Component } from 'react'
 import CameraView from '../panels/CameraView'
 import CaptureControl from '../panels/CaptureControl'
 import AxisControl from '../panels/AxisControl'
+import TrackingControl from '../panels/TrackingControl'
 import { AppConsumer, AppContext } from '../../context/AppContext'
+import { Row, Col } from 'reactstrap'
 
 export default class Operate extends Component {
   render () {
@@ -11,9 +13,14 @@ export default class Operate extends Component {
       <AppConsumer>
         {({ store, mutations }) => (
           <div className='operate'>
-            <CameraView />
-            <CaptureControl />
-            <AxisControl />
+            <Col>
+              <Row><CameraView /></Row>
+              <Row><CaptureControl /></Row>
+              <Row>
+                <AxisControl />
+                <TrackingControl />
+              </Row>
+            </Col>
           </div>
         )}
       </AppConsumer>

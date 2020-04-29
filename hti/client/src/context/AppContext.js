@@ -45,6 +45,10 @@ export class AppProvider extends Component {
         if (this.camera !== null) {
           return $backend.stopSequence(this.camera)
         }
+      },
+
+      queryTarget: (query) => {
+        return $backend.queryTarget(query)
       }
     }
   }

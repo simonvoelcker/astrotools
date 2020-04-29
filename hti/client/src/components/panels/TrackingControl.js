@@ -7,10 +7,39 @@ export default class TrackingControl extends Component {
   constructor (props) {
     super(props)
     this.state = {
+      targetInput: '',
+      targetInputStatus: '',
+      target: null
     }
   }
 
+  onChangeTargetInput (event) {
+    this.setState({targetInput: event.target.value})
+  }
+
+  onSetTarget () {
+    let query = this.state.targetInput
+    this.setState({targetInputStatus: ''})
+    this.context.mutations.queryTarget(query).then(response => {
+      this.setState({target: response.data})
+    }).catch(error => {
+      this.setState({targetInputStatus: 'Not found: ' + query})
+    })
+  }
+
+  trackTarget () {
+  }
+
+  trackImage () {
+  }
+
   render () {
+
+    const targetString = (this.state.target ?
+      this.state.target.name + ' RA=' +
+      this.state.target.ra.toFixed(1) + ' Dec=' +
+      this.state.target.dec.toFixed(1) : '')
+
     return (
       <AppConsumer>
         {({ store }) => (
@@ -19,14 +48,25 @@ export default class TrackingControl extends Component {
               <Row>
                 <Col style={{ maxWidth: '350px' }}>
                   <Label style={{width: '80px'}} className='spitzmarke' for='target-input'>Target</Label>
-                  <Input style={{width: '230px'}} id='target-input' className='number-input' placeholder="Object name or coordinates" type="text" />
+                  <Input style={{width: '230px'}}
+                    id='target-input'
+                    className='number-input'
+                    placeholder="Object name or coordinates"
+                    type="text"
+                    value={this.state.targetInput}
+                    onChange={this.onChangeTargetInput.bind(this)} />
+                  <span className="spitzmarke">{this.state.targetInputStatus}</span><br />
+                  <span className="spitzmarke">{targetString}</span>
                 </Col>
                 <Col style={{ maxWidth: '160px' }}>
-                  <StandardButton onClick={() => { }}>SET</StandardButton>
+                  <StandardButton onClick={this.onSetTarget.bind(this)}>SET</StandardButton>
                 </Col>
                 <Col style={{ maxWidth: '280px' }}>
-                  <StandardButton onClick={() => { }}>TRACK TARGET</StandardButton>
-                  <StandardButton onClick={() => { }}>TRACK IMAGE</StandardButton>
+                  <StandardButton
+                    disabled={this.state.target === null}
+                    onClick={this.trackTarget.bind(this)}>TRACK TARGET</StandardButton>
+                  <StandardButton
+                    onClick={this.trackImage.bind(this)}>TRACK IMAGE</StandardButton>
                 </Col>
               </Row>
             </div>

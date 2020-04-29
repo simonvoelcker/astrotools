@@ -1,34 +1,13 @@
-import os
 import threading
 
 from flask import request
 from flask.json import jsonify
 from flask_restplus import Namespace, Resource
 
-from lib.indi.controller import INDIController
-from .util import image_event
+from hti.server.api.util import image_event
+from hti.server.globals import get_indi_controller, get_app_state
 
 api = Namespace('Control', description='Machine control API endpoints')
-
-
-app_state = None
-indi_controller = None
-
-
-def get_app_state():
-    global app_state
-    if app_state is None:
-        app_state = dict()
-    return app_state
-
-
-def get_indi_controller():
-    global indi_controller
-    if indi_controller is None:
-        here = os.path.dirname(os.path.abspath(__file__))
-        workdir = os.path.join(here, '..', '..', 'static', 'images')
-        indi_controller = INDIController(workdir)
-    return indi_controller
 
 
 @api.route('/clean-cache')

@@ -35,5 +35,9 @@ export default {
 
   stopSequence (deviceName) {
     return $axios.get('/camera/device/' + deviceName + '/stop_sequence')
+  },
+
+  queryTarget (query) {
+    return $axios.get('/info/target/' + query)
   }
 }

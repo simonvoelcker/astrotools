@@ -39,5 +39,12 @@ export default {
 
   queryTarget (query) {
     return $axios.get('/info/target/' + query)
+  },
+
+  setSpeeds (raSpeed, decSpeed) {
+    return $axios.post('/axes/speed', {
+        ra: raSpeed,
+        dec: decSpeed
+    })
   }
 }

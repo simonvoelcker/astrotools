@@ -49,6 +49,10 @@ export class AppProvider extends Component {
 
       queryTarget: (query) => {
         return $backend.queryTarget(query)
+      },
+
+      setSpeeds: (raSpeed, decSpeed) => {
+        return $backend.setSpeeds(raSpeed, decSpeed)
       }
     }
   }

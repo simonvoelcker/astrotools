@@ -1,7 +1,7 @@
 import threading
+import os
 
 from flask import request
-from flask.json import jsonify
 from flask_restplus import Namespace, Resource
 
 from hti.server.api.util import image_event
@@ -10,77 +10,7 @@ from hti.server.globals import get_indi_controller, get_app_state
 api = Namespace('Control', description='Machine control API endpoints')
 
 
-@api.route('/clean-cache')
-class CleanCacheApi(Resource):
-    @api.doc(
-        description='Clean the INDI cache',
-        response={
-            200: 'Success'
-        }
-    )
-    def get(self):
-        numfiles = get_indi_controller().clean_cache()
-        return jsonify({'files': numfiles})
-
-
-@api.route('/devices')
-class DevicesApi(Resource):
-    @api.doc(
-        description='List devices',
-        response={
-            200: 'Success'
-        }
-    )
-    def get(self):
-        return jsonify(get_indi_controller().devices())
-
-
-@api.route('/device_names')
-class DeviceNamesApi(Resource):
-    @api.doc(
-        description='List device names',
-        response={
-            200: 'Success'
-        }
-    )
-    def get(self):
-        return jsonify({'devices': get_indi_controller().device_names()})
-
-
-@api.route('/device/<devicename>/properties')
-class DevicePropertiesListApi(Resource):
-    @api.doc(
-        description='List device properties',
-        response={
-            200: 'Success'
-        }
-    )
-    def get(self, devicename):
-        return jsonify(get_indi_controller().properties(devicename))
-
-
-@api.route('/device/<devicename>/properties/<property>')
-class DevicePropertyApi(Resource):
-    @api.doc(
-        description='Get device property',
-        response={
-            200: 'Success'
-        }
-    )
-    def get(self, devicename, property):
-        return jsonify(get_indi_controller().property(devicename, property))
-
-    @api.doc(
-        description='Set device property',
-        response={
-            200: 'Success'
-        }
-    )
-    def put(self, devicename, property):
-        return jsonify(get_indi_controller().set_property(devicename, property, request.json['value']))
-
-
-@api.route('/device/<devicename>/capture/<exposure>/<gain>')
+@api.route('/<devicename>/capture')
 class CaptureImageApi(Resource):
     @api.doc(
         description='Capture an image',
@@ -88,19 +18,24 @@ class CaptureImageApi(Resource):
             200: 'Success'
         }
     )
-    def get(self, devicename, exposure, gain):
+    def post(self, devicename):
+        body = request.json
+        exposure = float(body['exposure'])
+        gain = float(body['gain'])
+
         def exp():
             controller = get_indi_controller()
             try:
-                image_filename = controller.capture_image(devicename, 'singleCapture', float(exposure), float(gain))
-                image_event(image_filename)
+                image_path = controller.capture_image(devicename, 'singleCapture', exposure, gain)
+                image_url = os.path.join('static', image_path)
+                image_event(image_url)
             except Exception as e:
                 print('Capture error:', e)
         threading.Thread(target=exp).start()
         return '', 204
 
 
-@api.route('/device/<devicename>/start_sequence')
+@api.route('/<devicename>/start_sequence')
 class StartSequenceApi(Resource):
     @api.doc(
         description='Start image sequence',
@@ -112,14 +47,15 @@ class StartSequenceApi(Resource):
         body = request.json
         exposure = float(body['exposure'])
         gain = float(body['gain'])
-        path_prefix = body['pathPrefix']
+        path_prefix = body['pathPrefix'] or 'sequence'
 
         def exp():
             try:
                 controller = get_indi_controller()
                 while get_app_state().get('running_sequence'):
-                    image_filepath = controller.capture_image(devicename, path_prefix, exposure, gain)
-                    image_event(image_filepath)
+                    image_path = controller.capture_image(devicename, path_prefix, exposure, gain)
+                    image_url = os.path.join('static', image_path)
+                    image_event(image_url)
             except Exception as e:
                 print('Capture error', e)
 
@@ -128,7 +64,7 @@ class StartSequenceApi(Resource):
         return '', 204
 
 
-@api.route('/device/<devicename>/stop_sequence')
+@api.route('/<devicename>/stop_sequence')
 class StopSequenceApi(Resource):
     @api.doc(
         description='Start image sequence',

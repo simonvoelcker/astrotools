@@ -27,8 +27,8 @@ def get_indi_controller():
     global _indi_controller
     if _indi_controller is None:
         here = os.path.dirname(os.path.abspath(__file__))
-        workdir = os.path.join(here, '..', '..', 'static', 'images')
-        _indi_controller = INDIController(workdir)
+        hti_static_dir = os.path.join(here, '..', 'static')
+        _indi_controller = INDIController(static_dir=hti_static_dir)
     return _indi_controller
 
 

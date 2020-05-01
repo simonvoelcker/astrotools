@@ -1,5 +1,4 @@
 import os
-import glob
 import numpy as np
 import datetime
 
@@ -23,14 +22,14 @@ def convert_fits_image(fits_filepath, out_filepath):
 
 
 class INDIController:
-    def __init__(self, workdir):
+    def __init__(self, static_dir):
         self.client = INDIClient()
         self.cameras = dict()  # by device name
-        self.workdir = workdir
+        self.static_dir = static_dir
         self.shooting = False
 
-        if not os.path.isdir(self.workdir):
-            os.makedirs(self.workdir)
+        if not os.path.isdir(self.static_dir):
+            os.makedirs(self.static_dir)
 
     def devices(self):
         properties = self.client.get_properties()
@@ -75,17 +74,12 @@ class INDIController:
 
         image_name = datetime.datetime.now().isoformat()
         camera = self.get_camera(device_name)
-        camera.set_output(self.workdir, image_name)
+        camera.set_output(self.static_dir, image_name)
         camera.shoot(exposure, gain)
 
         self.shooting = False
 
-        convert_fits_image(fits_filepath=os.path.join(self.workdir, f'{image_name}.fits'),
-                           out_filepath=os.path.join(self.workdir, path_prefix, f'{image_name}.png'))
+        convert_fits_image(fits_filepath=os.path.join(self.static_dir, f'{image_name}.fits'),
+                           out_filepath=os.path.join(self.static_dir, path_prefix, f'{image_name}.png'))
 
         return f'{path_prefix}/{image_name}.png'
-
-    def clean_cache(self):
-        for file in glob.glob(self.workdir + '/*'):
-            os.remove(file)
-        return len([f for f in os.listdir(self.workdir) if os.path.isfile(f)])

@@ -16,43 +16,36 @@ export class AppProvider extends Component {
     }
 
     this.mutations = {
-      getAxisSpeed: (axis) => {
-        $backend.getAxisSpeed(axis)
-          .then(response => {
-            console.log('Success, ' + response)
-          }).catch(error => {
-            console.log('Error, ' + error)
-          })
-      },
-
       updateImage: (url) => {
         this.setState({imageUrl: url})
       },
 
       capture: (exposure, gain) => {
-        if (this.camera !== null) {
-          return $backend.capture(this.camera, exposure, gain)
-        }
+        return $backend.capture(this.camera, exposure, gain)
       },
 
       startSequence: (pathPrefix, exposure, gain) => {
-        if (this.camera !== null) {
-          return $backend.startSequence(this.camera, pathPrefix, exposure, gain)
-        }
+        return $backend.startSequence(this.camera, pathPrefix, exposure, gain)
       },
 
       stopSequence: () => {
-        if (this.camera !== null) {
-          return $backend.stopSequence(this.camera)
-        }
+        return $backend.stopSequence(this.camera)
       },
 
       queryTarget: (query) => {
         return $backend.queryTarget(query)
       },
 
+      getSpeeds: () => {
+        return $backend.getSpeeds()
+      },
+
       setSpeeds: (raSpeed, decSpeed) => {
         return $backend.setSpeeds(raSpeed, decSpeed)
+      },
+
+      setRest: () => {
+        return $backend.setRest()
       }
     }
   }

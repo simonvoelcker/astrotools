@@ -40,5 +40,7 @@ def get_axis_control():
     global _axis_control
     if _axis_control is None:
         _axis_control = AxisControl()
-        _axis_control.connect(usb_ports=[0, 1])
+        sim_mode = os.environ.get('SIM_AXES', 'false').lower() == 'true'
+        if not sim_mode:
+            _axis_control.connect(usb_ports=[0, 1])
     return _axis_control

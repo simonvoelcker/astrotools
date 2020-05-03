@@ -20,6 +20,16 @@ class AxisControl:
 
 	def __init__(self):
 		self.serial = None
+		self.speeds = {
+			'A': 0.0,
+			'B': 0.0
+		}
+
+	def get_speeds(self):
+		return {
+			'ra': self.speeds['A'],
+			'dec': self.speeds['B']
+		}
 
 	def connect(self, usb_ports):
 		for port in usb_ports:
@@ -47,6 +57,7 @@ class AxisControl:
 				print(f'Setting motor {motor} speed to {speed:9.6f} U/s')
 			msg = f'{motor}{speed:9.6f}'
 			self.serial.write(msg.encode())
+		self.speeds[motor] = speed
 		if motor == 'B':
 			self.dec_backlash_direction = 1 if speed > 0 else -1
 

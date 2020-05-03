@@ -12,8 +12,31 @@ export default class AxisControl extends Component {
     }
   }
 
+  getActualSpeeds () {
+    this.context.mutations.getSpeeds().then(response => {
+      this.setState({
+        raSpeed: response.data.ra,
+        decSpeed: response.data.dec
+      })
+    })
+  }
+
   setSpeeds () {
-    this.context.mutations.setSpeeds(this.state.raSpeed, this.state.decSpeed)
+    this.context.mutations.setSpeeds(this.state.raSpeed, this.state.decSpeed).then(() => {
+      this.getActualSpeeds()
+    })
+  }
+
+  rest () {
+    this.context.mutations.setRest().then(() => {
+      this.getActualSpeeds()
+    })
+  }
+
+  stop () {
+    this.context.mutations.setSpeeds(0.0, 0.0).then(() => {
+      this.getActualSpeeds()
+    })
   }
 
   onChangeRaSpeed (event) {
@@ -22,16 +45,6 @@ export default class AxisControl extends Component {
 
   onChangeDecSpeed (event) {
     this.setState({decSpeed: event.target.value})
-  }
-
-  track () {
-    this.setState({raSpeed: -0.0047, decSpeed: 0.0})
-    this.context.mutations.setSpeeds(-0.0047, 0.0)
-  }
-
-  stop () {
-    this.setState({raSpeed: 0.0, decSpeed: 0.0})
-    this.context.mutations.setSpeeds(0.0, 0.0)
   }
 
   render () {
@@ -65,7 +78,7 @@ export default class AxisControl extends Component {
                   <StandardButton onClick={this.setSpeeds.bind(this)}>SET</StandardButton>
                 </Col>
                 <Col style={{ maxWidth: '160px' }}>
-                  <StandardButton onClick={this.track.bind(this)}>TRACK</StandardButton>
+                  <StandardButton onClick={this.rest.bind(this)}>REST</StandardButton>
                   <StandardButton onClick={this.stop.bind(this)}>STOP</StandardButton>
                 </Col>
               </Row>

@@ -45,7 +45,6 @@ class QueryTargetApi(Resource):
         parsed_coordinates = Coordinates.parse(query)
         if parsed_coordinates is not None:
             return jsonify({
-                'name': '(custom)',
                 'ra': parsed_coordinates.ra,
                 'dec': parsed_coordinates.dec
             })
@@ -56,7 +55,12 @@ class QueryTargetApi(Resource):
             return jsonify({
                 'name': catalog_result['Name'],
                 'ra': parsed_coordinates.ra,
-                'dec': parsed_coordinates.dec
+                'dec': parsed_coordinates.dec,
+                'type': catalog_result.get('Type'),
+                'const': catalog_result.get('Const'),
+                'minAx': catalog_result.get('MinAx'),
+                'majAx': catalog_result.get('MajAx'),
+                'posAng': catalog_result.get('PosAng'),
             })
 
         return '', 404

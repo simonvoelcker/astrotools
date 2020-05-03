@@ -52,7 +52,7 @@ export default class CameraView extends Component {
           <div className='panel capture-control-panel'>
             <Row>
               <Col style={{ maxWidth: '280px' }}>
-                <Label style={{width: '100px'}} className='spitzmarke' for="exposure">Exposure</Label>
+                <Label style={{width: '100px'}} className='spaced-text' for="exposure">Exposure</Label>
                 <Input style={{width: '130px'}}
                         className='number-input'
                         type="number"
@@ -60,7 +60,7 @@ export default class CameraView extends Component {
                         value={this.state.exposure}
                         onChange={(event) => this.onChangeExposure(event)} />
                 <br/>
-                <Label style={{width: '100px'}} className='spitzmarke' for="gain">Gain</Label>
+                <Label style={{width: '100px'}} className='spaced-text' for="gain">Gain</Label>
                 <Input style={{width: '130px'}}
                         className='number-input'
                         type="number"
@@ -74,7 +74,7 @@ export default class CameraView extends Component {
                         onClick={this.capture.bind(this)}>Capture</StandardButton>
               </Col>
               <Col style={{ width: '400px' }}>
-                <Label style={{width: '120px'}} className='spitzmarke' for="pathprefix">Path Prefix</Label>
+                <Label style={{width: '120px'}} className='spaced-text' for="pathprefix">Path Prefix</Label>
                 <Input style={{width: '200px'}}
                         className='number-input'
                         type="string"

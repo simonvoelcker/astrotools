@@ -55,7 +55,7 @@ export default class AxisControl extends Component {
             <div className='panel axis-control-panel'>
               <Row>
                 <Col style={{ maxWidth: '280px' }}>
-                  <Label style={{width: '80px'}} className='spitzmarke' for='ra-speed'>RA</Label>
+                  <Label style={{width: '80px'}} className='spaced-text' for='ra-speed'>RA</Label>
                   <Input style={{width: '150px'}}
                     id='ra-speed'
                     className='number-input'
@@ -64,7 +64,7 @@ export default class AxisControl extends Component {
                     value={this.state.raSpeed}
                     onChange={this.onChangeRaSpeed.bind(this)} />
                   <br/>
-                  <Label style={{width: '80px'}} className='spitzmarke' for='dec-speed'>Dec</Label>
+                  <Label style={{width: '80px'}} className='spaced-text' for='dec-speed'>Dec</Label>
                   <Input style={{width: '150px'}}
                     id='dec-speed'
                     className='number-input'

@@ -16,12 +16,49 @@
     Input
         display: inline-block
 
+.panel-title
+    margin-bottom: 10px
+
 .camera-image
     width: 960px
     height: 540px
     margin-top: 10px
     margin-left: 10px
     background-color: $panelBackgroundColor
+
+.tracking-control-panel
+    width: 860px
+    height: 540px
+
+    .row
+        margin-top: 20px
+        display: flex
+        flex-direction: row
+        flex-wrap: nowrap
+        align-items: center
+
+    .target-select-row
+        Label
+            margin: 5px
+        Input
+            width: 300px
+            margin: 5px
+        span
+            margin: 5px
+        button
+            width: 150px
+            margin: 5px
+            margin-left: auto
+
+    .target-display-row
+        span
+            margin: 5px
+
+    .tracking-row
+        button
+            margin: 5px
+            width: 300px
+
 
 .capture-control-panel
     display: flex
@@ -30,5 +67,3 @@
 .axis-control-panel
     width: 640px
 
-.tracking-control-panel
-    width: 800px

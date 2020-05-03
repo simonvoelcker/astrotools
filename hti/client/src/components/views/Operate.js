@@ -14,11 +14,15 @@ export default class Operate extends Component {
         {({ store, mutations }) => (
           <div className='operate'>
             <Col>
-              <Row><CameraView /></Row>
-              <Row><CaptureControl /></Row>
+              <Row>
+                <CameraView />
+                <TrackingControl />
+              </Row>
+              <Row>
+                <CaptureControl />
+              </Row>
               <Row>
                 <AxisControl />
-                <TrackingControl />
               </Row>
             </Col>
           </div>

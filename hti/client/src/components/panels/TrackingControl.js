@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 import StandardButton from '../panels/StandardButton'
-import { Row, Col, Input, Label } from 'reactstrap'
+import { Table, Row, Col, Input, Label } from 'reactstrap'
 
 export default class TrackingControl extends Component {
   constructor (props) {
@@ -33,42 +33,59 @@ export default class TrackingControl extends Component {
   trackImage () {
   }
 
+  getTargetProperties (target) {
+    return [
+        {key: 'Name', value: target && target.name ? target.name : '-'},
+        {key: 'Type', value: target && target.type ? target.type : '-'},
+        {key: 'Position', value: target !== null ? target.ra.toFixed(2) + ', ' + target.dec.toFixed(2) : '-'},
+        {key: 'Constellation', value: target && target.const ? target.const : '-'},
+        {key: 'Size', value: target && (target.majAx || target.minAx) ? (target.majAx || '') + 'x' + (target.minAx || '?') : '-'}
+    ]
+  }
+
   render () {
 
-    const targetString = (this.state.target ?
-      this.state.target.name + ' RA=' +
-      this.state.target.ra.toFixed(1) + ' Dec=' +
-      this.state.target.dec.toFixed(1) : '')
+    const targetProperties = this.getTargetProperties(this.state.target)
 
     return (
       <AppConsumer>
         {({ store }) => (
           <div>
             <div className='panel tracking-control-panel'>
-              <Row>
-                <Col style={{ maxWidth: '350px' }}>
-                  <Label style={{width: '80px'}} className='spitzmarke' for='target-input'>Target</Label>
-                  <Input style={{width: '230px'}}
+              <span className='spaced-text panel-title'>Tracking Control</span>
+              <Col>
+                <Row className='row target-select-row'>
+                  <Label className='spaced-text' for='target-input'>Target:</Label>
+                  <Input
                     id='target-input'
                     className='number-input'
                     placeholder="Object name or coordinates"
                     type="text"
                     value={this.state.targetInput}
                     onChange={this.onChangeTargetInput.bind(this)} />
-                  <span className="spitzmarke">{this.state.targetInputStatus}</span><br />
-                  <span className="spitzmarke">{targetString}</span>
-                </Col>
-                <Col style={{ maxWidth: '160px' }}>
+                  <span className="spaced-text">{this.state.targetInputStatus}</span>
                   <StandardButton onClick={this.onSetTarget.bind(this)}>SET</StandardButton>
-                </Col>
-                <Col style={{ maxWidth: '280px' }}>
+                </Row>
+                <Row className='row target-display-row'>
+                  <Table>
+                    <tbody>
+                      {targetProperties.map(targetProperty => {
+                        return <tr>
+                          <td className="spaced-text">{targetProperty.key}: </td>
+                          <td className="spaced-text">{targetProperty.value}</td>
+                        </tr>
+                      })}
+                    </tbody>
+                  </Table>
+                </Row>
+                <Row className='row tracking-row'>
                   <StandardButton
                     disabled={this.state.target === null}
                     onClick={this.trackTarget.bind(this)}>TRACK TARGET</StandardButton>
                   <StandardButton
                     onClick={this.trackImage.bind(this)}>TRACK IMAGE</StandardButton>
-                </Col>
-              </Row>
+                </Row>
+              </Col>
             </div>
           </div>
         )}

@@ -53,5 +53,12 @@ export default {
 
   setRest () {
     return $axios.post('/axes/rest')
+  },
+
+  calibrateImage (imagePath) {
+    return $axios.post('/info/images/calibrate', {
+      imagePath: imagePath,
+      timeout: 30
+    })
   }
 }

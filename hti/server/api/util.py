@@ -1,5 +1,3 @@
-import os
-
 subscriptions = []
 
 
@@ -12,17 +10,9 @@ def put_event(event):
         subscription.put(event)
 
 
-def image_event(image_url):
+def image_event(image_path):
+    # path is relative to /static/
     put_event({
         'type': 'image',
-        'image_url': image_url
-    })
-
-
-def notification(level, title, message):
-    put_event({
-        'type': 'notification',
-        'level': level,
-        'title': title,
-        'message': message
+        'image_path': image_path,
     })

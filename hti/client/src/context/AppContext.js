@@ -12,12 +12,32 @@ export class AppProvider extends Component {
 
     this.state = {
         imageUrl: null,
+        imagePath: null,
+        imagePosition: null,
+        imageRotation: null,
         initialized: false
     }
 
     this.mutations = {
-      updateImage: (url) => {
-        this.setState({imageUrl: url})
+
+      calibrateImage: (imagePath) => {
+        return $backend.calibrateImage(imagePath).then(response => {
+          this.setState({
+            imagePosition: {
+              ra: parseFloat(response.data.center_deg.ra),
+              dec: parseFloat(response.data.center_deg.dec)
+            },
+            imageRotation: {
+              angle: parseFloat(response.data.rotation.angle),
+              direction: response.data.rotation.direction
+            }
+          })
+        }).catch(error => {
+          this.setState({
+            imagePosition: null,
+            imageRotation: null
+          })
+        })
       },
 
       capture: (exposure, gain) => {
@@ -63,7 +83,10 @@ export class AppProvider extends Component {
     eventListener.onmessage = (event) => {
       event = JSON.parse(event.data)
       if (event['type'] === 'image') {
-        this.setState({imageUrl: 'http://localhost:5000/' + event['image_url']})
+        this.setState({
+          imageUrl: 'http://localhost:5000/static/' + event['image_path'],
+          imagePath: event['image_path']
+        })
       }
     }
   }

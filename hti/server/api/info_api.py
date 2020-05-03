@@ -1,7 +1,8 @@
 import queue
 import json
+import os
 
-from flask import Response
+from flask import Response, request
 from flask_restplus import Namespace, Resource
 from flask.json import jsonify
 
@@ -9,6 +10,7 @@ from hti.server.api.util import subscribe_for_events
 from hti.server.globals import get_catalog
 
 from lib.coordinates import Coordinates
+from lib.solver import Solver
 
 api = Namespace('Info', description='Info API endpoints')
 
@@ -41,7 +43,6 @@ class QueryTargetApi(Resource):
         }
     )
     def get(self, query):
-
         parsed_coordinates = Coordinates.parse(query)
         if parsed_coordinates is not None:
             return jsonify({
@@ -64,3 +65,31 @@ class QueryTargetApi(Resource):
             })
 
         return '', 404
+
+
+@api.route('/images/calibrate')
+class CalibrateImageApi(Resource):
+    @api.doc(
+        description='Get calibration data of given image',
+        response={
+            200: 'Success',
+            404: 'Image not found or failed to calibrate'
+        }
+    )
+    def post(self):
+        body = request.json
+        image_path = body['imagePath']
+        timeout = float(body['timeout'])
+
+        here = os.path.dirname(os.path.abspath(__file__))
+        hti_static_dir = os.path.join(here, '..', '..', 'static')
+        image_path = os.path.join(hti_static_dir, image_path)
+
+        if not os.path.isfile(image_path):
+            return 'Image not found', 404
+
+        calibration_data = Solver().analyze_image(image_path, timeout)
+        if calibration_data is None:
+            return 'Failed to calibrate', 404
+
+        return jsonify(calibration_data)

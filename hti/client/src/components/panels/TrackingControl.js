@@ -9,7 +9,8 @@ export default class TrackingControl extends Component {
     this.state = {
       targetInput: '',
       targetInputStatus: '',
-      target: null
+      target: null,
+      calibrating: false
     }
   }
 
@@ -30,22 +31,38 @@ export default class TrackingControl extends Component {
   trackTarget () {
   }
 
-  trackImage () {
+  calibrateImage () {
+    this.setState({calibrating: true})
+    this.context.mutations.calibrateImage(this.context.store.imagePath).then(response => {
+      this.setState({calibrating: false})
+    }).catch(error => {
+      this.setState({calibrating: false})
+    })
   }
 
   getTargetProperties (target) {
+    const name = target && target.name ? target.name : '-'
+    const type = target && target.type ? ' (' + target.type + ')' : ''
+    const position = target !== null ? target.ra.toFixed(2) + ', ' + target.dec.toFixed(2) : '-'
+    const size = target && (target.majAx || target.minAx) ? (target.majAx || '') + 'x' + (target.minAx || '?') : '-'
     return [
-        {key: 'Name', value: target && target.name ? target.name : '-'},
-        {key: 'Type', value: target && target.type ? target.type : '-'},
-        {key: 'Position', value: target !== null ? target.ra.toFixed(2) + ', ' + target.dec.toFixed(2) : '-'},
-        {key: 'Constellation', value: target && target.const ? target.const : '-'},
-        {key: 'Size', value: target && (target.majAx || target.minAx) ? (target.majAx || '') + 'x' + (target.minAx || '?') : '-'}
+        {key: 'Name', value: name + type},
+        {key: 'Position', value: position},
+        {key: 'Size', value: size}
     ]
   }
 
   render () {
-
     const targetProperties = this.getTargetProperties(this.state.target)
+    let imagePosition = '-'
+    if (this.context.store.imagePosition !== null) {
+      imagePosition = this.context.store.imagePosition.ra.toFixed(2) + ', ' +
+                      this.context.store.imagePosition.dec.toFixed(2)
+    }
+    let imageRotation = '-'
+    if (this.context.store.imageRotation !== null) {
+      imageRotation = this.context.store.imageRotation.angle.toFixed(2) + '°'
+    }
 
     return (
       <AppConsumer>
@@ -70,11 +87,19 @@ export default class TrackingControl extends Component {
                   <Table>
                     <tbody>
                       {targetProperties.map(targetProperty => {
-                        return <tr>
+                        return <tr key={targetProperty.key}>
                           <td className="spaced-text">{targetProperty.key}: </td>
                           <td className="spaced-text">{targetProperty.value}</td>
                         </tr>
                       })}
+                      <tr>
+                        <td className="spaced-text">Image center:</td>
+                        <td className="spaced-text">{imagePosition}</td>
+                      </tr>
+                      <tr>
+                        <td className="spaced-text">Image rotation:</td>
+                        <td className="spaced-text">{imageRotation}</td>
+                      </tr>
                     </tbody>
                   </Table>
                 </Row>
@@ -83,7 +108,8 @@ export default class TrackingControl extends Component {
                     disabled={this.state.target === null}
                     onClick={this.trackTarget.bind(this)}>TRACK TARGET</StandardButton>
                   <StandardButton
-                    onClick={this.trackImage.bind(this)}>TRACK IMAGE</StandardButton>
+                    disabled={this.state.calibrating}
+                    onClick={this.calibrateImage.bind(this)}>CALIBRATE IMAGE</StandardButton>
                 </Row>
               </Col>
             </div>

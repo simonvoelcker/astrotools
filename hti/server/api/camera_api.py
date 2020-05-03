@@ -1,5 +1,4 @@
 import threading
-import os
 
 from flask import request
 from flask_restplus import Namespace, Resource
@@ -27,8 +26,7 @@ class CaptureImageApi(Resource):
             controller = get_indi_controller()
             try:
                 image_path = controller.capture_image(devicename, 'singleCapture', exposure, gain)
-                image_url = os.path.join('static', image_path)
-                image_event(image_url)
+                image_event(image_path)
             except Exception as e:
                 print('Capture error:', e)
         threading.Thread(target=exp).start()
@@ -54,8 +52,7 @@ class StartSequenceApi(Resource):
                 controller = get_indi_controller()
                 while get_app_state().get('running_sequence'):
                     image_path = controller.capture_image(devicename, path_prefix, exposure, gain)
-                    image_url = os.path.join('static', image_path)
-                    image_event(image_url)
+                    image_event(image_path)
             except Exception as e:
                 print('Capture error', e)
 

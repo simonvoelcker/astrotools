@@ -1,6 +1,9 @@
 import os
 import numpy as np
 import datetime
+import glob
+import random
+import shutil
 
 from .camera import INDICamera
 from .client import INDIClient
@@ -38,12 +41,6 @@ class INDIController:
         for device in devices:
             result[device] = [p for p in properties if p['device'] == device]
         return result
-
-    def device_names(self):
-        properties = self.client.get_properties()
-        devices = list(set([property['device'] for property in properties]))
-        devices.sort()
-        return devices
 
     def properties(self, device):
         return self.client.get_properties(device)
@@ -83,3 +80,32 @@ class INDIController:
                            out_filepath=os.path.join(self.static_dir, path_prefix, f'{image_name}.png'))
 
         return f'{path_prefix}/{image_name}.png'
+
+
+class INDIControllerMock:
+    def __init__(self, static_dir):
+        self.static_dir = static_dir
+
+    def devices(self):
+        return {"Toupcam GPCMOS02000KPA": []}
+
+    def properties(self, device):
+        raise NotImplementedError
+
+    def property(self, device, property):
+        raise NotImplementedError
+
+    def set_property(self, device, property, value):
+        raise NotImplementedError
+
+    def capture_image(self, device_name, path_prefix, exposure, gain):
+        here = os.path.dirname(os.path.abspath(__file__))
+        astro_dir_glob = os.path.join(here, '..', '..', '..', '**', '*.png')
+        images = glob.glob(astro_dir_glob)
+        random_image_path = random.choice(images)
+
+        out_dir = os.path.join(self.static_dir, path_prefix)
+        if not os.path.isdir(out_dir):
+            os.makedirs(out_dir)
+        shutil.copy(random_image_path, out_dir)
+        return os.path.join(path_prefix, os.path.basename(random_image_path))

@@ -1,7 +1,7 @@
 import os
 from lib.catalog import Catalog
 from lib.axis_control import AxisControl
-from lib.indi.controller import INDIController
+from lib.indi.controller import INDIController, INDIControllerMock
 
 _app_state = None
 _indi_controller = None
@@ -28,7 +28,11 @@ def get_indi_controller():
     if _indi_controller is None:
         here = os.path.dirname(os.path.abspath(__file__))
         hti_static_dir = os.path.join(here, '..', 'static')
-        _indi_controller = INDIController(static_dir=hti_static_dir)
+        sim_mode = os.environ.get('SIM_CAMERA', 'false').lower() == 'true'
+        if sim_mode:
+            _indi_controller = INDIControllerMock(static_dir=hti_static_dir)
+        else:
+            _indi_controller = INDIController(static_dir=hti_static_dir)
     return _indi_controller
 
 

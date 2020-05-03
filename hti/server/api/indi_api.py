@@ -19,18 +19,6 @@ class DevicesApi(Resource):
         return jsonify(get_indi_controller().devices())
 
 
-@api.route('/device_names')
-class DeviceNamesApi(Resource):
-    @api.doc(
-        description='List device names',
-        response={
-            200: 'Success'
-        }
-    )
-    def get(self):
-        return jsonify({'devices': get_indi_controller().device_names()})
-
-
 @api.route('/device/<devicename>/properties')
 class DevicePropertiesListApi(Resource):
     @api.doc(

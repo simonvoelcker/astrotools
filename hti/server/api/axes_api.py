@@ -3,6 +3,7 @@ from flask_restplus import Namespace, Resource
 
 from hti.server.globals import get_axis_control
 from lib.axis_control import AxisControl
+from lib.coordinates import Coordinates
 
 api = Namespace('Axes', description='Axes control API endpoints')
 
@@ -52,3 +53,22 @@ class RestApi(Resource):
         axis_control.set_motor_speed('A', AxisControl.ra_resting_speed)
         axis_control.set_motor_speed('B', AxisControl.dec_resting_speed)
         return '', 200
+
+
+@api.route('/goto')
+class GoToApi(Resource):
+    @api.doc(
+        description='Steer to given position, then rest',
+        response={
+            200: 'Success'
+        }
+    )
+    def post(self):
+        body = request.json
+        here = Coordinates(float(body['here']['ra']), float(body['here']['dec']))
+        target = Coordinates(float(body['target']['ra']), float(body['target']['dec']))
+
+        axis_control = get_axis_control()
+        axis_control.steer(here, target, max_speed_dps=1.0)
+        return '', 200
+

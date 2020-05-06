@@ -10,7 +10,8 @@ export default class TrackingControl extends Component {
       targetInput: '',
       targetInputStatus: '',
       target: null,
-      calibrating: false
+      calibrating: false,
+      tracking: false,
     }
   }
 
@@ -31,6 +32,12 @@ export default class TrackingControl extends Component {
   trackTarget () {
   }
 
+  trackImage () {
+  }
+
+  goToTarget () {
+  }
+
   calibrateImage () {
     this.setState({calibrating: true})
     this.context.mutations.calibrateImage(this.context.store.imagePath).then(response => {
@@ -44,11 +51,9 @@ export default class TrackingControl extends Component {
     const name = target && target.name ? target.name : '-'
     const type = target && target.type ? ' (' + target.type + ')' : ''
     const position = target !== null ? target.ra.toFixed(2) + ', ' + target.dec.toFixed(2) : '-'
-    const size = target && (target.majAx || target.minAx) ? (target.majAx || '') + 'x' + (target.minAx || '?') : '-'
     return [
-        {key: 'Name', value: name + type},
-        {key: 'Position', value: position},
-        {key: 'Size', value: size}
+        {key: 'Target name', value: name + type},
+        {key: 'Target position', value: position}
     ]
   }
 
@@ -103,13 +108,21 @@ export default class TrackingControl extends Component {
                     </tbody>
                   </Table>
                 </Row>
-                <Row className='row tracking-row'>
+                <Row className='row button-row'>
                   <StandardButton
-                    disabled={this.state.target === null}
-                    onClick={this.trackTarget.bind(this)}>TRACK TARGET</StandardButton>
-                  <StandardButton
-                    disabled={this.state.calibrating}
+                    disabled={store.imagePath === null || this.state.tracking || this.state.calibrating}
                     onClick={this.calibrateImage.bind(this)}>CALIBRATE IMAGE</StandardButton>
+                  <StandardButton
+                    disabled={store.imagePath === null || this.state.tracking}
+                    onClick={this.trackImage.bind(this)}>TRACK IMAGE</StandardButton>
+                </Row>
+                <Row className='row button-row'>
+                  <StandardButton
+                    disabled={this.state.target === null || this.state.tracking || store.imagePosition === null}
+                    onClick={this.goToTarget.bind(this)}>GO TO TARGET</StandardButton>
+                  <StandardButton
+                    disabled={this.state.target === null || this.state.tracking || store.imagePosition === null}
+                    onClick={this.trackTarget.bind(this)}>TRACK TARGET</StandardButton>
                 </Row>
               </Col>
             </div>

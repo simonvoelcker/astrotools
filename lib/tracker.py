@@ -32,10 +32,10 @@ class Tracker:
             self.dec_pid.output_limits = (-self.config['dec']['range'], self.config['dec']['range'])
             self.dec_pid.sample_time = self.config['sample_time']
 
-    def track(self):
+    def track(self, keep_running_callback=None):
         known_files = set(glob.glob(self.image_search_pattern))
 
-        while True:
+        while keep_running_callback is None or keep_running_callback():
             all_files = set(glob.glob(self.image_search_pattern))
             new_files = all_files - known_files
             time.sleep(0.5)  # wait here, not above, to be sure the new file is complete on disk

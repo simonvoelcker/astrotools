@@ -4,6 +4,7 @@ import datetime
 import glob
 import random
 import shutil
+import time
 
 from .camera import INDICamera
 from .client import INDIClient
@@ -99,6 +100,8 @@ class INDIControllerMock:
         raise NotImplementedError
 
     def capture_image(self, device_name, path_prefix, exposure, gain):
+        time.sleep(exposure)
+
         here = os.path.dirname(os.path.abspath(__file__))
         astro_dir_glob = os.path.join(here, '..', '..', '..', '**', '*.png')
         images = glob.glob(astro_dir_glob)

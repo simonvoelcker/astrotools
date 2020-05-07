@@ -5,6 +5,7 @@ from hti.server.api.camera_api import api as camera_api
 from hti.server.api.axes_api import api as axes_api
 from hti.server.api.info_api import api as info_api
 from hti.server.api.indi_api import api as indi_api
+from hti.server.api.tracking_api import api as tracking_api
 
 client_blueprint = Blueprint(
     'client_app',
@@ -32,3 +33,4 @@ api.add_namespace(camera_api, path='/camera')
 api.add_namespace(axes_api, path='/axes')
 api.add_namespace(info_api, path='/info')
 api.add_namespace(indi_api, path='/indi')
+api.add_namespace(tracking_api, path='/tracking')

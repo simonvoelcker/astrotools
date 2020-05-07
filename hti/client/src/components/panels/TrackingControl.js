@@ -30,6 +30,7 @@ export default class TrackingControl extends Component {
   }
 
   trackTarget () {
+    this.context.mutations.trackTarget(this.state.target)
   }
 
   trackImage () {

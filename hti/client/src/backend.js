@@ -60,5 +60,11 @@ export default {
       imagePath: imagePath,
       timeout: 30
     })
+  },
+
+  trackTarget (target) {
+    return $axios.post('/tracking/startWithTarget', {
+      target: target
+    })
   }
 }

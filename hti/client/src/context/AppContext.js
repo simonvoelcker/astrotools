@@ -66,6 +66,10 @@ export class AppProvider extends Component {
 
       setRest: () => {
         return $backend.setRest()
+      },
+
+      trackTarget: (target) => {
+        return $backend.trackTarget(target)
       }
     }
   }

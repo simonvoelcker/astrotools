@@ -1,8 +1,12 @@
-subscriptions = []
+subscriptions = set()
 
 
 def subscribe_for_events(sub):
-    subscriptions.append(sub)
+    subscriptions.add(sub)
+
+
+def unsubscribe_from_events(sub):
+    subscriptions.remove(sub)
 
 
 def put_event(event):

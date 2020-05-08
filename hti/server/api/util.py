@@ -1,3 +1,5 @@
+import time
+
 subscriptions = set()
 
 
@@ -18,5 +20,6 @@ def image_event(image_path):
     # path is relative to /static/
     put_event({
         'type': 'image',
+        'unix_timestamp': time.time(),
         'image_path': image_path,
     })

@@ -37,15 +37,23 @@ class TrackTargetApi(Resource):
         tracker.set_target(target)
 
         def thread_func():
-            q = queue.Queue()
+            # process most recent events first and discard old ones
+            q = queue.LifoQueue()
             subscribe_for_events(q)
+            latest_processed_event = None
             while get_app_state()['tracking']:
-                # TODO the queue can be full of shit after a long steering maneuver
                 event = q.get()
-                if event['type'] == 'image':
-                    image_path = event['image_path']  # relative to static
-                    absolute_image_path = os.path.join(root_dir, 'hti', 'static', image_path)
-                    tracker.on_new_file(absolute_image_path)
+                if event['type'] != 'image':
+                    continue
+                if latest_processed_event is not None and latest_processed_event['timestamp'] >= event['timestamp']:
+                    # skip over old events
+                    continue
+                latest_processed_event = event
+                image_path = event['image_path']  # relative to static
+                absolute_image_path = os.path.join(root_dir, 'hti', 'static', image_path)
+                # TODO frontend must get infos
+                tracker.on_new_file(absolute_image_path)
+
             # TODO this must also happen on exception
             unsubscribe_from_events(q)
 

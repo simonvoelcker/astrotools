@@ -3,7 +3,6 @@ import numpy as np
 import datetime
 import glob
 import random
-import shutil
 import time
 
 from .camera import INDICamera
@@ -103,12 +102,16 @@ class INDIControllerMock:
         time.sleep(exposure)
 
         here = os.path.dirname(os.path.abspath(__file__))
-        astro_dir_glob = os.path.join(here, '..', '..', '..', '**', '*.png')
+        astro_dir_glob = os.path.join(here, '..', '..', '..', 'NGC*', '**', '*.tif')
         images = glob.glob(astro_dir_glob)
         random_image_path = random.choice(images)
-
         out_dir = os.path.join(self.static_dir, path_prefix)
         if not os.path.isdir(out_dir):
             os.makedirs(out_dir)
-        shutil.copy(random_image_path, out_dir)
-        return os.path.join(path_prefix, os.path.basename(random_image_path))
+
+        # convert to jpg while copying to static/path_prefix
+        filename, extension = os.path.splitext(os.path.basename(random_image_path))
+        out_filepath = os.path.join(self.static_dir, path_prefix, f'{filename}.jpg')
+        Image.open(random_image_path).save(out_filepath)
+
+        return os.path.join(path_prefix, f'{filename}.jpg')

@@ -58,7 +58,7 @@ export default {
   calibrateImage (imagePath) {
     return $axios.post('/info/images/calibrate', {
       imagePath: imagePath,
-      timeout: 30
+      timeout: 60
     })
   },
 

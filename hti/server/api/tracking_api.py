@@ -8,33 +8,47 @@ from flask_restplus import Namespace, Resource
 
 from hti.server.api.util import subscribe_for_events, unsubscribe_from_events
 from hti.server.globals import get_axis_control, get_app_state
-from lib.coordinates import Coordinates
+from lib.image_tracker import ImageTracker
+from lib.passive_tracker import PassiveTracker
 from lib.target_tracker import TargetTracker
 
 api = Namespace('Tracking', description='Tracking API')
 
 
-@api.route('/startWithTarget')
+@api.route('/start')
 class TrackTargetApi(Resource):
     @api.doc(
-        description='Track the given target continuously',
+        description='Start tracking with given mode. Target, if required, is assumed to be set beforehand.',
         response={
             200: 'Success'
         }
     )
     def post(self):
-        body = request.json
-        target = Coordinates(float(body['target']['ra']), float(body['target']['dec']))
+        mode = request.json['mode']
 
         here = os.path.dirname(os.path.abspath(__file__))
-        root_dir = os.path.join(here, '..', '..', '..')
-        config_file = os.path.join(root_dir, 'track_target_config.json')
-        with open(config_file, 'r') as f:
+        root_dir = os.path.normpath(os.path.join(here, '..', '..', '..'))
+
+        config_file = {
+            'target': 'track_target_config.json',
+            'image': 'track_image_config.json',
+            'passive': 'track_passively_config.json',
+        }[mode]
+
+        with open(os.path.join(root_dir, config_file), 'r') as f:
             config = json.load(f)
 
-        axis_control = get_axis_control()
-        tracker = TargetTracker(config, axis_control)
-        tracker.set_target(target)
+        tracker = None
+        if mode == 'target':
+            axis_control = get_axis_control()
+            target = get_app_state()['target']
+            tracker = TargetTracker(config, axis_control)
+            tracker.set_target(target)
+        elif mode == 'image':
+            axis_control = get_axis_control()
+            tracker = ImageTracker(config, axis_control)
+        elif mode == 'passive':
+            tracker = PassiveTracker(config)
 
         def thread_func():
             # process most recent events first and discard old ones
@@ -45,7 +59,7 @@ class TrackTargetApi(Resource):
                 event = q.get()
                 if event['type'] != 'image':
                     continue
-                if latest_processed_event is not None and latest_processed_event['timestamp'] >= event['timestamp']:
+                if latest_processed_event and latest_processed_event['unix_timestamp'] >= event['unix_timestamp']:
                     # skip over old events
                     continue
                 latest_processed_event = event

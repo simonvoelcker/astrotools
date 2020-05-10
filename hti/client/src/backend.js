@@ -62,9 +62,13 @@ export default {
     })
   },
 
-  trackTarget (target) {
-    return $axios.post('/tracking/startWithTarget', {
-      target: target
+  startTracking (mode) {
+    return $axios.post('/tracking/start', {
+      mode: mode
     })
+  },
+
+  stopTracking () {
+    return $axios.post('/tracking/stop')
   }
 }

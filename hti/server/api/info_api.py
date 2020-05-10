@@ -7,7 +7,7 @@ from flask_restplus import Namespace, Resource
 from flask.json import jsonify
 
 from hti.server.api.util import subscribe_for_events
-from hti.server.globals import get_catalog
+from hti.server.globals import get_catalog, get_app_state
 
 from lib.coordinates import Coordinates
 from lib.solver import Solver
@@ -45,15 +45,17 @@ class QueryTargetApi(Resource):
     def get(self, query):
         parsed_coordinates = Coordinates.parse(query)
         if parsed_coordinates is not None:
-            return jsonify({
+            target = {
                 'ra': parsed_coordinates.ra,
                 'dec': parsed_coordinates.dec
-            })
+            }
+            get_app_state()['target'] = target
+            return jsonify(target)
 
         catalog_result = get_catalog().get_entry(query.upper())
         if catalog_result is not None:
             parsed_coordinates = Coordinates.parse_csvformat(catalog_result['RA'], catalog_result['Dec'])
-            return jsonify({
+            target = {
                 'name': catalog_result['Name'],
                 'ra': parsed_coordinates.ra,
                 'dec': parsed_coordinates.dec,
@@ -62,7 +64,9 @@ class QueryTargetApi(Resource):
                 'minAx': catalog_result.get('MinAx'),
                 'majAx': catalog_result.get('MajAx'),
                 'posAng': catalog_result.get('PosAng'),
-            })
+            }
+            get_app_state()['target'] = target
+            return jsonify(target)
 
         return '', 404
 

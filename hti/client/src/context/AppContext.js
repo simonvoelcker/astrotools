@@ -15,7 +15,8 @@ export class AppProvider extends Component {
         imagePath: null,
         imagePosition: null,
         imageRotation: null,
-        initialized: false
+        initialized: false,
+        tracking: false,
     }
 
     this.mutations = {
@@ -68,8 +69,20 @@ export class AppProvider extends Component {
         return $backend.setRest()
       },
 
-      trackTarget: (target) => {
-        return $backend.trackTarget(target)
+      startTracking: (mode) => {
+        return $backend.startTracking(mode).then(() => {
+          this.setState({tracking: true})
+        })
+      },
+
+      stopTracking: () => {
+        return $backend.stopTracking().then(() => {
+          this.setState({tracking: false})
+        })
+      },
+
+      goToTarget: () => {
+        return $backend.goToTarget()
       }
     }
   }

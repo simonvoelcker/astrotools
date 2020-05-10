@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 import StandardButton from '../panels/StandardButton'
 import { Table, Row, Col, Input, Label } from 'reactstrap'
+import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 
 export default class TrackingControl extends Component {
   constructor (props) {
@@ -11,7 +12,7 @@ export default class TrackingControl extends Component {
       targetInputStatus: '',
       target: null,
       calibrating: false,
-      tracking: false,
+      trackingMode: 'target',
     }
   }
 
@@ -27,16 +28,6 @@ export default class TrackingControl extends Component {
     }).catch(error => {
       this.setState({targetInputStatus: 'Not found: ' + query})
     })
-  }
-
-  trackTarget () {
-    this.context.mutations.trackTarget(this.state.target)
-  }
-
-  trackImage () {
-  }
-
-  goToTarget () {
   }
 
   calibrateImage () {
@@ -72,7 +63,7 @@ export default class TrackingControl extends Component {
 
     return (
       <AppConsumer>
-        {({ store }) => (
+        {({ store, mutations }) => (
           <div>
             <div className='panel tracking-control-panel'>
               <span className='spaced-text panel-title'>Tracking Control</span>
@@ -111,19 +102,29 @@ export default class TrackingControl extends Component {
                 </Row>
                 <Row className='row button-row'>
                   <StandardButton
-                    disabled={store.imagePath === null || this.state.tracking || this.state.calibrating}
+                    disabled={store.imagePath === null || store.tracking || this.state.calibrating}
                     onClick={this.calibrateImage.bind(this)}>CALIBRATE IMAGE</StandardButton>
                   <StandardButton
-                    disabled={store.imagePath === null || this.state.tracking}
-                    onClick={this.trackImage.bind(this)}>TRACK IMAGE</StandardButton>
+                    disabled={this.state.target === null || store.tracking || store.imagePosition === null}
+                    onClick={mutations.goToTarget}>GO TO TARGET</StandardButton>
                 </Row>
                 <Row className='row button-row'>
-                  <StandardButton
-                    disabled={this.state.target === null || this.state.tracking || store.imagePosition === null}
-                    onClick={this.goToTarget.bind(this)}>GO TO TARGET</StandardButton>
-                  <StandardButton
-                    disabled={this.state.target === null || this.state.tracking || store.imagePosition === null}
-                    onClick={this.trackTarget.bind(this)}>TRACK TARGET</StandardButton>
+                  { store.tracking ?
+                    <StandardButton
+                      onClick={mutations.stopTracking}>STOP TRACKING</StandardButton>
+                  :
+                    <StandardButton
+                      disabled={this.state.trackingMode === 'target' && this.state.target === null}
+                      onClick={() => {mutations.startTracking(this.state.trackingMode)}}>START TRACKING</StandardButton>
+                  }
+                  <UncontrolledDropdown>
+                    <DropdownToggle caret>MODE: {this.state.trackingMode}</DropdownToggle>
+                    <DropdownMenu>
+                      <DropdownItem onClick={() => {this.setState({trackingMode: 'target'})}}>Target</DropdownItem>
+                      <DropdownItem onClick={() => {this.setState({trackingMode: 'image'})}}>Image</DropdownItem>
+                      <DropdownItem onClick={() => {this.setState({trackingMode: 'passive'})}}>Passive</DropdownItem>
+                    </DropdownMenu>
+                  </UncontrolledDropdown>
                 </Row>
               </Col>
             </div>

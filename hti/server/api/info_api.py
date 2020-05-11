@@ -96,4 +96,7 @@ class CalibrateImageApi(Resource):
         if calibration_data is None:
             return 'Failed to calibrate', 404
 
+        center = calibration_data['center_deg']
+        get_app_state()['here'] = Coordinates(float(center['ra']), float(center['dec']))
+
         return jsonify(calibration_data)

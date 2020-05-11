@@ -70,5 +70,9 @@ export default {
 
   stopTracking () {
     return $axios.post('/tracking/stop')
+  },
+
+  goToTarget () {
+    return $axios.post('/axes/gototarget')
   }
 }

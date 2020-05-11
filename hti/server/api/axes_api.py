@@ -1,7 +1,7 @@
 from flask import request
 from flask_restplus import Namespace, Resource
 
-from hti.server.globals import get_axis_control
+from hti.server.globals import get_axis_control, get_app_state
 from lib.axis_control import AxisControl
 from lib.coordinates import Coordinates
 
@@ -55,20 +55,23 @@ class RestApi(Resource):
         return '', 200
 
 
-@api.route('/goto')
+@api.route('/gototarget')
 class GoToApi(Resource):
     @api.doc(
-        description='Steer to given position, then rest',
+        description='Steer to target. Assumes last known position and target set',
         response={
             200: 'Success'
         }
     )
     def post(self):
-        body = request.json
-        here = Coordinates(float(body['here']['ra']), float(body['here']['dec']))
-        target = Coordinates(float(body['target']['ra']), float(body['target']['dec']))
+        app_state = get_app_state()
+        here = app_state['here']
+        target = app_state['target']
+        # TODO this is grütze
+        target = Coordinates(float(target['ra']), float(target['dec']))
 
         axis_control = get_axis_control()
+        # TODO this will block. need app state "steering" or so. should also be stoppable.
         axis_control.steer(here, target, max_speed_dps=1.0)
         return '', 200
 

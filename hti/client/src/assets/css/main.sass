@@ -1,11 +1,6 @@
 @import "variables.sass"
-
-@import "components/button.sass"
-@import "components/slider.sass"
-@import "components/numberinput.sass"
-
-@import "views/operate.sass"
-
+@import "elements.sass"
+@import "panels.sass"
 
 html,
 body
@@ -23,26 +18,10 @@ body
         user-select: none
         border: 0 none
         color: white
-    h1,
-    h2,
-    h3,
-    h4
-        font-weight: 100
 
-    h4
-        font-size: 1.3rem
-    h2
-        letter-spacing: 2px
-        font-size: $fontSizeLarge
-    li
-        list-style: none
+.operate
+    display: flex
+    flex-direction: column
 
-    p
-        margin-bottom: 0.5rem
-
-
-.spaced-text
-    letter-spacing: 2px
-    font-weight: 100
-    font-size: $fontSize
-    line-height: 24px
+    .scene
+        display: flex

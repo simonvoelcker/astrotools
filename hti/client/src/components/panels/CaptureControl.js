@@ -11,7 +11,7 @@ export default class CameraView extends Component {
       exposure: 0.2,
       gain: 100,
       pathPrefix: '',
-      capturing: false
+      capturing: false,
     }
   }
 
@@ -72,16 +72,6 @@ export default class CameraView extends Component {
                 <StandardButton id="capture"
                         disabled={!store.initialized || this.state.capturing}
                         onClick={this.capture.bind(this)}>Capture</StandardButton>
-              </Col>
-              <Col style={{ width: '400px' }}>
-                <Label style={{width: '120px'}} className='spaced-text' for="pathprefix">Path Prefix</Label>
-                <Input style={{width: '200px'}}
-                        className='number-input'
-                        type="string"
-                        id="pathprefix"
-                        placeholder={this.state.pathPrefix}
-                        value={this.state.pathPrefix}
-                        onChange={(event) => this.onChangePathPrefix(event)} />
               </Col>
               <Col style={{ maxWidth: '200px' }}>
                 <StandardButton id="start-sequence"

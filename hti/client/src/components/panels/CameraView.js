@@ -6,8 +6,8 @@ export default class CameraView extends Component {
     return (
       <AppConsumer>
         {({ store }) => (
-          <div>
-            <img id="camera-image" className='camera-image' alt='' src={store.imageUrl} />
+          <div className='camera-view-panel'>
+            <img id="camera-image" alt='' src={store.imageUrl} />
           </div>
         )}
       </AppConsumer>

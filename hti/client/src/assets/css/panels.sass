@@ -1,8 +1,8 @@
 .panel
     background: $panelBackgroundColor
+    margin-top: $panelMargin
+    margin-left: $panelMargin
     padding: 20px
-    margin-top: 10px
-    margin-left: 10px
 
     Label
         display: inline-block
@@ -12,15 +12,20 @@
 .panel-title
     margin-bottom: 10px
 
-.camera-image
-    width: 960px
-    height: 540px
-    margin-top: 10px
-    margin-left: 10px
+.camera-view-panel
     background-color: $panelBackgroundColor
+    margin-top: $panelMargin
+    margin-left: $panelMargin
+
+    margin-right: auto
+    margin-bottom: auto
+
+    img
+        width: 100%
+        height: 100%
 
 .tracking-control-panel
-    width: 860px
+    width: $controlsWidth
     height: 540px
 
     .row
@@ -54,9 +59,10 @@
 
 
 .capture-control-panel
+    width: $controlsWidth
     display: flex
     flex-direction: row
 
 .axis-control-panel
-    width: 640px
+    width: $controlsWidth
 

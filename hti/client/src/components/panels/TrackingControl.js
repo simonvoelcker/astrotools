@@ -26,7 +26,7 @@ export default class TrackingControl extends Component {
     this.context.mutations.queryTarget(query).then(response => {
       this.setState({target: response.data})
     }).catch(error => {
-      this.setState({targetInputStatus: 'Not found: ' + query})
+      this.setState({targetInputStatus: 'Not found'})
     })
   }
 

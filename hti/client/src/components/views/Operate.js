@@ -5,7 +5,6 @@ import CaptureControl from '../panels/CaptureControl'
 import AxisControl from '../panels/AxisControl'
 import TrackingControl from '../panels/TrackingControl'
 import { AppConsumer, AppContext } from '../../context/AppContext'
-import { Col } from 'reactstrap'
 
 export default class Operate extends Component {
   render () {
@@ -13,14 +12,14 @@ export default class Operate extends Component {
       <AppConsumer>
         {({ store, mutations }) => (
           <div className='operate'>
-            <Col>
+            <div>
               <CameraView />
-            </Col>
-            <Col>
+            </div>
+            <div>
               <TrackingControl />
               <CaptureControl />
               <AxisControl />
-            </Col>
+            </div>
           </div>
         )}
       </AppConsumer>

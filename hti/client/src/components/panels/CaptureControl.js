@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 import StandardButton from '../panels/StandardButton'
 import { Input, Label } from 'reactstrap'
+import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 
 export default class CameraView extends Component {
   constructor (props) {
@@ -10,8 +11,8 @@ export default class CameraView extends Component {
     this.state = {
       exposure: 1,
       gain: 100,
-      pathPrefix: '',
-      capturing: false,
+      sequencing: false,
+      imageType: 'lights'
     }
   }
 
@@ -23,25 +24,18 @@ export default class CameraView extends Component {
     this.setState({gain: event.target.value})
   }
 
-  onChangePathPrefix (event) {
-    this.setState({pathPrefix: event.target.value})
-  }
-
   capture () {
-    this.setState({capturing: true})
-    this.context.mutations.capture(this.state.exposure, this.state.gain).then(() => {
-      this.setState({capturing: false})
-    })
+    this.context.mutations.capture(this.state.exposure, this.state.gain)
   }
 
   startSequence () {
-    this.setState({capturing: true})
-    this.context.mutations.startSequence(this.state.pathPrefix, this.state.exposure, this.state.gain)
+    this.setState({sequencing: true})
+    this.context.mutations.startSequence(this.state.imageType, this.state.exposure, this.state.gain)
   }
 
   stopSequence () {
     this.context.mutations.stopSequence().then(() => {
-      this.setState({capturing: false})
+      this.setState({sequencing: false})
     })
   }
 
@@ -70,16 +64,28 @@ export default class CameraView extends Component {
             </div>
             <div className='button-column'>
               <StandardButton id="capture"
-                      disabled={!store.initialized || this.state.capturing}
+                      disabled={!store.initialized || this.state.sequencing}
                       onClick={this.capture.bind(this)}>Capture</StandardButton>
+              { this.state.sequencing ?
+                <StandardButton id="stop-sequence"
+                        disabled={!store.initialized}
+                        onClick={this.stopSequence.bind(this)}>Stop</StandardButton>
+              :
+                <StandardButton id="start-sequence"
+                        disabled={!store.initialized}
+                        onClick={this.startSequence.bind(this)}>Sequence</StandardButton>
+              }
             </div>
             <div className='button-column'>
-              <StandardButton id="start-sequence"
-                      disabled={!store.initialized || this.state.capturing}
-                      onClick={this.startSequence.bind(this)}>Sequence</StandardButton>
-              <StandardButton id="stop-sequence"
-                      disabled={!store.initialized || !this.state.capturing}
-                      onClick={this.stopSequence.bind(this)}>Stop</StandardButton>
+              <UncontrolledDropdown>
+                <DropdownToggle caret>{this.state.imageType}</DropdownToggle>
+                <DropdownMenu>
+                  <DropdownItem onClick={() => {this.setState({imageType: 'lights'})}}>Lights</DropdownItem>
+                  <DropdownItem onClick={() => {this.setState({imageType: 'darks'})}}>Darks</DropdownItem>
+                  <DropdownItem onClick={() => {this.setState({imageType: 'flats'})}}>Flats</DropdownItem>
+                  <DropdownItem onClick={() => {this.setState({imageType: 'other'})}}>Other</DropdownItem>
+                </DropdownMenu>
+              </UncontrolledDropdown>
             </div>
           </div>
         )}

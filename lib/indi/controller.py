@@ -63,12 +63,14 @@ class INDIController:
             self.cameras[device_name] = camera
         return self.cameras[device_name]
 
-    def capture_image(self, device_name, path_prefix, exposure, gain):
+    def capture_image(self, device_name, frame_type, exposure, gain):
         if self.shooting:
             raise RuntimeError('Another exposure is already in progress')
 
         self.shooting = True
 
+        today = datetime.date.today().isoformat()
+        path_prefix = os.path.join(today, frame_type)
         image_name = datetime.datetime.now().isoformat()
         camera = self.get_camera(device_name)
         camera.set_output(self.static_dir, image_name)
@@ -98,8 +100,11 @@ class INDIControllerMock:
     def set_property(self, device, property, value):
         raise NotImplementedError
 
-    def capture_image(self, device_name, path_prefix, exposure, gain):
+    def capture_image(self, device_name, frame_type, exposure, gain):
         time.sleep(exposure)
+
+        today = datetime.date.today().isoformat()
+        path_prefix = os.path.join(today, frame_type)
 
         here = os.path.dirname(os.path.abspath(__file__))
         astro_dir_glob = os.path.join(here, '..', '..', '..', 'NGC*', '**', '*.tif')

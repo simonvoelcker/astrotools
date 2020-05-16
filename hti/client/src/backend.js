@@ -24,9 +24,9 @@ export default {
     })
   },
 
-  startSequence (deviceName, pathPrefix, exposure, gain) {
+  startSequence (deviceName, frameType, exposure, gain) {
     return $axios.post('/camera/' + deviceName + '/start_sequence', {
-        pathPrefix: pathPrefix,
+        frameType: frameType,
         exposure: exposure,
         gain: gain
     })

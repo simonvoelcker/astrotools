@@ -21,11 +21,12 @@ class CaptureImageApi(Resource):
         body = request.json
         exposure = float(body['exposure'])
         gain = float(body['gain'])
+        frame_type = body.get('frameType', 'singleCapture')
 
         def exp():
             controller = get_indi_controller()
             try:
-                image_path = controller.capture_image(devicename, 'singleCapture', exposure, gain)
+                image_path = controller.capture_image(devicename, frame_type, exposure, gain)
                 image_event(image_path)
             except Exception as e:
                 print('Capture error:', e)
@@ -45,13 +46,13 @@ class StartSequenceApi(Resource):
         body = request.json
         exposure = float(body['exposure'])
         gain = float(body['gain'])
-        path_prefix = body['pathPrefix'] or 'sequence'
+        frame_type = body.get('frameType', 'other')
 
         def exp():
             try:
                 controller = get_indi_controller()
                 while get_app_state().get('running_sequence'):
-                    image_path = controller.capture_image(devicename, path_prefix, exposure, gain)
+                    image_path = controller.capture_image(devicename, frame_type, exposure, gain)
                     image_event(image_path)
             except Exception as e:
                 print('Capture error', e)

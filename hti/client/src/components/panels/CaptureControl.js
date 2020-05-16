@@ -12,7 +12,7 @@ export default class CameraView extends Component {
       exposure: 1,
       gain: 100,
       sequencing: false,
-      imageType: 'lights'
+      frameType: 'lights'
     }
   }
 
@@ -30,7 +30,7 @@ export default class CameraView extends Component {
 
   startSequence () {
     this.setState({sequencing: true})
-    this.context.mutations.startSequence(this.state.imageType, this.state.exposure, this.state.gain)
+    this.context.mutations.startSequence(this.state.frameType, this.state.exposure, this.state.gain)
   }
 
   stopSequence () {
@@ -78,12 +78,12 @@ export default class CameraView extends Component {
             </div>
             <div className='button-column'>
               <UncontrolledDropdown>
-                <DropdownToggle caret>{this.state.imageType}</DropdownToggle>
+                <DropdownToggle caret>{this.state.frameType}</DropdownToggle>
                 <DropdownMenu>
-                  <DropdownItem onClick={() => {this.setState({imageType: 'lights'})}}>Lights</DropdownItem>
-                  <DropdownItem onClick={() => {this.setState({imageType: 'darks'})}}>Darks</DropdownItem>
-                  <DropdownItem onClick={() => {this.setState({imageType: 'flats'})}}>Flats</DropdownItem>
-                  <DropdownItem onClick={() => {this.setState({imageType: 'other'})}}>Other</DropdownItem>
+                  <DropdownItem onClick={() => {this.setState({frameType: 'lights'})}}>Lights</DropdownItem>
+                  <DropdownItem onClick={() => {this.setState({frameType: 'darks'})}}>Darks</DropdownItem>
+                  <DropdownItem onClick={() => {this.setState({frameType: 'flats'})}}>Flats</DropdownItem>
+                  <DropdownItem onClick={() => {this.setState({frameType: 'other'})}}>Other</DropdownItem>
                 </DropdownMenu>
               </UncontrolledDropdown>
             </div>

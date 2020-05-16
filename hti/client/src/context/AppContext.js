@@ -45,8 +45,8 @@ export class AppProvider extends Component {
         return $backend.capture(this.camera, exposure, gain)
       },
 
-      startSequence: (pathPrefix, exposure, gain) => {
-        return $backend.startSequence(this.camera, pathPrefix, exposure, gain)
+      startSequence: (frameType, exposure, gain) => {
+        return $backend.startSequence(this.camera, frameType, exposure, gain)
       },
 
       stopSequence: () => {

@@ -1,14 +1,14 @@
 import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 import StandardButton from '../panels/StandardButton'
-import { Row, Col, Input, Label } from 'reactstrap'
+import { Input, Label } from 'reactstrap'
 
 export default class CameraView extends Component {
   constructor (props) {
     super(props)
 
     this.state = {
-      exposure: 0.2,
+      exposure: 1,
       gain: 100,
       pathPrefix: '',
       capturing: false,
@@ -50,38 +50,37 @@ export default class CameraView extends Component {
       <AppConsumer>
         {({ store }) => (
           <div className='panel capture-control-panel'>
-            <Row>
-              <Col style={{ maxWidth: '280px' }}>
-                <Label style={{width: '100px'}} className='spaced-text' for="exposure">Exposure</Label>
-                <Input style={{width: '130px'}}
-                        className='number-input'
-                        type="number"
-                        placeholder={this.state.exposure}
-                        value={this.state.exposure}
-                        onChange={(event) => this.onChangeExposure(event)} />
-                <br/>
-                <Label style={{width: '100px'}} className='spaced-text' for="gain">Gain</Label>
-                <Input style={{width: '130px'}}
-                        className='number-input'
-                        type="number"
-                        placeholder={this.state.gain}
-                        value={this.state.gain}
-                        onChange={(event) => this.onChangeGain(event)} />
-              </Col>
-              <Col style={{ maxWidth: '180px' }}>
-                <StandardButton id="capture"
-                        disabled={!store.initialized || this.state.capturing}
-                        onClick={this.capture.bind(this)}>Capture</StandardButton>
-              </Col>
-              <Col style={{ maxWidth: '200px' }}>
-                <StandardButton id="start-sequence"
-                        disabled={!store.initialized || this.state.capturing}
-                        onClick={this.startSequence.bind(this)}>Sequence</StandardButton>
-                <StandardButton id="stop-sequence"
-                        disabled={!store.initialized || !this.state.capturing}
-                        onClick={this.stopSequence.bind(this)}>Stop</StandardButton>
-              </Col>
-            </Row>
+            <div className='settings-column'>
+              <div>
+                <Label className='spaced-text' for="exposure">Exposure (s)</Label>
+                <Input className='number-input'
+                       type="number"
+                       placeholder={this.state.exposure}
+                       value={this.state.exposure}
+                       onChange={(event) => this.onChangeExposure(event)} />
+              </div>
+              <div>
+                <Label className='spaced-text' for="gain">Gain</Label>
+                <Input className='number-input'
+                       type="number"
+                       placeholder={this.state.gain}
+                       value={this.state.gain}
+                       onChange={(event) => this.onChangeGain(event)} />
+              </div>
+            </div>
+            <div className='button-column'>
+              <StandardButton id="capture"
+                      disabled={!store.initialized || this.state.capturing}
+                      onClick={this.capture.bind(this)}>Capture</StandardButton>
+            </div>
+            <div className='button-column'>
+              <StandardButton id="start-sequence"
+                      disabled={!store.initialized || this.state.capturing}
+                      onClick={this.startSequence.bind(this)}>Sequence</StandardButton>
+              <StandardButton id="stop-sequence"
+                      disabled={!store.initialized || !this.state.capturing}
+                      onClick={this.stopSequence.bind(this)}>Stop</StandardButton>
+            </div>
           </div>
         )}
       </AppConsumer>

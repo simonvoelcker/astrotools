@@ -17,6 +17,7 @@ export class AppProvider extends Component {
         imageRotation: null,
         initialized: false,
         tracking: false,
+        trackingStatus: null,
     }
 
     this.mutations = {
@@ -103,6 +104,14 @@ export class AppProvider extends Component {
         this.setState({
           imageUrl: 'http://localhost:5000/static/' + event['image_path'],
           imagePath: event['image_path']
+        })
+      } else if (event['type'] === 'tracking_status') {
+        this.setState({
+          trackingStatus: {
+            message: event['message'],
+            unixTimestamp: event['unix_timestamp'],
+            details: event['details']
+          }
         })
       }
     }

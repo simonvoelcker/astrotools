@@ -48,7 +48,7 @@ class Tracker:
             print(f'Handling new file: {newest_file}')
             self.on_new_file(newest_file)
 
-    def on_new_file(self, filepath):
+    def on_new_file(self, filepath, status_change_callback=None):
         raise NotImplementedError
 
     def write_frame_stats(self, **kwargs):

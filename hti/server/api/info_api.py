@@ -6,7 +6,7 @@ from flask import Response, request
 from flask_restplus import Namespace, Resource
 from flask.json import jsonify
 
-from hti.server.api.util import subscribe_for_events
+from hti.server.api.events import subscribe_for_events
 from hti.server.globals import get_catalog, get_app_state
 
 from lib.coordinates import Coordinates

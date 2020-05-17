@@ -97,6 +97,10 @@ export default class TrackingControl extends Component {
                         <td className="spaced-text">Image rotation:</td>
                         <td className="spaced-text">{imageRotation}</td>
                       </tr>
+                      <tr>
+                        <td className="spaced-text">Tracking status:</td>
+                        <td className="spaced-text">{store.trackingStatus ? store.trackingStatus.message : '-'}</td>
+                      </tr>
                     </tbody>
                   </Table>
                 </Row>

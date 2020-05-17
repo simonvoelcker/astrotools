@@ -23,3 +23,12 @@ def image_event(image_path):
         'unix_timestamp': time.time(),
         'image_path': image_path,
     })
+
+
+def tracking_status_event(message, **kwargs):
+    put_event({
+        'type': 'tracking_status',
+        'unix_timestamp': time.time(),
+        'message': message,
+        'details': kwargs,
+    })

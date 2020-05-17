@@ -14,13 +14,14 @@ class ImageTracker(Tracker):
         self.reference_image = None
         self.sigma_threshold = config['sigma_threshold']
 
-    def on_new_file(self, filepath):
+    def on_new_file(self, filepath, status_change_callback=None):
         image = load_image(filepath, dtype=np.int16)
         image_for_offset_detection = sigma_clip_dark_end(image, self.sigma_threshold)
 
         if self.reference_image is None:
             print(f'Using reference image: {filepath}')
             self.reference_image = image_for_offset_detection
+            status_change_callback(message='Using reference image', filepath=filepath)
             return
 
         (ra_error, dec_error), _, __ = register_translation(self.reference_image, image_for_offset_detection)
@@ -29,6 +30,7 @@ class ImageTracker(Tracker):
             print(f'Image errors are (0,0) in {filepath}. Falling back to resting speed.')
             self.axis_control.set_motor_speed('A', AxisControl.ra_resting_speed, quiet=True)
             self.axis_control.set_motor_speed('B', AxisControl.dec_resting_speed, quiet=True)
+            status_change_callback(message='Fell back to resting speed', filepath=filepath)
             return
 
         ra_speed = self.config['ra']['center'] + self.ra_pid(-ra_error if self.config['ra']['invert'] else ra_error)
@@ -38,9 +40,9 @@ class ImageTracker(Tracker):
         print(f'RA error: {ra_error:8.6f}, RA speed: {ra_speed:8.6f}, '
               f'DEC error: {dec_error:8.6f}, DEC speed: {dec_speed:8.6f}')
 
-        if self.axis_control is not None:
-            self.axis_control.set_motor_speed('A', ra_speed, quiet=True)
-            self.axis_control.set_motor_speed('B', dec_speed, quiet=True)
+        self.axis_control.set_motor_speed('A', ra_speed, quiet=True)
+        self.axis_control.set_motor_speed('B', dec_speed, quiet=True)
+        status_change_callback(message='Tracking', filepath=filepath, errors=(ra_error, dec_error))
 
         if self.influx_client is not None:
             self.write_frame_stats(

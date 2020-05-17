@@ -1,8 +1,8 @@
 import time
 
 from lib.axis_control import AxisControl
-from lib.tracker import Tracker
 from lib.solver import Solver
+from lib.tracker import Tracker
 
 
 class TargetTracker(Tracker):
@@ -22,13 +22,13 @@ class TargetTracker(Tracker):
                 return mode_config
         raise RuntimeError(f'Found no tracking mode config for given error: RA={ra_error}, Dec={dec_error}')
 
-    def on_new_file(self, file_path):
-        image_coordinates = Solver().locate_image(file_path)
+    def on_new_file(self, filepath, status_change_callback=None):
+        image_coordinates = Solver().locate_image(filepath)
 
         if not image_coordinates:
-            print(f'Failed to locate: {file_path}. Falling back to resting speed.')
             self.axis_control.set_motor_speed('A', AxisControl.ra_resting_speed)
             self.axis_control.set_motor_speed('B', AxisControl.dec_resting_speed)
+            status_change_callback(message='Calibration failed, using default speeds', filepath=filepath)
             return
 
         ra_error = image_coordinates.ra - self.target.ra
@@ -37,12 +37,13 @@ class TargetTracker(Tracker):
         mode_config = self._get_tracking_mode_config(ra_error, dec_error)
 
         if 'Steering' in mode_config['name']:
+            status_change_callback(message='Steering to target', filepath=filepath, errors=(ra_error, dec_error))
             self.axis_control.steer(
                 here=image_coordinates,
                 target=self.target,
                 max_speed_dps=mode_config['max_speed_dps'],
             )
-            print('Waiting for axes to settle')
+            status_change_callback(message='Waiting for axes to settle', filepath=filepath)
             time.sleep(mode_config['delay_after_maneuver_sec'])
             return
 
@@ -55,9 +56,11 @@ class TargetTracker(Tracker):
         self.axis_control.set_motor_speed('A', ra_speed)
         self.axis_control.set_motor_speed('B', dec_speed)
 
+        status_change_callback(message='Tracking', filepath=filepath, errors=(ra_error, dec_error))
+
         if self.influx_client is not None:
             self.write_frame_stats(
-                file_path=file_path,
+                file_path=filepath,
                 ra_image_error=float(ra_error),
                 ra_speed=float(ra_speed),
                 ra_pid_p=float(self.ra_pid.components[0]),

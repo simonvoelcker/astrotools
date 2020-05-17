@@ -25,16 +25,16 @@ class PassiveTracker(Tracker):
 		cleaned = np.clip(image_greyscale, average + threshold * stddev, 255)
 		return cleaned
 
-	def on_new_file(self, filepath):
+	def on_new_file(self, filepath, status_change_callback=None):
 		image = load_image(filepath, dtype=np.int16)
 		image_for_offset_detection = self._clean_image_for_offset_detection(image)
 
 		if self.reference_image is None:
-			print(f'Using reference image: {filepath}')
+			status_change_callback(message='Using reference frame', filepath=filepath)
 			self.reference_image = image_for_offset_detection
 			self.reference_coordinates = Solver().locate_image(filepath, timeout=5)
 			if not self.reference_coordinates:
-				print('Warn: Failed to determine coordinates of reference frame')
+				status_change_callback(message='Failed to determine coordinates of reference frame', filepath=filepath)
 			return
 
 		(ra_error, dec_error), _, __ = register_translation(self.reference_image, image_for_offset_detection)
@@ -46,12 +46,17 @@ class PassiveTracker(Tracker):
 			if coordinates:
 				ra_coord_error = coordinates.ra - self.reference_coordinates.ra
 				dec_coord_error = coordinates.dec - self.reference_coordinates.dec
-				print(f'Pixel error: {ra_error},{dec_error}, Coordinate error: {ra_coord_error:7.5f},{dec_coord_error:7.5f}')
+				status_change_callback(
+					message='Tracking',
+					filepath=filepath,
+					errors=(ra_error, dec_error),
+					coord_errors=(ra_coord_error, dec_coord_error)
+				)
 			else:
-				print(f'Pixel error: {ra_error},{dec_error}, Coordinate error: Could not detect')
+				status_change_callback(message='Tracking', filepath=filepath, errors=(ra_error, dec_error))
 		else:
-			print(f'Pixel error: {ra_error},{dec_error}, Coordinate error: Missing reference')
-	
+			status_change_callback(message='Tracking', filepath=filepath, errors=(ra_error, dec_error))
+
 		if self.influx_client is not None:
 			self.write_frame_stats(
 				file_path=filepath,

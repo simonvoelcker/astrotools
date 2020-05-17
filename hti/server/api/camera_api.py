@@ -3,7 +3,7 @@ import threading
 from flask import request
 from flask_restplus import Namespace, Resource
 
-from hti.server.api.util import image_event
+from hti.server.api.events import image_event
 from hti.server.globals import get_indi_controller, get_app_state
 
 api = Namespace('Control', description='Machine control API endpoints')

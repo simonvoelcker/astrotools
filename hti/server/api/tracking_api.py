@@ -6,7 +6,7 @@ import queue
 from flask import request
 from flask_restplus import Namespace, Resource
 
-from hti.server.api.util import subscribe_for_events, unsubscribe_from_events
+from hti.server.api.events import subscribe_for_events, unsubscribe_from_events, tracking_status_event
 from hti.server.globals import get_axis_control, get_app_state
 from lib.image_tracker import ImageTracker
 from lib.passive_tracker import PassiveTracker
@@ -65,10 +65,10 @@ class TrackTargetApi(Resource):
                 latest_processed_event = event
                 image_path = event['image_path']  # relative to static
                 absolute_image_path = os.path.join(root_dir, 'hti', 'static', image_path)
-                # TODO frontend must get infos
-                tracker.on_new_file(absolute_image_path)
+                tracker.on_new_file(absolute_image_path, status_change_callback=tracking_status_event)
 
             # TODO this must also happen on exception
+            tracking_status_event(message='Stopped')
             unsubscribe_from_events(q)
 
         get_app_state()['tracking'] = True
@@ -85,5 +85,8 @@ class StopTrackingApi(Resource):
         }
     )
     def post(self):
+
+        # TODO killing the thread would have the advantage that does it does not block indefinitely if capturing was stopped
+
         get_app_state()['tracking'] = False
         return '', 200

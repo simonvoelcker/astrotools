@@ -4,6 +4,20 @@ import serial
 import time
 
 
+class AxisSpeeds:
+	def __init__(self, ra_revs_per_sec, dec_revs_per_sec):
+		self.ra_revs_per_sec = ra_revs_per_sec
+		self.dec_revs_per_sec = dec_revs_per_sec
+
+	@staticmethod
+	def revolutions_per_second(ra, dec):
+		return AxisSpeeds(ra, dec)
+
+	@staticmethod
+	def resting_speeds():
+		return AxisSpeeds(-0.004725, 0.000075)
+
+
 class AxisControl:
 	control_response_rx = re.compile(r'\s*M(?P<motor>[12])\s+S=(?P<speed>-?\d+\.\d+)\s+P1=(?P<P1>-?\d+)\s+P2=(?P<P2>-?\d+)\s*')
 

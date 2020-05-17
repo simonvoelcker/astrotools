@@ -41,9 +41,8 @@ class TrackTargetApi(Resource):
         tracker = None
         if mode == 'target':
             axis_control = get_axis_control()
-            target = get_app_state()['target']
             tracker = TargetTracker(config, axis_control)
-            tracker.set_target(target)
+            tracker.set_target(get_app_state().target)
         elif mode == 'image':
             axis_control = get_axis_control()
             tracker = ImageTracker(config, axis_control)
@@ -55,7 +54,7 @@ class TrackTargetApi(Resource):
             q = queue.LifoQueue()
             subscribe_for_events(q)
             latest_processed_event = None
-            while get_app_state()['tracking']:
+            while get_app_state().tracking:
                 event = q.get()
                 if event['type'] != 'image':
                     continue
@@ -71,7 +70,7 @@ class TrackTargetApi(Resource):
             tracking_status_event(message='Stopped')
             unsubscribe_from_events(q)
 
-        get_app_state()['tracking'] = True
+        get_app_state().tracking = True
         threading.Thread(target=thread_func, daemon=True).start()
         return '', 200
 
@@ -86,7 +85,9 @@ class StopTrackingApi(Resource):
     )
     def post(self):
 
-        # TODO killing the thread would have the advantage that does it does not block indefinitely if capturing was stopped
+        # TODO killing the thread would have the advantage that
+        # does it does not block indefinitely if capturing was stopped
+        # and it would ensure there cannot be two tracking threads, ever
 
-        get_app_state()['tracking'] = False
+        get_app_state().tracking = False
         return '', 200

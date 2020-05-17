@@ -51,13 +51,13 @@ class StartSequenceApi(Resource):
         def exp():
             try:
                 controller = get_indi_controller()
-                while get_app_state().get('running_sequence'):
+                while get_app_state().running_sequence:
                     image_path = controller.capture_image(devicename, frame_type, exposure, gain)
                     image_event(image_path)
             except Exception as e:
                 print('Capture error', e)
 
-        get_app_state()['running_sequence'] = True
+        get_app_state().running_sequence = True
         threading.Thread(target=exp).start()
         return '', 204
 
@@ -71,5 +71,5 @@ class StopSequenceApi(Resource):
         }
     ) 
     def get(self, devicename):
-        get_app_state()['running_sequence'] = False
+        get_app_state().running_sequence = False
         return '', 200

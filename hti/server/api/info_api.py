@@ -49,7 +49,7 @@ class QueryTargetApi(Resource):
                 'ra': parsed_coordinates.ra,
                 'dec': parsed_coordinates.dec
             }
-            get_app_state()['target'] = target
+            get_app_state().target = parsed_coordinates
             return jsonify(target)
 
         catalog_result = get_catalog().get_entry(query.upper())
@@ -65,7 +65,7 @@ class QueryTargetApi(Resource):
                 'majAx': catalog_result.get('MajAx'),
                 'posAng': catalog_result.get('PosAng'),
             }
-            get_app_state()['target'] = target
+            get_app_state().target = parsed_coordinates
             return jsonify(target)
 
         return '', 404
@@ -97,6 +97,6 @@ class CalibrateImageApi(Resource):
             return 'Failed to calibrate', 404
 
         center = calibration_data['center_deg']
-        get_app_state()['here'] = Coordinates(float(center['ra']), float(center['dec']))
+        get_app_state().here = Coordinates(float(center['ra']), float(center['dec']))
 
         return jsonify(calibration_data)

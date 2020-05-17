@@ -1,4 +1,6 @@
 import os
+
+from hti.server.app_state import AppState
 from lib.catalog import Catalog
 from lib.axis_control import AxisControl
 from lib.indi.controller import INDIController, INDIControllerMock
@@ -12,7 +14,7 @@ _axis_control = None
 def get_app_state():
     global _app_state
     if _app_state is None:
-        _app_state = dict()
+        _app_state = AppState()
     return _app_state
 
 

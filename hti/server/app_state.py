@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from lib.axis_control import AxisSpeeds
 from lib.coordinates import Coordinates
 
 
@@ -11,3 +12,4 @@ class AppState:
     calibrating: bool = False
     here: Coordinates = None
     target: Coordinates = None
+    axis_speeds: AxisSpeeds = AxisSpeeds.stopped()

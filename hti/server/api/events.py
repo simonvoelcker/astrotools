@@ -16,6 +16,14 @@ def put_event(event):
         subscription.put(event)
 
 
+def app_state_event(app_state):
+    put_event({
+        'type': 'app_state',
+        'unix_timestamp': time.time(),
+        'app_state': app_state,
+    })
+
+
 def image_event(image_path):
     # path is relative to /static/
     put_event({

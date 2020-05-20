@@ -42,21 +42,21 @@ class CommandShell(cmd.Cmd):
 
 	def do_rest(self, arg):
 		print('Setting motors to resting speed')
-		self.axis_control.set_motor_speed('A', self.ra_resting_speed)
-		self.axis_control.set_motor_speed('B', self.dec_resting_speed)
+		self.axis_control.set_motor_speed('ra', self.ra_resting_speed)
+		self.axis_control.set_motor_speed('dec', self.dec_resting_speed)
 
 	def do_stop(self, arg):
 		print('Stopping motors')
-		self.axis_control.set_motor_speed('A', 0)
-		self.axis_control.set_motor_speed('B', 0)		
+		self.axis_control.set_motor_speed('ra', 0)
+		self.axis_control.set_motor_speed('dec', 0)
 
 	def do_ra(self, arg):
 		print(f'Setting RA motor speed to {float(arg)}')
-		self.axis_control.set_motor_speed('A', float(arg))
+		self.axis_control.set_motor_speed('ra', float(arg))
 
 	def do_dec(self, arg):
 		print(f'Setting DEC motor speed to {float(arg)}')
-		self.axis_control.set_motor_speed('B', float(arg))
+		self.axis_control.set_motor_speed('dec', float(arg))
 
 	def do_here(self, arg):
 		self.here = Coordinates.parse(arg)

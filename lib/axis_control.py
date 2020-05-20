@@ -4,7 +4,7 @@ import serial
 import time
 
 
-class AxisSpeeds:
+class AxisSpeeds(dict):
 
 	ra_axis_ratio = 69.0 * 3.0 * 2.0  # 2.0 is magic
 	dec_axis_ratio = 105.6 * 2.0  # 2.0 is magic
@@ -15,6 +15,8 @@ class AxisSpeeds:
 	dec_resting_speed = 0.000075
 
 	def __init__(self, ra_revs_per_sec, dec_revs_per_sec):
+		# inherit from dict to make this object json serializable on the cheap
+		super().__init__(ra_revs_per_sec=ra_revs_per_sec, dec_revs_per_sec=dec_revs_per_sec)
 		# these are MOTOR SHAFT revolutions per second
 		self.ra_revs_per_sec = ra_revs_per_sec
 		self.dec_revs_per_sec = dec_revs_per_sec
@@ -54,9 +56,10 @@ class AxisControl:
 	dec_backlash_direction = None  # +1, -1, None
 	dec_backlash_revolutions = 0.55		# /2? *2?
 
-	def __init__(self):
+	def __init__(self, on_speeds_change=None):
 		self.serial = None
 		self.speeds = AxisSpeeds.stopped()
+		self.on_speeds_change = on_speeds_change
 
 	def get_speeds(self):
 		# TODO must get used to DPS at some point
@@ -84,23 +87,21 @@ class AxisControl:
 	def connected(self):
 		return self.serial is not None
 
-	def set_motor_speed(self, motor, axis_speed, quiet=False):
-		if self.serial is None:
-			if not quiet:
-				print(f'Setting motor {motor} speed to {axis_speed:9.6f} U/s (DRYRUN)')
-		else:
-			if not quiet:
-				print(f'Setting motor {motor} speed to {axis_speed:9.6f} U/s')
-			msg = f'{motor}{axis_speed:9.6f}'
+	def set_motor_speed(self, axis, axis_speed):
+		if self.serial is not None:
+			motor_key = 'A' if axis == 'ra' else 'B'
+			msg = f'{motor_key}{axis_speed:9.6f}'
 			self.serial.write(msg.encode())
 
-		if motor == 'A':
+		if axis == 'ra':
 			self.speeds.ra_revs_per_sec = axis_speed
 		else:
 			self.speeds.dec_revs_per_sec = axis_speed
 
-		if motor == 'B':
+		if axis == 'dec':
 			self.dec_backlash_direction = 1 if axis_speed > 0 else -1
+
+		self.on_speeds_change(self.speeds)
 
 	def read_position(self):
 		# this is too slow right now. revive later.
@@ -111,7 +112,8 @@ class AxisControl:
 			print(response)
 		return match.group('P1'), match.group('P2')
 
-	def _calc_ra_maneuver(self, ra_from, ra_to, max_speed_dps):
+	@staticmethod
+	def _calc_ra_maneuver(ra_from, ra_to, max_speed_dps):
 		if not ra_from or not ra_to or ra_from == ra_to:
 			return None
 
@@ -174,23 +176,23 @@ class AxisControl:
 			else:
 				ra_speed *= ra_time / dec_time
 			common_time = max(ra_time, dec_time)
-			self.set_motor_speed('A', ra_speed)
-			self.set_motor_speed('B', dec_speed)
+			self.set_motor_speed('ra', ra_speed)
+			self.set_motor_speed('dec', dec_speed)
 			print(f'Waiting {common_time:6.3f} seconds')
 			time.sleep(common_time)
-			self.set_motor_speed('A', AxisSpeeds.ra_resting_speed)
-			self.set_motor_speed('B', AxisSpeeds.dec_resting_speed)
+			self.set_motor_speed('ra', AxisSpeeds.ra_resting_speed)
+			self.set_motor_speed('dec', AxisSpeeds.dec_resting_speed)
 		elif ra_maneuver:
-			self.set_motor_speed('B', AxisSpeeds.dec_resting_speed)
+			self.set_motor_speed('dec', AxisSpeeds.dec_resting_speed)
 			ra_speed, ra_time = ra_maneuver
-			self.set_motor_speed('A', ra_speed)
+			self.set_motor_speed('ra', ra_speed)
 			print(f'Waiting {ra_time:6.3f} seconds')
 			time.sleep(ra_time)
-			self.set_motor_speed('A', AxisSpeeds.ra_resting_speed)
+			self.set_motor_speed('ra', AxisSpeeds.ra_resting_speed)
 		elif dec_maneuver:
-			self.set_motor_speed('A', AxisSpeeds.ra_resting_speed)
+			self.set_motor_speed('ra', AxisSpeeds.ra_resting_speed)
 			dec_speed, dec_time = dec_maneuver
-			self.set_motor_speed('B', dec_speed)
+			self.set_motor_speed('dec', dec_speed)
 			print(f'Waiting {dec_time:6.3f} seconds')
 			time.sleep(dec_time)
-			self.set_motor_speed('B', AxisSpeeds.dec_resting_speed)
+			self.set_motor_speed('dec', AxisSpeeds.dec_resting_speed)

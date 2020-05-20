@@ -1,7 +1,8 @@
 import re
 
 
-class Coordinates:
+class Coordinates(dict):
+
 	# format that's easy to type on the command line
 	# TODO make the seconds/arcseconds part optional
 	string_format_rx = re.compile(r'(?P<ra>.+):(?P<dec>.+)')
@@ -12,6 +13,8 @@ class Coordinates:
 	csv_dec_format_rx = re.compile(r'(?P<sign>[+\-]?)(?P<d>\d+):(?P<m>\d+):(?P<s>[\d.]+)')
 
 	def __init__(self, ra, dec):
+		# inherit from dict to make this object json-serializable on the cheap
+		super().__init__(ra=ra, dec=dec)
 		# the canonical representation of RA and DEC shall be in degrees, as float
 		self.ra = ra
 		self.dec = dec

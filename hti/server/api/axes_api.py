@@ -33,8 +33,8 @@ class SetSpeedApi(Resource):
         dec_speed = min(1.0, max(-1.0, dec_speed))
 
         axis_control = get_axis_control()
-        axis_control.set_motor_speed('A', ra_speed)
-        axis_control.set_motor_speed('B', dec_speed)
+        axis_control.set_motor_speed('ra', ra_speed)
+        axis_control.set_motor_speed('dec', dec_speed)
         return '', 200
 
 
@@ -49,8 +49,8 @@ class RestApi(Resource):
     )
     def post(self):
         axis_control = get_axis_control()
-        axis_control.set_motor_speed('A', AxisSpeeds.ra_resting_speed)
-        axis_control.set_motor_speed('B', AxisSpeeds.dec_resting_speed)
+        axis_control.set_motor_speed('ra', AxisSpeeds.ra_resting_speed)
+        axis_control.set_motor_speed('dec', AxisSpeeds.dec_resting_speed)
         return '', 200
 
 

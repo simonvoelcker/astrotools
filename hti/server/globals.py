@@ -5,23 +5,19 @@ from lib.catalog import Catalog
 from lib.axis_control import AxisControl
 from lib.indi.controller import INDIController, INDIControllerMock
 
-_app_state = None
+_app_state = AppState()
+_catalog = Catalog()
 _indi_controller = None
-_catalog = None
 _axis_control = None
 
 
 def get_app_state():
     global _app_state
-    if _app_state is None:
-        _app_state = AppState()
     return _app_state
 
 
 def get_catalog():
     global _catalog
-    if _catalog is None:
-        _catalog = Catalog()
     return _catalog
 
 
@@ -41,7 +37,9 @@ def get_indi_controller():
 def get_axis_control():
     global _axis_control
     if _axis_control is None:
-        _axis_control = AxisControl()
+        def on_speeds_change(speeds):
+            get_app_state().axis_speeds = speeds
+        _axis_control = AxisControl(on_speeds_change)
         sim_mode = os.environ.get('SIM_AXES', 'false').lower() == 'true'
         if not sim_mode:
             _axis_control.connect(usb_ports=[0, 1])

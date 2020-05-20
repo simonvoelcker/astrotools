@@ -26,8 +26,8 @@ class TargetTracker(Tracker):
         image_coordinates = Solver().locate_image(filepath)
 
         if not image_coordinates:
-            self.axis_control.set_motor_speed('A', AxisSpeeds.ra_resting_speed)
-            self.axis_control.set_motor_speed('B', AxisSpeeds.dec_resting_speed)
+            self.axis_control.set_motor_speed('ra', AxisSpeeds.ra_resting_speed)
+            self.axis_control.set_motor_speed('dec', AxisSpeeds.dec_resting_speed)
             status_change_callback(message='Calibration failed, using default speeds', filepath=filepath)
             return
 
@@ -53,8 +53,8 @@ class TargetTracker(Tracker):
         print(f'RA error: {ra_error:8.6f}, DEC error: {dec_error:8.6f}, '
               f'RA speed: {ra_speed:8.6f}, DEC speed: {dec_speed:8.6f}')
 
-        self.axis_control.set_motor_speed('A', ra_speed)
-        self.axis_control.set_motor_speed('B', dec_speed)
+        self.axis_control.set_motor_speed('ra', ra_speed)
+        self.axis_control.set_motor_speed('dec', dec_speed)
 
         status_change_callback(message='Tracking', filepath=filepath, errors=(ra_error, dec_error))
 

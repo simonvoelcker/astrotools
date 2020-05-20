@@ -66,6 +66,12 @@ class TrackTargetApi(Resource):
                 absolute_image_path = os.path.join(root_dir, 'hti', 'static', image_path)
                 tracker.on_new_file(absolute_image_path, status_change_callback=tracking_status_event)
 
+            # TODO next up:
+            # axis speed display
+            # image position display must update
+            # axis speed in reasonable units
+            # manual control using arrows instead of set
+
             # TODO this must also happen on exception
             tracking_status_event(message='Stopped')
             unsubscribe_from_events(q)

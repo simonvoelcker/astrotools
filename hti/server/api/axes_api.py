@@ -2,7 +2,7 @@ from flask import request
 from flask_restplus import Namespace, Resource
 
 from hti.server.globals import get_axis_control, get_app_state
-from lib.axis_control import AxisControl
+from lib.axis_control import AxisSpeeds
 
 api = Namespace('Axes', description='Axes control API endpoints')
 
@@ -49,8 +49,8 @@ class RestApi(Resource):
     )
     def post(self):
         axis_control = get_axis_control()
-        axis_control.set_motor_speed('A', AxisControl.ra_resting_speed)
-        axis_control.set_motor_speed('B', AxisControl.dec_resting_speed)
+        axis_control.set_motor_speed('A', AxisSpeeds.ra_resting_speed)
+        axis_control.set_motor_speed('B', AxisSpeeds.dec_resting_speed)
         return '', 200
 
 

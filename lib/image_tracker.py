@@ -2,7 +2,7 @@ import numpy as np
 
 from skimage.feature import register_translation
 
-from lib.axis_control import AxisControl
+from lib.axis_control import AxisSpeeds
 from lib.util import load_image, sigma_clip_dark_end
 from lib.tracker import Tracker
 
@@ -28,8 +28,8 @@ class ImageTracker(Tracker):
 
         if ra_error == 0 and dec_error == 0:
             print(f'Image errors are (0,0) in {filepath}. Falling back to resting speed.')
-            self.axis_control.set_motor_speed('A', AxisControl.ra_resting_speed, quiet=True)
-            self.axis_control.set_motor_speed('B', AxisControl.dec_resting_speed, quiet=True)
+            self.axis_control.set_motor_speed('A', AxisSpeeds.ra_resting_speed, quiet=True)
+            self.axis_control.set_motor_speed('B', AxisSpeeds.dec_resting_speed, quiet=True)
             status_change_callback(message='Fell back to resting speed', filepath=filepath)
             return
 

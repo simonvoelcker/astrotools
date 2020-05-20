@@ -1,6 +1,6 @@
 import time
 
-from lib.axis_control import AxisControl
+from lib.axis_control import AxisSpeeds
 from lib.solver import Solver
 from lib.tracker import Tracker
 
@@ -26,8 +26,8 @@ class TargetTracker(Tracker):
         image_coordinates = Solver().locate_image(filepath)
 
         if not image_coordinates:
-            self.axis_control.set_motor_speed('A', AxisControl.ra_resting_speed)
-            self.axis_control.set_motor_speed('B', AxisControl.dec_resting_speed)
+            self.axis_control.set_motor_speed('A', AxisSpeeds.ra_resting_speed)
+            self.axis_control.set_motor_speed('B', AxisSpeeds.dec_resting_speed)
             status_change_callback(message='Calibration failed, using default speeds', filepath=filepath)
             return
 

@@ -7,6 +7,7 @@ __pycache__
 *.wcs
 *.csv
 *.log
+*.fits
 viewer/images
 static/images
 temp

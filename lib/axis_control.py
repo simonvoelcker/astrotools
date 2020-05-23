@@ -4,7 +4,7 @@ import serial
 import time
 
 
-class AxisSpeeds(dict):
+class AxisSpeeds:
 
 	ra_axis_ratio = 69.0 * 3.0 * 2.0  # 2.0 is magic
 	dec_axis_ratio = 105.6 * 2.0  # 2.0 is magic
@@ -15,8 +15,6 @@ class AxisSpeeds(dict):
 	dec_resting_speed = 0.000075
 
 	def __init__(self, ra_revs_per_sec, dec_revs_per_sec):
-		# inherit from dict to make this object json serializable on the cheap
-		super().__init__(ra_revs_per_sec=ra_revs_per_sec, dec_revs_per_sec=dec_revs_per_sec)
 		# these are MOTOR SHAFT revolutions per second
 		self.ra_revs_per_sec = ra_revs_per_sec
 		self.dec_revs_per_sec = dec_revs_per_sec

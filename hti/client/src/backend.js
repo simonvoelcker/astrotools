@@ -40,10 +40,6 @@ export default {
     return $axios.get('/info/target/' + query)
   },
 
-  getSpeeds () {
-    return $axios.get('/axes/speeds')
-  },
-
   setSpeeds (raSpeed, decSpeed) {
     return $axios.post('/axes/speeds', {
         ra: raSpeed,

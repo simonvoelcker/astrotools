@@ -15,9 +15,17 @@ export class AppProvider extends Component {
         imagePath: null,
         imagePosition: null,
         imageRotation: null,
-        initialized: false,
-        tracking: false,
+        initialized: false,  // todo need a state to mean "backend state received"
         trackingStatus: null,
+
+        // from backend (app state events):
+        runningSequence: null,
+        steering: null,
+        tracking: null,
+        calibrating: null,
+        here: null,
+        target: null,  // todo this is only coordinates, no meta data
+        axisSpeeds: null,
     }
 
     this.mutations = {
@@ -58,10 +66,6 @@ export class AppProvider extends Component {
         return $backend.queryTarget(query)
       },
 
-      getSpeeds: () => {
-        return $backend.getSpeeds()
-      },
-
       setSpeeds: (raSpeed, decSpeed) => {
         return $backend.setSpeeds(raSpeed, decSpeed)
       },
@@ -71,15 +75,11 @@ export class AppProvider extends Component {
       },
 
       startTracking: (mode) => {
-        return $backend.startTracking(mode).then(() => {
-          this.setState({tracking: true})
-        })
+        return $backend.startTracking(mode)
       },
 
       stopTracking: () => {
-        return $backend.stopTracking().then(() => {
-          this.setState({tracking: false})
-        })
+        return $backend.stopTracking()
       },
 
       goToTarget: () => {
@@ -100,16 +100,19 @@ export class AppProvider extends Component {
     let eventListener = new EventSource('http://localhost:5000/api/info/events')
     eventListener.onmessage = (event) => {
       event = JSON.parse(event.data)
-      if (event['type'] === 'image') {
+      if (event['type'] === 'app_state') {
+        console.log(event['appState'])
+        this.setState(event['appState'])
+      } else if (event['type'] === 'image') {
         this.setState({
-          imageUrl: 'http://localhost:5000/static/' + event['image_path'],
-          imagePath: event['image_path']
+          imageUrl: 'http://localhost:5000/static/' + event['imagePath'],
+          imagePath: event['imagePath']
         })
       } else if (event['type'] === 'tracking_status') {
         this.setState({
           trackingStatus: {
             message: event['message'],
-            unixTimestamp: event['unix_timestamp'],
+            unixTimestamp: event['unixTimestamp'],
             details: event['details']
           }
         })

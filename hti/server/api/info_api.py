@@ -7,6 +7,7 @@ from flask_restplus import Namespace, Resource
 from flask.json import jsonify
 
 from hti.server.api.events import subscribe_for_events
+from hti.server.api.util import camel_case_keys_recursively, to_dict_recursively
 from hti.server.globals import get_catalog, get_app_state
 
 from lib.coordinates import Coordinates
@@ -29,7 +30,10 @@ class EventsApi(Resource):
             subscribe_for_events(q)
             while True:
                 data = q.get()
-                yield f'data: {json.dumps(data)}\n\n'
+                # convert objects to dicts and make keys camel case
+                data_dict = to_dict_recursively(data)
+                camel_case_dict = camel_case_keys_recursively(data_dict)
+                yield f'data: {json.dumps(camel_case_dict)}\n\n'
         return Response(gen(), mimetype="text/event-stream")
 
 

@@ -42,5 +42,5 @@ def get_axis_control():
         _axis_control = AxisControl(on_speeds_change)
         sim_mode = os.environ.get('SIM_AXES', 'false').lower() == 'true'
         if not sim_mode:
-            _axis_control.connect(usb_ports=[0, 1])
+            _axis_control.connect()
     return _axis_control

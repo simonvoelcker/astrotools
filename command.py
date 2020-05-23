@@ -32,7 +32,7 @@ class CommandShell(cmd.Cmd):
 		if self.axis_control.connected():
 			print('Already connected')
 			return
-		self.axis_control.connect(usb_ports=[0,1])
+		self.axis_control.connect()
 
 	def do_disconnect(self, arg):
 		if not self.axis_control.connected():

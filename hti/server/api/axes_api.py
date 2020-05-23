@@ -10,15 +10,6 @@ api = Namespace('Axes', description='Axes control API endpoints')
 @api.route('/speeds')
 class SetSpeedApi(Resource):
     @api.doc(
-        description='Get axis speeds',
-        response={
-            200: 'Success'
-        }
-    )
-    def get(self):
-        return get_axis_control().get_speeds()
-
-    @api.doc(
         description='Set axis speeds',
         response={
             200: 'Success'

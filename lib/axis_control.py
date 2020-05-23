@@ -2,6 +2,7 @@ import math
 import re
 import serial
 import time
+import glob
 
 
 class AxisSpeeds:
@@ -59,25 +60,20 @@ class AxisControl:
 		self.speeds = AxisSpeeds.stopped()
 		self.on_speeds_change = on_speeds_change
 
-	def get_speeds(self):
-		# TODO must get used to DPS at some point
-		return {
-			'ra': self.speeds.ra_revs_per_sec,
-			'dec': self.speeds.dec_revs_per_sec,
-			'ra_dps': AxisSpeeds.ra_axis_to_dps(self.speeds.ra_revs_per_sec),
-			'dec_dps': AxisSpeeds.dec_axis_to_dps(self.speeds.dec_revs_per_sec),
-		}
-
-	def connect(self, usb_ports):
-		for port in usb_ports:
+	def connect(self):
+		devices = glob.glob('/dev/ttyUSB*')
+		if not devices:
+			print('No USB devices found')
+			return
+		for device in devices:
 			try:
-				self.serial = serial.Serial(f'/dev/ttyUSB{port}', 9600, timeout=2)
+				self.serial = serial.Serial(device, 9600, timeout=2)
 				# connection cannot be used immediately ...yes, i know.
 				time.sleep(2)
-				print(f'Connected to motor control on port {port}.')
+				print(f'Connected to motor control ({device})')
 				return
 			except serial.serialutil.SerialException:
-				print(f'Failed to connect to motor control on port {port}.')
+				print(f'Failed to connect to motor control ({device})')
 
 	def disconnect(self):
 		self.serial = None

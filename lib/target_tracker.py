@@ -26,8 +26,7 @@ class TargetTracker(Tracker):
         image_coordinates = Solver().locate_image(filepath)
 
         if not image_coordinates:
-            self.axis_control.set_motor_speed('ra', AxisSpeeds.ra_resting_speed)
-            self.axis_control.set_motor_speed('dec', AxisSpeeds.dec_resting_speed)
+            self.axis_control.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=AxisSpeeds.dec_resting_speed)
             status_change_callback(message='Calibration failed, using default speeds', filepath=filepath)
             return
 
@@ -47,14 +46,14 @@ class TargetTracker(Tracker):
             time.sleep(mode_config['delay_after_maneuver_sec'])
             return
 
+        # TODO split this into siderial part, drift and correction
         ra_speed = self.config['ra']['center'] + self.ra_pid(-ra_error if self.config['ra']['invert'] else ra_error)
         dec_speed = self.config['dec']['center'] + self.dec_pid(-dec_error if self.config['dec']['invert'] else dec_error)
 
         print(f'RA error: {ra_error:8.6f}, DEC error: {dec_error:8.6f}, '
               f'RA speed: {ra_speed:8.6f}, DEC speed: {dec_speed:8.6f}')
 
-        self.axis_control.set_motor_speed('ra', ra_speed)
-        self.axis_control.set_motor_speed('dec', dec_speed)
+        self.axis_control.set_axis_speeds(ra_dps=ra_speed, dec_dps=dec_speed)
 
         status_change_callback(message='Tracking', filepath=filepath, errors=(ra_error, dec_error))
 

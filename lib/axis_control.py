@@ -10,15 +10,15 @@ class AxisSpeeds:
 	ra_axis_ratio = 69.0 * 3.0 * 2.0  # 2.0 is magic
 	dec_axis_ratio = 105.6 * 2.0  # 2.0 is magic
 
-	max_axis_speed = 0.3
+	max_speed_dps = 0.3
 
-	ra_resting_speed = -0.004725
-	dec_resting_speed = 0.000075
+	# siderial speed plus typical drifting speeds
+	ra_resting_speed = -15.0 / 3600.0 + 0.2 / 3600.0
+	dec_resting_speed = 0.0 / 3600.0 + 0.5 / 3600.0
 
-	def __init__(self, ra_revs_per_sec, dec_revs_per_sec):
-		# these are MOTOR SHAFT revolutions per second
-		self.ra_revs_per_sec = ra_revs_per_sec
-		self.dec_revs_per_sec = dec_revs_per_sec
+	def __init__(self, ra_dps, dec_dps):
+		self.ra_dps = ra_dps
+		self.dec_dps = dec_dps
 
 	@classmethod
 	def ra_axis_to_dps(cls, ra_axis_speed):
@@ -35,10 +35,6 @@ class AxisSpeeds:
 	@classmethod
 	def dec_dps_to_axis(cls, dec_dps):
 		return dec_dps / 360.0 * cls.dec_axis_ratio
-
-	@staticmethod
-	def from_shaft_revolutions_per_second(ra, dec):
-		return AxisSpeeds(ra, dec)
 
 	@staticmethod
 	def stopped():
@@ -81,19 +77,22 @@ class AxisControl:
 	def connected(self):
 		return self.serial is not None
 
-	def set_motor_speed(self, axis, axis_speed):
+	def set_axis_speeds(self, ra_dps=None, dec_dps=None):
 		if self.serial is not None:
-			motor_key = 'A' if axis == 'ra' else 'B'
-			msg = f'{motor_key}{axis_speed:9.6f}'
-			self.serial.write(msg.encode())
+			if ra_dps is not None:
+				shaft_speed_rps = AxisSpeeds.ra_dps_to_axis(ra_dps)
+				msg = f'A{shaft_speed_rps:9.6f}'
+				self.serial.write(msg.encode())
+			if dec_dps is not None:
+				shaft_speed_rps = AxisSpeeds.dec_dps_to_axis(dec_dps)
+				msg = f'B{shaft_speed_rps:9.6f}'
+				self.serial.write(msg.encode())
 
-		if axis == 'ra':
-			self.speeds.ra_revs_per_sec = axis_speed
-		else:
-			self.speeds.dec_revs_per_sec = axis_speed
-
-		if axis == 'dec':
-			self.dec_backlash_direction = 1 if axis_speed > 0 else -1
+		if ra_dps is not None:
+			self.speeds.ra_dps = ra_dps
+		if dec_dps is not None:
+			self.speeds.dec_dps = dec_dps
+			self.dec_backlash_direction = 1 if dec_dps > 0 else -1
 
 		self.on_speeds_change(self.speeds)
 
@@ -111,40 +110,42 @@ class AxisControl:
 		if not ra_from or not ra_to or ra_from == ra_to:
 			return None
 
-		ra_axis_speed = AxisSpeeds.max_axis_speed
+		ra_speed_dps = AxisSpeeds.max_speed_dps
 		if max_speed_dps is not None:
-			max_speed_override = AxisSpeeds.ra_dps_to_axis(max_speed_dps)
-			ra_axis_speed = min(ra_axis_speed, max_speed_override)
+			ra_speed_dps = min(ra_speed_dps, max_speed_dps)
 
 		ra_revolutions = AxisSpeeds.ra_dps_to_axis(ra_to-ra_from)
-		duration = abs(ra_revolutions / ra_axis_speed)
-		ra_axis_speed = math.copysign(ra_axis_speed, ra_revolutions) + AxisSpeeds.ra_resting_speed
+		ra_shaft_speed = AxisSpeeds.ra_dps_to_axis(ra_speed_dps)
 
-		return ra_axis_speed, duration
+		duration = abs(ra_revolutions / ra_shaft_speed)
+		ra_speed_dps = math.copysign(ra_speed_dps, ra_revolutions) + AxisSpeeds.ra_resting_speed
+
+		return ra_speed_dps, duration
 		
 	def _calc_dec_maneuver(self, dec_from, dec_to, max_speed_dps):
 		if not dec_from or not dec_to or dec_from == dec_to:
 			return None
 
-		dec_axis_speed = AxisSpeeds.max_axis_speed
+		dec_speed_dps = AxisSpeeds.max_speed_dps
 		if max_speed_dps is not None:
-			max_speed_override = AxisSpeeds.dec_dps_to_axis(max_speed_dps)
-			dec_axis_speed = min(dec_axis_speed, max_speed_override)
+			dec_speed_dps = min(dec_speed_dps, max_speed_dps)
 
 		dec_revolutions = AxisSpeeds.dec_dps_to_axis(dec_to-dec_from)
-		if self.dec_backlash_direction is not None:
-			if self.dec_backlash_direction > 0 and dec_revolutions > 0:
-				dec_revolutions += self.dec_backlash_revolutions
-			elif self.dec_backlash_direction < 0 and dec_revolutions < 0:
-				dec_revolutions -= self.dec_backlash_revolutions
+		dec_shaft_speed = AxisSpeeds.dec_dps_to_axis(dec_speed_dps)
 
-		duration = abs(dec_revolutions / dec_axis_speed)
-		dec_axis_speed = math.copysign(dec_axis_speed, dec_revolutions)
+		# TODO restore backlash compensation one day
+		# if self.dec_backlash_direction is not None:
+		# 	if self.dec_backlash_direction > 0 and dec_revolutions > 0:
+		# 		dec_revolutions += self.dec_backlash_revolutions
+		# 	elif self.dec_backlash_direction < 0 and dec_revolutions < 0:
+		# 		dec_revolutions -= self.dec_backlash_revolutions
+
+		duration = abs(dec_revolutions / dec_shaft_speed)
+		dec_speed_dps = math.copysign(dec_speed_dps, dec_revolutions) + AxisSpeeds.dec_resting_speed
 
 		# beware: magic minus
-		dec_axis_speed = -dec_axis_speed
-
-		return dec_axis_speed, duration
+		dec_speed_dps = -dec_speed_dps
+		return dec_speed_dps, duration
 
 	def steer(self, here, target, max_speed_dps=None):
 
@@ -162,31 +163,27 @@ class AxisControl:
 
 		if ra_maneuver and dec_maneuver:
 			# combined maneuver
-			ra_speed, ra_time = ra_maneuver
-			dec_speed, dec_time = dec_maneuver
+			ra_speed_dps, ra_time = ra_maneuver
+			dec_speed_dps, dec_time = dec_maneuver
 			# slow down the quicker maneuver to match execution times
 			if ra_time > dec_time:
-				dec_speed *= dec_time / ra_time
+				dec_speed_dps *= dec_time / ra_time
 			else:
-				ra_speed *= ra_time / dec_time
+				ra_speed_dps *= ra_time / dec_time
 			common_time = max(ra_time, dec_time)
-			self.set_motor_speed('ra', ra_speed)
-			self.set_motor_speed('dec', dec_speed)
+			self.set_axis_speeds(ra_dps=ra_speed_dps, dec_dps=dec_speed_dps)
 			print(f'Waiting {common_time:6.3f} seconds')
 			time.sleep(common_time)
-			self.set_motor_speed('ra', AxisSpeeds.ra_resting_speed)
-			self.set_motor_speed('dec', AxisSpeeds.dec_resting_speed)
+			self.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=AxisSpeeds.dec_resting_speed)
 		elif ra_maneuver:
-			self.set_motor_speed('dec', AxisSpeeds.dec_resting_speed)
-			ra_speed, ra_time = ra_maneuver
-			self.set_motor_speed('ra', ra_speed)
+			ra_speed_dps, ra_time = ra_maneuver
+			self.set_axis_speeds(ra_dps=ra_speed_dps, dec_dps=AxisSpeeds.dec_resting_speed)
 			print(f'Waiting {ra_time:6.3f} seconds')
 			time.sleep(ra_time)
-			self.set_motor_speed('ra', AxisSpeeds.ra_resting_speed)
+			self.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed)
 		elif dec_maneuver:
-			self.set_motor_speed('ra', AxisSpeeds.ra_resting_speed)
-			dec_speed, dec_time = dec_maneuver
-			self.set_motor_speed('dec', dec_speed)
+			dec_speed_dps, dec_time = dec_maneuver
+			self.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=dec_speed_dps)
 			print(f'Waiting {dec_time:6.3f} seconds')
 			time.sleep(dec_time)
-			self.set_motor_speed('dec', AxisSpeeds.dec_resting_speed)
+			self.set_axis_speeds(dec_dps=AxisSpeeds.dec_resting_speed)

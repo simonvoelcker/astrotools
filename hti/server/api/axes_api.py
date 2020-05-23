@@ -10,7 +10,7 @@ api = Namespace('Axes', description='Axes control API endpoints')
 @api.route('/speeds')
 class SetSpeedApi(Resource):
     @api.doc(
-        description='Set axis speeds',
+        description='Set axis speeds, in degrees per second',
         response={
             200: 'Success'
         }
@@ -20,12 +20,8 @@ class SetSpeedApi(Resource):
         ra_speed = float(body['ra'])
         dec_speed = float(body['dec'])
 
-        ra_speed = min(1.0, max(-1.0, ra_speed))
-        dec_speed = min(1.0, max(-1.0, dec_speed))
-
         axis_control = get_axis_control()
-        axis_control.set_motor_speed('ra', ra_speed)
-        axis_control.set_motor_speed('dec', dec_speed)
+        axis_control.set_axis_speeds(ra_dps=ra_speed, dec_dps=dec_speed)
         return '', 200
 
 
@@ -40,8 +36,7 @@ class RestApi(Resource):
     )
     def post(self):
         axis_control = get_axis_control()
-        axis_control.set_motor_speed('ra', AxisSpeeds.ra_resting_speed)
-        axis_control.set_motor_speed('dec', AxisSpeeds.dec_resting_speed)
+        axis_control.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=AxisSpeeds.dec_resting_speed)
         return '', 200
 
 

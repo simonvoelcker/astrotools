@@ -3,7 +3,7 @@ import glob
 import json
 import os
 
-from lib.axis_control import AxisControl
+from lib.axis_control import AxisControl, AxisSpeeds
 from lib.catalog import Catalog
 from lib.coordinates import Coordinates
 from lib.image_tracker import ImageTracker
@@ -41,22 +41,20 @@ class CommandShell(cmd.Cmd):
 		self.axis_control.disconnect()
 
 	def do_rest(self, arg):
-		print('Setting motors to resting speed')
-		self.axis_control.set_motor_speed('ra', self.ra_resting_speed)
-		self.axis_control.set_motor_speed('dec', self.dec_resting_speed)
+		print('Setting axes to resting speed')
+		self.axis_control.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=AxisSpeeds.dec_resting_speed)
 
 	def do_stop(self, arg):
-		print('Stopping motors')
-		self.axis_control.set_motor_speed('ra', 0)
-		self.axis_control.set_motor_speed('dec', 0)
+		print('Stopping axes')
+		self.axis_control.set_axis_speeds(ra_dps=0.0, dec_dps=0.0)
 
 	def do_ra(self, arg):
-		print(f'Setting RA motor speed to {float(arg)}')
-		self.axis_control.set_motor_speed('ra', float(arg))
+		print(f'Setting RA axis speed to {float(arg)}')
+		self.axis_control.set_axis_speeds(ra_dps=float(arg))
 
 	def do_dec(self, arg):
-		print(f'Setting DEC motor speed to {float(arg)}')
-		self.axis_control.set_motor_speed('dec', float(arg))
+		print(f'Setting DEC axis speed to {float(arg)}')
+		self.axis_control.set_axis_speeds(dec_dps=float(arg))
 
 	def do_here(self, arg):
 		self.here = Coordinates.parse(arg)

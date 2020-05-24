@@ -13,12 +13,30 @@ export default class AxisControl extends Component {
   }
 
   steer (direction) {
-    // this.context.mutations.setSpeeds(this.state.raSpeed, this.state.decSpeed)
+    const incrementDps = 0.1 / 3600.0
+
+    const increments = {
+      up: {ra: 0.0, dec: -incrementDps},
+      down: {ra: 0.0, dec: +incrementDps},
+      left: {ra: -incrementDps, dec: 0.0},
+      right: {ra: +incrementDps, dec: 0.0},
+    }[direction]
+
+    this.context.mutations.setSpeeds(
+      this.context.store.axisSpeeds.raDps + increments.ra,
+      this.context.store.axisSpeeds.decDps + increments.dec,
+    )
   }
 
   render () {
-    // const raDrift = 3600.0 * this.context.store.axisSpeeds.raDps
-    // steering, resting or stopping.
+    const store = this.context.store
+    let raSpeed = 0
+    let decSpeed = 0
+    if (store.axisSpeeds) {
+      // degrees per second -> degrees per hour
+      raSpeed = store.axisSpeeds.raDps * 3600.0
+      decSpeed = store.axisSpeeds.decDps * 3600.0
+    }
 
     return (
       <AppConsumer>
@@ -39,10 +57,18 @@ export default class AxisControl extends Component {
                 <StandardButton className='btn steer-right' onClick={() => this.steer('right')}>R</StandardButton>
                 <StandardButton className='btn steer-up' onClick={() => this.steer('up')}>U</StandardButton>
                 <StandardButton className='btn steer-down' onClick={() => this.steer('down')}>D</StandardButton>
-                <span className='spaced-text steer-left-label'>0.2°/h</span>
-                <span className='spaced-text steer-right-label'>0.2°/h</span>
-                <span className='spaced-text steer-up-label'>0.2°/h</span>
-                <span className='spaced-text steer-down-label'>0.2°/h</span>
+                <span className='spaced-text steer-left-label'>
+                  {raSpeed < 0 ? -raSpeed.toFixed(1) + '°/h' : ''}
+                </span>
+                <span className='spaced-text steer-right-label'>
+                  {raSpeed > 0 ? raSpeed.toFixed(1) + '°/h' : ''}
+                </span>
+                <span className='spaced-text steer-up-label'>
+                  {decSpeed < 0 ? -decSpeed.toFixed(1) + '°/h' : ''}
+                </span>
+                <span className='spaced-text steer-down-label'>
+                  {decSpeed > 0 ? decSpeed.toFixed(1) + '°/h' : ''}
+                </span>
               </div>
             </div>
           </div>

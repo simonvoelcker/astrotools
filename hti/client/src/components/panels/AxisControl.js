@@ -2,8 +2,17 @@ import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 import StandardButton from '../panels/StandardButton'
 import { Input, Label } from 'reactstrap'
+import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 
 export default class AxisControl extends Component {
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      incrementValue: 0.1,
+      incrementUnit: '°/h'
+    }
+  }
 
   componentDidMount () {
     document.onkeydown = this.onKeyDown.bind(this)
@@ -39,7 +48,14 @@ export default class AxisControl extends Component {
       return
     }
 
-    const incrementDps = 0.1 / 3600.0
+    let incrementDps = null
+    if (this.state.incrementUnit == '°/h') {
+      incrementDps = this.state.incrementValue / 3600.0
+    } else if (this.state.incrementUnit == '°/m') {
+      incrementDps = this.state.incrementValue / 60.0
+    } else if (this.state.incrementUnit == '°/s') {
+      incrementDps = this.state.incrementValue
+    }
 
     const increments = {
       up: {ra: 0.0, dec: -incrementDps},
@@ -54,15 +70,31 @@ export default class AxisControl extends Component {
     )
   }
 
+  formatAxisSpeed (dps) {
+    if (dps === null) {
+      return {value: 0, unit: ''}
+    }
+    if (Math.abs(dps) >= 0.5) {
+      return {value: dps, unit: '°/s'}
+    }
+    let dpm = dps * 60.0
+    if (Math.abs(dpm) > 0.5) {
+      return {value: dpm, unit: '°/m'}
+    }
+    let dph = dpm * 60.0
+    return {value: dph, unit: '°/h'}
+  }
+
   render () {
     const store = this.context.store
-    let raSpeed = 0
-    let decSpeed = 0
-    if (store.axisSpeeds) {
-      // degrees per second -> degrees per hour
-      raSpeed = store.axisSpeeds.raDps * 3600.0
-      decSpeed = store.axisSpeeds.decDps * 3600.0
-    }
+    const raSpeed = this.formatAxisSpeed(store.axisSpeeds ? store.axisSpeeds.raDps : null)
+    const decSpeed = this.formatAxisSpeed(store.axisSpeeds ? store.axisSpeeds.decDps : null)
+
+    let incrementOptions = [
+      {value: 0.1, unit: '°/h'},
+      {value: 0.1, unit: '°/m'},
+      {value: 0.1, unit: '°/s'},
+    ]
 
     return (
       <AppConsumer>
@@ -79,22 +111,37 @@ export default class AxisControl extends Component {
                   onClick={this.stop.bind(this)}>STOP</StandardButton>
               </div>
               <div className='steering-control'>
-                <StandardButton className='btn steer-left' onClick={() => this.steer('left')}>L</StandardButton>
-                <StandardButton className='btn steer-right' onClick={() => this.steer('right')}>R</StandardButton>
-                <StandardButton className='btn steer-up' onClick={() => this.steer('up')}>U</StandardButton>
-                <StandardButton className='btn steer-down' onClick={() => this.steer('down')}>D</StandardButton>
+                <StandardButton className='btn steer-left' onClick={() => this.steer('left')}>&#129136;</StandardButton>
+                <StandardButton className='btn steer-right' onClick={() => this.steer('right')}>&#129138;</StandardButton>
+                <StandardButton className='btn steer-up' onClick={() => this.steer('up')}>&#129137;</StandardButton>
+                <StandardButton className='btn steer-down' onClick={() => this.steer('down')}>&#129139;</StandardButton>
                 <span className='spaced-text steer-left-label'>
-                  {raSpeed < 0 ? -raSpeed.toFixed(1) + '°/h' : ''}
+                  {raSpeed.value < 0 ? -raSpeed.value.toFixed(1) + raSpeed.unit : ''}
                 </span>
                 <span className='spaced-text steer-right-label'>
-                  {raSpeed > 0 ? raSpeed.toFixed(1) + '°/h' : ''}
+                  {raSpeed.value > 0 ? raSpeed.value.toFixed(1) + raSpeed.unit : ''}
                 </span>
                 <span className='spaced-text steer-up-label'>
-                  {decSpeed < 0 ? -decSpeed.toFixed(1) + '°/h' : ''}
+                  {decSpeed.value < 0 ? -decSpeed.value.toFixed(1) + decSpeed.unit : ''}
                 </span>
                 <span className='spaced-text steer-down-label'>
-                  {decSpeed > 0 ? decSpeed.toFixed(1) + '°/h' : ''}
+                  {decSpeed.value > 0 ? decSpeed.value.toFixed(1) + decSpeed.unit : ''}
                 </span>
+              </div>
+              <div className='button-column'>
+                <UncontrolledDropdown>
+                  <DropdownToggle caret>&#177;{this.state.incrementValue}{this.state.incrementUnit}</DropdownToggle>
+                  <DropdownMenu>
+                    {incrementOptions.map(option => {
+                      return <DropdownItem onClick={() => {
+                        this.setState({
+                          incrementValue: option.value,
+                          incrementUnit: option.unit,
+                        })}
+                      }>{option.value}{option.unit}</DropdownItem>
+                    })}
+                  </DropdownMenu>
+                </UncontrolledDropdown>
               </div>
             </div>
           </div>

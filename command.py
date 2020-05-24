@@ -42,19 +42,19 @@ class CommandShell(cmd.Cmd):
 
 	def do_rest(self, arg):
 		print('Setting axes to resting speed')
-		self.axis_control.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=AxisSpeeds.dec_resting_speed)
+		self.axis_control.set_resting()
 
 	def do_stop(self, arg):
 		print('Stopping axes')
-		self.axis_control.set_axis_speeds(ra_dps=0.0, dec_dps=0.0)
+		self.axis_control.set_axis_speeds(ra_dps=0.0, dec_dps=0.0, mode='stopped')
 
 	def do_ra(self, arg):
 		print(f'Setting RA axis speed to {float(arg)}')
-		self.axis_control.set_axis_speeds(ra_dps=float(arg))
+		self.axis_control.set_axis_speeds(ra_dps=float(arg), mode='manual')
 
 	def do_dec(self, arg):
 		print(f'Setting DEC axis speed to {float(arg)}')
-		self.axis_control.set_axis_speeds(dec_dps=float(arg))
+		self.axis_control.set_axis_speeds(dec_dps=float(arg), mode='manual')
 
 	def do_here(self, arg):
 		self.here = Coordinates.parse(arg)

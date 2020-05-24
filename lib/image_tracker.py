@@ -28,7 +28,7 @@ class ImageTracker(Tracker):
 
         if ra_error == 0 and dec_error == 0:
             print(f'Image errors are (0,0) in {filepath}. Falling back to resting speed.')
-            self.axis_control.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=AxisSpeeds.dec_resting_speed)
+            self.axis_control.set_resting()
             status_change_callback(message='Fell back to resting speed', filepath=filepath)
             return
 
@@ -38,7 +38,7 @@ class ImageTracker(Tracker):
         print(f'RA error: {ra_error:8.6f}, RA speed: {ra_speed:8.6f}, '
               f'DEC error: {dec_error:8.6f}, DEC speed: {dec_speed:8.6f}')
 
-        self.axis_control.set_axis_speeds(ra_dps=ra_speed, dec_dps=dec_speed)
+        self.axis_control.set_axis_speeds(ra_dps=ra_speed, dec_dps=dec_speed, mode='tracking')
         status_change_callback(message='Tracking', filepath=filepath, errors=(ra_error, dec_error))
 
         if self.influx_client is not None:

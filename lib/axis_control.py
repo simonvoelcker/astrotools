@@ -13,20 +13,15 @@ class AxisSpeeds:
 	max_speed_dps = 0.3
 
 	# siderial speed plus typical drifting speeds
+	# TODO the drift should not be part of the theoretical resting speed
+	# it should be the default offset applied when the frontend calls /rest
 	ra_resting_speed = -15.0 / 3600.0 + 0.2 / 3600.0
 	dec_resting_speed = 0.0 / 3600.0 + 0.5 / 3600.0
 
-	def __init__(self, ra_dps, dec_dps):
+	def __init__(self, ra_dps: float, dec_dps: float, mode: str):
 		self.ra_dps = ra_dps
 		self.dec_dps = dec_dps
-
-	@classmethod
-	def ra_axis_to_dps(cls, ra_axis_speed):
-		return ra_axis_speed / cls.ra_axis_ratio * 360.0
-
-	@classmethod
-	def dec_axis_to_dps(cls, dec_axis_speed):
-		return dec_axis_speed / cls.dec_axis_ratio * 360.0
+		self.mode = mode
 
 	@classmethod
 	def ra_dps_to_axis(cls, ra_dps):
@@ -38,11 +33,7 @@ class AxisSpeeds:
 
 	@staticmethod
 	def stopped():
-		return AxisSpeeds(0, 0)
-
-	@classmethod
-	def resting_speeds(cls):
-		return AxisSpeeds(cls.ra_resting_speed, cls.dec_resting_speed)
+		return AxisSpeeds(0, 0, 'stopped')
 
 
 class AxisControl:
@@ -77,7 +68,10 @@ class AxisControl:
 	def connected(self):
 		return self.serial is not None
 
-	def set_axis_speeds(self, ra_dps=None, dec_dps=None):
+	def set_resting(self):
+		self.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=AxisSpeeds.dec_resting_speed, mode='resting')
+
+	def set_axis_speeds(self, ra_dps=None, dec_dps=None, mode=None):
 		if self.serial is not None:
 			if ra_dps is not None:
 				shaft_speed_rps = AxisSpeeds.ra_dps_to_axis(ra_dps)
@@ -94,6 +88,7 @@ class AxisControl:
 			self.speeds.dec_dps = dec_dps
 			self.dec_backlash_direction = 1 if dec_dps > 0 else -1
 
+		self.speeds.mode = mode
 		self.on_speeds_change(self.speeds)
 
 	def read_position(self):
@@ -171,19 +166,19 @@ class AxisControl:
 			else:
 				ra_speed_dps *= ra_time / dec_time
 			common_time = max(ra_time, dec_time)
-			self.set_axis_speeds(ra_dps=ra_speed_dps, dec_dps=dec_speed_dps)
+			self.set_axis_speeds(ra_dps=ra_speed_dps, dec_dps=dec_speed_dps, mode='steering')
 			print(f'Waiting {common_time:6.3f} seconds')
 			time.sleep(common_time)
-			self.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=AxisSpeeds.dec_resting_speed)
+			self.set_resting()
 		elif ra_maneuver:
 			ra_speed_dps, ra_time = ra_maneuver
-			self.set_axis_speeds(ra_dps=ra_speed_dps, dec_dps=AxisSpeeds.dec_resting_speed)
+			self.set_axis_speeds(ra_dps=ra_speed_dps, dec_dps=AxisSpeeds.dec_resting_speed, mode='steering')
 			print(f'Waiting {ra_time:6.3f} seconds')
 			time.sleep(ra_time)
-			self.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed)
+			self.set_resting()
 		elif dec_maneuver:
 			dec_speed_dps, dec_time = dec_maneuver
-			self.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=dec_speed_dps)
+			self.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=dec_speed_dps, mode='steering')
 			print(f'Waiting {dec_time:6.3f} seconds')
 			time.sleep(dec_time)
-			self.set_axis_speeds(dec_dps=AxisSpeeds.dec_resting_speed)
+			self.set_resting()

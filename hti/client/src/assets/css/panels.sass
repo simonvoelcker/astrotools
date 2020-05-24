@@ -80,18 +80,63 @@
     display: flex
     flex-direction: row
 
-    .settings-column
-      display: flex
-      flex-direction: column
-
-      Label
-        width: 130px
-      Input
-        width: 130px
-
     .button-column
+      width: 200px
       display: flex
       flex-direction: column
-      flex-grow: 1
-      margin-left: 10px
 
+    .steering-control
+      width: 2*$steeringCtrlLabelWidth + 3*$steeringBtnSize + 2*$steeringBtnMargin
+      height: 3*$steeringBtnSize + 2*$steeringBtnMargin
+      margin-left: 100px
+      margin-right: 100px
+      position: relative
+
+      .btn
+        position: absolute
+        width: $steeringBtnSize
+        height: $steeringBtnSize
+        margin: 0
+
+      .steer-left
+        top: $steeringBtnSize + $steeringBtnMargin
+        left: $steeringCtrlLabelWidth + $steeringBtnMargin
+
+      .steer-up
+        top: 0
+        left: $steeringCtrlLabelWidth + $steeringBtnSize + 2*$steeringBtnMargin
+
+      .steer-right
+        top: $steeringBtnSize + $steeringBtnMargin
+        left: $steeringCtrlLabelWidth + 2*$steeringBtnSize + 3*$steeringBtnMargin
+
+      .steer-down
+        top: 2*$steeringBtnSize + 2*$steeringBtnMargin
+        left: $steeringCtrlLabelWidth + $steeringBtnSize + 2*$steeringBtnMargin
+
+      .spaced-text
+        width: 80px
+        position: absolute
+        width: $steeringCtrlLabelWidth
+        height: $steeringBtnSize
+        line-height: $steeringBtnSize
+
+      .steer-left-label
+        top: $steeringBtnSize + $steeringBtnMargin
+        left: 0
+        text-align: right
+
+      .steer-right-label
+        top: $steeringBtnSize + $steeringBtnMargin
+        left: $steeringCtrlLabelWidth + 3*$steeringBtnSize + 4*$steeringBtnMargin
+        text-align: left
+
+      .steer-up-label
+        top: 0
+        left: $steeringCtrlLabelWidth + 2*$steeringBtnSize + 3*$steeringBtnMargin
+        text-align: left
+
+      .steer-down-label
+        top: 2*$steeringBtnSize + 2*$steeringBtnMargin
+        left: $steeringCtrlLabelWidth + 2*$steeringBtnSize + 3*$steeringBtnMargin
+        text-align: left

@@ -4,6 +4,28 @@ import StandardButton from '../panels/StandardButton'
 import { Input, Label } from 'reactstrap'
 
 export default class AxisControl extends Component {
+
+  componentDidMount () {
+    document.onkeydown = this.onKeyDown.bind(this)
+  }
+
+  onKeyDown (event) {
+    switch (event.key) {
+        case 'ArrowUp':
+            this.steer('up')
+            break;
+        case 'ArrowDown':
+            this.steer('down')
+            break;
+        case 'ArrowLeft':
+            this.steer('left')
+            break;
+        case 'ArrowRight':
+            this.steer('right')
+            break;
+    }
+  }
+
   rest () {
     this.context.mutations.setRest()
   }
@@ -13,6 +35,10 @@ export default class AxisControl extends Component {
   }
 
   steer (direction) {
+    if (this.context.store.axisSpeeds === null) {
+      return
+    }
+
     const incrementDps = 0.1 / 3600.0
 
     const increments = {

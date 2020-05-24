@@ -37,7 +37,7 @@ export default class AxisControl extends Component {
                     className='number-input'
                     type="number"
                     step="0.001"
-                    value={store.axisSpeeds ? store.axisSpeeds.raRevsPerSec : 0}
+                    value={store.axisSpeeds ? store.axisSpeeds.raDps : 0}
                     disabled={true}
                     onChange={this.onChangeRaSpeed.bind(this)} />
                 </div>
@@ -48,7 +48,7 @@ export default class AxisControl extends Component {
                     placeholder="0.0"
                     type="number"
                     step="0.001"
-                    value={store.axisSpeeds ? store.axisSpeeds.decRevsPerSec : 0}
+                    value={store.axisSpeeds ? store.axisSpeeds.decDps : 0}
                     disabled={true}
                     onChange={this.onChangeDecSpeed.bind(this)} />
                   </div>
@@ -61,7 +61,7 @@ export default class AxisControl extends Component {
               <div className='button-column'>
                 <StandardButton onClick={this.rest.bind(this)}>REST</StandardButton>
                 <StandardButton
-                  disabled={!store.axisSpeeds || (store.axisSpeeds.raRevsPerSec === 0 && store.axisSpeeds.decRevsPerSec === 0)}
+                  disabled={!store.axisSpeeds || (store.axisSpeeds.raDps === 0 && store.axisSpeeds.decDps === 0)}
                   onClick={this.stop.bind(this)}>STOP</StandardButton>
               </div>
             </div>

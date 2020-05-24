@@ -32,10 +32,8 @@ class ImageTracker(Tracker):
             status_change_callback(message='Fell back to resting speed', filepath=filepath)
             return
 
-        # TODO take apart siderial part, drift and correction
-        ra_speed = self.config['ra']['center'] + self.ra_pid(-ra_error if self.config['ra']['invert'] else ra_error)
-        dec_speed = self.config['dec']['center'] + self.dec_pid(
-            -dec_error if self.config['dec']['invert'] else dec_error)
+        ra_speed = AxisSpeeds.ra_resting_speed + self.ra_pid(-ra_error if self.config['ra']['invert'] else ra_error)
+        dec_speed = AxisSpeeds.dec_resting_speed + self.dec_pid(-dec_error if self.config['dec']['invert'] else dec_error)
 
         print(f'RA error: {ra_error:8.6f}, RA speed: {ra_speed:8.6f}, '
               f'DEC error: {dec_error:8.6f}, DEC speed: {dec_speed:8.6f}')

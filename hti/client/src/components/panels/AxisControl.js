@@ -1,7 +1,6 @@
 import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 import StandardButton from '../panels/StandardButton'
-import { Input, Label } from 'reactstrap'
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 
 export default class AxisControl extends Component {
@@ -32,6 +31,8 @@ export default class AxisControl extends Component {
         case 'ArrowRight':
             this.steer('right')
             break;
+        default:
+            break;
     }
   }
 
@@ -49,11 +50,11 @@ export default class AxisControl extends Component {
     }
 
     let incrementDps = null
-    if (this.state.incrementUnit == '°/h') {
+    if (this.state.incrementUnit === '°/h') {
       incrementDps = this.state.incrementValue / 3600.0
-    } else if (this.state.incrementUnit == '°/m') {
+    } else if (this.state.incrementUnit === '°/m') {
       incrementDps = this.state.incrementValue / 60.0
-    } else if (this.state.incrementUnit == '°/s') {
+    } else if (this.state.incrementUnit === '°/s') {
       incrementDps = this.state.incrementValue
     }
 
@@ -133,7 +134,7 @@ export default class AxisControl extends Component {
                   <DropdownToggle caret>&#177;{this.state.incrementValue}{this.state.incrementUnit}</DropdownToggle>
                   <DropdownMenu>
                     {incrementOptions.map(option => {
-                      return <DropdownItem onClick={() => {
+                      return <DropdownItem key={option.value+option.unit} onClick={() => {
                         this.setState({
                           incrementValue: option.value,
                           incrementUnit: option.unit,

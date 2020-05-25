@@ -11,8 +11,9 @@ export class AppProvider extends Component {
     this.initialize()
 
     this.state = {
-        imageUrl: null,
-        imagePath: null,
+        // todo there's a default here because the layout is not stable otherwise
+        imageUrl: 'http://localhost:5000/static/2020-05-25/singleCapture/s10752.jpg',
+        imagePath: '2020-05-25/singleCapture/s10752.jpg',
         imagePosition: null,
         imageRotation: null,
         initialized: false,  // todo need a state to mean "backend state received"

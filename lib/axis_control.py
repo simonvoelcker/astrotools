@@ -156,6 +156,8 @@ class AxisControl:
 			print('Skipping Dec maneuver, error is small')
 			dec_maneuver = None
 
+		# TODO: compensate backlash by overshooting, then moving back. genius.
+
 		if ra_maneuver and dec_maneuver:
 			# combined maneuver
 			ra_speed_dps, ra_time = ra_maneuver

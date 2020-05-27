@@ -7,9 +7,14 @@ export default class AxisControl extends Component {
   constructor(props) {
     super(props)
 
+    this.incrementOptions = [
+      {label: 'slow',   dps: 0.1 / 3600.0},
+      {label: 'medium', dps: 0.1 / 60.0},
+      {label: 'fast',   dps: 0.1},
+    ]
+
     this.state = {
-      incrementValue: 0.1,
-      incrementUnit: '°/h'
+      increment: this.incrementOptions[0]
     }
   }
 
@@ -49,20 +54,11 @@ export default class AxisControl extends Component {
       return
     }
 
-    let incrementDps = null
-    if (this.state.incrementUnit === '°/h') {
-      incrementDps = this.state.incrementValue / 3600.0
-    } else if (this.state.incrementUnit === '°/m') {
-      incrementDps = this.state.incrementValue / 60.0
-    } else if (this.state.incrementUnit === '°/s') {
-      incrementDps = this.state.incrementValue
-    }
-
     const increments = {
-      up: {ra: 0.0, dec: -incrementDps},
-      down: {ra: 0.0, dec: +incrementDps},
-      left: {ra: -incrementDps, dec: 0.0},
-      right: {ra: +incrementDps, dec: 0.0},
+      up: {ra: 0.0, dec: -this.state.increment.dps},
+      down: {ra: 0.0, dec: +this.state.increment.dps},
+      left: {ra: -this.state.increment.dps, dec: 0.0},
+      right: {ra: +this.state.increment.dps, dec: 0.0},
     }[direction]
 
     this.context.mutations.setSpeeds(
@@ -78,11 +74,7 @@ export default class AxisControl extends Component {
     if (Math.abs(dps) >= 0.5) {
       return {value: dps, unit: '°/s'}
     }
-    let dpm = dps * 60.0
-    if (Math.abs(dpm) > 0.5) {
-      return {value: dpm, unit: '°/m'}
-    }
-    let dph = dpm * 60.0
+    let dph = dps * 3600.0
     return {value: dph, unit: '°/h'}
   }
 
@@ -90,12 +82,6 @@ export default class AxisControl extends Component {
     const store = this.context.store
     const raSpeed = this.formatAxisSpeed(store.axisSpeeds ? store.axisSpeeds.raDps : null)
     const decSpeed = this.formatAxisSpeed(store.axisSpeeds ? store.axisSpeeds.decDps : null)
-
-    let incrementOptions = [
-      {value: 0.1, unit: '°/h'},
-      {value: 0.1, unit: '°/m'},
-      {value: 0.1, unit: '°/s'},
-    ]
 
     return (
       <AppConsumer>
@@ -131,15 +117,12 @@ export default class AxisControl extends Component {
               </div>
               <div className='button-column'>
                 <UncontrolledDropdown>
-                  <DropdownToggle caret>&#177;{this.state.incrementValue}{this.state.incrementUnit}</DropdownToggle>
+                  <DropdownToggle caret>{this.state.increment.label}</DropdownToggle>
                   <DropdownMenu>
-                    {incrementOptions.map(option => {
-                      return <DropdownItem key={option.value+option.unit} onClick={() => {
-                        this.setState({
-                          incrementValue: option.value,
-                          incrementUnit: option.unit,
-                        })}
-                      }>{option.value}{option.unit}</DropdownItem>
+                    {this.incrementOptions.map(option => {
+                      return <DropdownItem key={option.label} onClick={() => {this.setState({increment: option})}}>
+                        {option.label}
+                      </DropdownItem>
                     })}
                   </DropdownMenu>
                 </UncontrolledDropdown>

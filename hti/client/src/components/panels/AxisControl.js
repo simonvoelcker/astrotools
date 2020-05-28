@@ -89,7 +89,7 @@ export default class AxisControl extends Component {
           <div>
             <div className='panel axis-control-panel'>
               <div className='button-column'>
-                <span className='spaced-text'>Mode: {store.axisSpeeds ? store.axisSpeeds.mode.toUpperCase() : '-'}</span>
+                <span className='spaced-text'>{store.axisSpeeds ? store.axisSpeeds.mode.toUpperCase() : '-'}</span>
                 <StandardButton
                   disabled={store.axisSpeeds && store.axisSpeeds.mode === 'resting'}
                   onClick={this.rest.bind(this)}>REST</StandardButton>

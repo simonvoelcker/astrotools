@@ -71,6 +71,7 @@ class AxisControl:
 		self.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=AxisSpeeds.dec_resting_speed, mode='resting')
 
 	def set_axis_speeds(self, ra_dps=None, dec_dps=None, mode=None):
+		print(f'setting RA={ra_dps:9.6f}, Dec={dec_dps:9.6f}, mode: {mode}')
 		if self.serial is not None:
 			if ra_dps is not None:
 				shaft_speed_rps = AxisSpeeds.ra_dps_to_axis(ra_dps)
@@ -122,67 +123,46 @@ class AxisControl:
 
 	def steer(self, here, target, max_speed_dps=None):
 
-		if abs(target.ra - here.ra) > 0.075:
-			ra_maneuver = self._calc_maneuver('ra', here.ra, target.ra, max_speed_dps)
+		ra_speed_dps, ra_time = self._calc_maneuver('ra', here.ra, target.ra, max_speed_dps)
+		dec_speed_dps, dec_time = self._calc_maneuver('dec', here.dec, target.dec, max_speed_dps)
+
+		# slow down the quicker maneuver to match execution times
+		if ra_time > dec_time:
+			dec_speed_dps *= dec_time / ra_time
 		else:
-			print('Skipping RA maneuver, error is small')
-			ra_maneuver = None
+			ra_speed_dps *= ra_time / dec_time
+		common_time = max(ra_time, dec_time)
 
-		if abs(target.dec - here.dec) > 0.075:
-			dec_maneuver = self._calc_maneuver('dec', here.dec, target.dec, max_speed_dps)
-			# TODO beware: magic minus!
-			dec_maneuver = -dec_maneuver[0], dec_maneuver[1]
-		else:
-			print('Skipping Dec maneuver, error is small')
-			dec_maneuver = None
+		ra_speed_dps += AxisSpeeds.ra_resting_speed
+		dec_speed_dps += AxisSpeeds.dec_resting_speed
 
-		# TODO restore combined maneuvers
+		self.set_axis_speeds(ra_dps=ra_speed_dps, dec_dps=dec_speed_dps, mode=f'steering ({int(common_time)}s)')
+		print(f'Waiting {common_time:6.3f} seconds')
+		time.sleep(common_time)
+		self.set_resting()
 
-		# if ra_maneuver and dec_maneuver:
-		# 	# combined maneuver
-		# 	ra_speed_dps, ra_time = ra_maneuver
-		# 	dec_speed_dps, dec_time = dec_maneuver
-		# 	# slow down the quicker maneuver to match execution times
-		# 	if ra_time > dec_time:
-		# 		dec_speed_dps *= dec_time / ra_time
-		# 	else:
-		# 		ra_speed_dps *= ra_time / dec_time
-		# 	common_time = max(ra_time, dec_time)
-		# 	self.set_axis_speeds(ra_dps=ra_speed_dps, dec_dps=dec_speed_dps, mode='steering')
-		# 	print(f'Waiting {common_time:6.3f} seconds')
-		# 	time.sleep(common_time)
-		# 	self.set_resting()
+		# apply backlash compensation if we moved against resting direction
+		compensate_ra = bool(ra_speed_dps * AxisSpeeds.ra_resting_speed < 0)
+		compensate_dec = bool(dec_speed_dps * AxisSpeeds.dec_resting_speed < 0)
 
-		if ra_maneuver:
-			ra_speed_dps, ra_time = ra_maneuver
-			ra_speed_dps += AxisSpeeds.ra_resting_speed
-			self.set_axis_speeds(ra_dps=ra_speed_dps, dec_dps=AxisSpeeds.dec_resting_speed, mode='steering')
-			print(f'Waiting {ra_time:6.3f} seconds')
-			time.sleep(ra_time)
+		if compensate_ra or compensate_dec:
+			print(f'Compensating backlash for RA={compensate_ra}, Dec={compensate_dec}')
+			dps = 0.1
+			duration = 5.0
+			# move further against backlash on those axes which also did so before
+			self.set_axis_speeds(
+				ra_dps=math.copysign(dps, ra_speed_dps) if compensate_ra else AxisSpeeds.ra_resting_speed,
+				dec_dps=math.copysign(dps, dec_speed_dps) if compensate_dec else AxisSpeeds.dec_resting_speed,
+				mode='BL-compensation'
+			)
+			time.sleep(duration)
 
-			if ra_speed_dps * AxisSpeeds.ra_resting_speed < 0:
-				# move again resting speed direction
-				self.set_axis_speeds(ra_dps=math.copysign(0.1, ra_speed_dps), mode='BL-fix')
-				time.sleep(5.0)
-				# move with resting speed direction (into backlash)
-				self.set_axis_speeds(ra_dps=math.copysign(0.1, AxisSpeeds.ra_resting_speed), mode='BL-fix')
-				time.sleep(5.0)
+			# move back into backlash
+			self.set_axis_speeds(
+				ra_dps=math.copysign(dps, AxisSpeeds.ra_resting_speed) if compensate_ra else AxisSpeeds.ra_resting_speed,
+				dec_dps=math.copysign(dps, AxisSpeeds.dec_resting_speed) if compensate_dec else AxisSpeeds.dec_resting_speed,
+				mode='BL-compensation')
+			time.sleep(duration)
 
-			self.set_resting()
-
-		if dec_maneuver:
-			dec_speed_dps, dec_time = dec_maneuver
-			dec_speed_dps += AxisSpeeds.dec_resting_speed
-			self.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=dec_speed_dps, mode='steering')
-			print(f'Waiting {dec_time:6.3f} seconds')
-			time.sleep(dec_time)
-
-			if dec_speed_dps * AxisSpeeds.dec_resting_speed < 0:
-				# move again resting speed direction
-				self.set_axis_speeds(dec_dps=math.copysign(0.1, dec_speed_dps), mode='BL-fix')
-				time.sleep(5.0)
-				# move with resting speed direction (into backlash)
-				self.set_axis_speeds(dec_dps=math.copysign(0.1, AxisSpeeds.dec_resting_speed), mode='BL-fix')
-				time.sleep(5.0)
-
+			print(f'Done compensating')
 			self.set_resting()

@@ -122,9 +122,16 @@ class AxisControl:
 		return speed_dps, duration
 
 	def steer(self, here, target, max_speed_dps=None):
+		# force slow maneuver if close to target already
+		max_distance_deg = max(abs(here.ra-target.ra), abs(here.dec-target.dec))
+		if max_distance_deg < 1.0:
+			max_speed_dps = 0.1
 
 		ra_speed_dps, ra_time = self._calc_maneuver('ra', here.ra, target.ra, max_speed_dps)
 		dec_speed_dps, dec_time = self._calc_maneuver('dec', here.dec, target.dec, max_speed_dps)
+
+		# caution: magic minus!
+		dec_speed_dps = -dec_speed_dps
 
 		# slow down the quicker maneuver to match execution times
 		if ra_time > dec_time:
@@ -148,7 +155,7 @@ class AxisControl:
 		if compensate_ra or compensate_dec:
 			print(f'Compensating backlash for RA={compensate_ra}, Dec={compensate_dec}')
 			dps = 0.1
-			duration = 5.0
+			duration = 10.0
 			# move further against backlash on those axes which also did so before
 			self.set_axis_speeds(
 				ra_dps=math.copysign(dps, ra_speed_dps) if compensate_ra else AxisSpeeds.ra_resting_speed,

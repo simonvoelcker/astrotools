@@ -55,8 +55,8 @@ export default class AxisControl extends Component {
     }
 
     const increments = {
-      up: {ra: 0.0, dec: -this.state.increment.dps},
-      down: {ra: 0.0, dec: +this.state.increment.dps},
+      up: {ra: 0.0, dec: +this.state.increment.dps},
+      down: {ra: 0.0, dec: -this.state.increment.dps},
       left: {ra: -this.state.increment.dps, dec: 0.0},
       right: {ra: +this.state.increment.dps, dec: 0.0},
     }[direction]
@@ -71,7 +71,7 @@ export default class AxisControl extends Component {
     if (dps === null) {
       return {value: 0, unit: ''}
     }
-    if (Math.abs(dps) >= 0.5) {
+    if (Math.abs(dps) >= 0.2) {
       return {value: dps, unit: '°/s'}
     }
     let dph = dps * 3600.0
@@ -109,10 +109,10 @@ export default class AxisControl extends Component {
                   {raSpeed.value > 0 ? raSpeed.value.toFixed(1) + raSpeed.unit : ''}
                 </span>
                 <span className='spaced-text steer-up-label'>
-                  {decSpeed.value < 0 ? -decSpeed.value.toFixed(1) + decSpeed.unit : ''}
+                  {decSpeed.value > 0 ? decSpeed.value.toFixed(1) + decSpeed.unit : ''}
                 </span>
                 <span className='spaced-text steer-down-label'>
-                  {decSpeed.value > 0 ? decSpeed.value.toFixed(1) + decSpeed.unit : ''}
+                  {decSpeed.value < 0 ? -decSpeed.value.toFixed(1) + decSpeed.unit : ''}
                 </span>
               </div>
               <div className='button-column'>

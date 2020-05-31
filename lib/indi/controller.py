@@ -78,6 +78,8 @@ class INDIController:
 
         self.shooting = False
 
+        # TODO convert in a different thread. streamline this whole thing
+
         convert_fits_image(fits_filepath=os.path.join(self.static_dir, f'{image_name}.fits'),
                            out_filepath=os.path.join(self.static_dir, path_prefix, f'{image_name}.png'))
 

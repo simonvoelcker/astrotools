@@ -6,31 +6,29 @@ export default class ImageControl extends Component {
   constructor (props) {
     super(props)
     this.state = {
-      datePathComponent: '2020-03-15',
-      typePathComponent: 'lights',
-      namePathComponent: '20200315-164512.jpg'
     }
   }
 
   render () {
+    let path = this.context.store.imagePath
+    let components = path.split('/')
+    let pathComponents = components.splice(0, components.length-1)
+    let filename = components[components.length-1]
+
     return (
       <AppConsumer>
         {({ store, mutations }) => (
           <div>
             <div className='panel image-control-panel'>
-              <UncontrolledDropdown>
-               <DropdownToggle caret>{this.state.datePathComponent}</DropdownToggle>
-               <DropdownMenu>
-                 <DropdownItem onClick={() => {}}>{this.state.datePathComponent}</DropdownItem>
-               </DropdownMenu>
-             </UncontrolledDropdown>
-              <UncontrolledDropdown>
-               <DropdownToggle caret>{this.state.typePathComponent}</DropdownToggle>
-               <DropdownMenu>
-                 <DropdownItem onClick={() => {}}>{this.state.typePathComponent}</DropdownItem>
-               </DropdownMenu>
-             </UncontrolledDropdown>
-             <span className='spaced-text'>{this.state.namePathComponent}</span>
+              {pathComponents.map(component => {
+                return <UncontrolledDropdown>
+                 <DropdownToggle caret>{component}</DropdownToggle>
+                 <DropdownMenu>
+                   <DropdownItem key={component} onClick={() => {}}>{component}</DropdownItem>
+                 </DropdownMenu>
+               </UncontrolledDropdown>
+             })}
+             <span className='spaced-text'>{filename}</span>
             </div>
           </div>
         )}

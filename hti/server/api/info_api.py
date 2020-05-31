@@ -104,3 +104,30 @@ class CalibrateImageApi(Resource):
         get_app_state().here = Coordinates(float(center['ra']), float(center['dec']))
 
         return jsonify(calibration_data)
+
+
+@api.route('/directory')
+class ListDirectoryApi(Resource):
+    @api.doc(
+        description='List subdirectories and image files of given directory',
+        response={
+            200: 'Success',
+            400: 'Malformed request',
+            404: 'Directory not found'
+        }
+    )
+    def get(self):
+        body = request.json
+        if body is None:
+            return 'Missing request body', 400
+        path = body.get('path')  # path is understood to be relative to static
+        if path is None:
+            return 'Missing path in request body', 400
+
+        here = os.path.dirname(os.path.abspath(__file__))
+        hti_static_dir = os.path.join(here, '..', '..', 'static')
+        final_path = os.path.normpath(os.path.join(hti_static_dir, path))
+        if not os.path.isdir(final_path):
+            return f'Directory {final_path} not found', 404
+
+        return jsonify(os.listdir(final_path))

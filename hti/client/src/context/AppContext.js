@@ -12,8 +12,8 @@ export class AppProvider extends Component {
 
     this.state = {
         // todo there's a default here because the layout is not stable otherwise
-        imageUrl: 'http://localhost:5000/static/2020-05-27/singleCapture/s10754.jpg',
-        imagePath: '2020-05-27/singleCapture/s10754.jpg',
+        imageUrl: 'http://localhost:5000/static/2020-05-28/lights/2020-05-28T23:08:42.301155.png',
+        imagePath: '2020-05-28/lights/2020-05-28T23:08:42.301155.png',
         imagePosition: null,
         imageRotation: null,
         initialized: false,  // todo need a state to mean "backend state received"
@@ -85,6 +85,10 @@ export class AppProvider extends Component {
 
       goToTarget: () => {
         return $backend.goToTarget()
+      },
+
+      listDirectory: (path) => {
+        return $backend.listDirectory(path)
       }
     }
   }

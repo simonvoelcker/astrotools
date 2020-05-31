@@ -70,5 +70,11 @@ export default {
 
   goToTarget () {
     return $axios.post('/axes/gototarget')
+  },
+
+  listDirectory (path) {
+    return $axios.post('/info/directory', {
+      path: path
+    })
   }
 }

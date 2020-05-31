@@ -116,7 +116,7 @@ class ListDirectoryApi(Resource):
             404: 'Directory not found'
         }
     )
-    def get(self):
+    def post(self):
         body = request.json
         if body is None:
             return 'Missing request body', 400

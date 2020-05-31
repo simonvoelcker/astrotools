@@ -128,6 +128,7 @@ class ListDirectoryApi(Resource):
         hti_static_dir = os.path.join(here, '..', '..', 'static')
         final_path = os.path.normpath(os.path.join(hti_static_dir, path))
         if not os.path.isdir(final_path):
+            print('Not found', final_path)
             return f'Directory {final_path} not found', 404
 
         return jsonify(os.listdir(final_path))

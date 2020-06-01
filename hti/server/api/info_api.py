@@ -108,8 +108,21 @@ class CalibrateImageApi(Resource):
 
 @api.route('/directory')
 class ListDirectoryApi(Resource):
+
+    def _list_dir_recursively(self, path: str) -> list:
+        entries = list(os.listdir(path))
+        entries.sort()
+        for entry_index, entry in enumerate(entries):
+            sub_path = os.path.join(path, entry)
+            if os.path.isdir(sub_path):
+                entries[entry_index] = {
+                    'name': entry,
+                    'children': self._list_dir_recursively(sub_path)
+                }
+        return entries
+
     @api.doc(
-        description='List subdirectories and image files of given directory',
+        description='List subdirectories and files of given directory',
         response={
             200: 'Success',
             400: 'Malformed request',
@@ -121,6 +134,7 @@ class ListDirectoryApi(Resource):
         if body is None:
             return 'Missing request body', 400
         path = body.get('path')  # path is understood to be relative to static
+        recursive = body.get('recursive', False)
         if path is None:
             return 'Missing path in request body', 400
 
@@ -128,7 +142,11 @@ class ListDirectoryApi(Resource):
         hti_static_dir = os.path.join(here, '..', '..', 'static')
         final_path = os.path.normpath(os.path.join(hti_static_dir, path))
         if not os.path.isdir(final_path):
-            print('Not found', final_path)
             return f'Directory {final_path} not found', 404
 
-        return jsonify(os.listdir(final_path))
+        if recursive:
+            entries = self._list_dir_recursively(final_path)
+        else:
+            entries = os.listdir(final_path)
+            entries.sort()
+        return jsonify(entries)

@@ -72,9 +72,10 @@ export default {
     return $axios.post('/axes/gototarget')
   },
 
-  listDirectory (path) {
+  listDirectory (path, recursive) {
     return $axios.post('/info/directory', {
-      path: path
+      path: path,
+      recursive: recursive
     })
   }
 }

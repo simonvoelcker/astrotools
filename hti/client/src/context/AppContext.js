@@ -8,25 +8,67 @@ export class AppProvider extends Component {
     super(props)
 
     this.camera = null
-    this.initialize()
 
     this.state = {
-        // todo there's a default here because the layout is not stable otherwise
-        imageUrl: 'http://localhost:5000/static/2020-05-28/lights/2020-05-28T23:08:42.301155.png',
-        imagePath: '2020-05-28/lights/2020-05-28T23:08:42.301155.png',
-        imagePosition: null,
-        imageRotation: null,
-        initialized: false,  // todo need a state to mean "backend state received"
-        trackingStatus: null,
+      imagePosition: null,
+      imageRotation: null,
+      initialized: false,  // todo need a state to mean "backend state received"
+      trackingStatus: null,
 
-        // from backend (app state events):
-        runningSequence: null,
-        steering: null,
-        tracking: null,
-        calibrating: null,
-        here: null,
-        target: null,  // todo this is only coordinates, no meta data
-        axisSpeeds: null,
+      // from backend (app state events):
+      runningSequence: null,
+      steering: null,
+      tracking: null,
+      calibrating: null,
+      here: null,
+      target: null,  // todo this is only coordinates, no meta data
+      axisSpeeds: null,
+
+      images: {
+        prefix: null,     // common prefix to all image paths. relative to static
+        paths: null
+      },
+      imageSelection: {
+        directoryIndex: null,
+        filenameIndex: null
+      }
+    }
+
+    this.utils = {
+      imagePath: () => {
+        if (this.state.images.paths === null) {
+          return null
+        }
+        let directory = this.state.images.paths[this.state.imageSelection.directoryIndex]
+        let filename = directory.children[this.state.imageSelection.filenameIndex]
+        return this.state.images.prefix + '/' + directory.name + '/' + filename
+      },
+
+      imageUrl: () => {
+        let imagePath = this.utils.imagePath()
+        if (imagePath === null) {
+          return null
+        }
+        return 'http://localhost:5000/static/' + this.utils.imagePath()
+      },
+
+      directoryNames: () => {
+        if (this.state.images.paths === null) {
+          return []
+        }
+        return this.state.images.paths.map(directory => directory.name)
+      },
+
+      fileNames: () => {
+        if (this.state.images.paths === null) {
+          return []
+        }
+        return this.state.images.paths[this.state.imageSelection.directoryIndex].children
+      },
+
+      numFiles: () => {
+        return this.utils.fileNames().length
+      }
     }
 
     this.mutations = {
@@ -87,10 +129,41 @@ export class AppProvider extends Component {
         return $backend.goToTarget()
       },
 
-      listDirectory: (path) => {
-        return $backend.listDirectory(path)
+      listDirectory: (path, recursive) => {
+        return $backend.listDirectory(path, recursive)
+      },
+
+      selectDirectory: (directory) => {
+        this.setState({
+          imageSelection: {
+            directoryIndex: this.utils.directoryNames().indexOf(directory),
+            filenameIndex: 0
+          }
+        })
+      },
+
+      selectPreviousImage: () => {
+        let numFiles = this.utils.fileNames().length
+        this.setState({
+          imageSelection: {
+            directoryIndex: this.state.imageSelection.directoryIndex,
+            filenameIndex: (this.state.imageSelection.filenameIndex + numFiles - 1) % numFiles
+          }
+        })
+      },
+
+      selectNextImage: () => {
+        let numFiles = this.utils.fileNames().length
+        this.setState({
+          imageSelection: {
+            directoryIndex: this.state.imageSelection.directoryIndex,
+            filenameIndex: (this.state.imageSelection.filenameIndex + 1) % numFiles
+          }
+        })
       }
     }
+
+    this.initialize()
   }
 
   initialize () {
@@ -123,11 +196,30 @@ export class AppProvider extends Component {
         })
       }
     }
+
+    this.mutations.listDirectory('.', false).then(response => {
+      if (response.data.length > 0) {
+        let latestPrefix = response.data[response.data.length-1]
+        this.mutations.listDirectory(latestPrefix, true).then(response => {
+          let paths = response.data
+          this.setState({
+            images: {
+              prefix: latestPrefix,
+              paths: paths
+            },
+            imageSelection: {
+              directoryIndex: 0,
+              filenameIndex: 0
+            }
+          })
+        })
+      }
+    })
   }
 
   render () {
     return (
-      <AppContext.Provider value={{ store: this.state, mutations: this.mutations }}>
+      <AppContext.Provider value={{ store: this.state, mutations: this.mutations, utils: this.utils }}>
         {this.props.children}
       </AppContext.Provider>
     )

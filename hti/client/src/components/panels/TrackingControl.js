@@ -11,7 +11,6 @@ export default class TrackingControl extends Component {
       targetInput: '',
       targetInputStatus: '',
       target: null,
-      calibrating: false,
       trackingMode: 'target',
     }
   }
@@ -30,15 +29,6 @@ export default class TrackingControl extends Component {
     })
   }
 
-  calibrateImage () {
-    this.setState({calibrating: true})
-    this.context.mutations.calibrateImage(this.context.store.imagePath).then(response => {
-      this.setState({calibrating: false})
-    }).catch(error => {
-      this.setState({calibrating: false})
-    })
-  }
-
   getTargetProperties (target) {
     const name = target && target.name ? target.name : '-'
     const type = target && target.type ? ' (' + target.type + ')' : ''
@@ -51,15 +41,6 @@ export default class TrackingControl extends Component {
 
   render () {
     const targetProperties = this.getTargetProperties(this.state.target)
-    let imagePosition = '-'
-    if (this.context.store.imagePosition !== null) {
-      imagePosition = this.context.store.imagePosition.ra.toFixed(2) + ', ' +
-                      this.context.store.imagePosition.dec.toFixed(2)
-    }
-    let imageRotation = '-'
-    if (this.context.store.imageRotation !== null) {
-      imageRotation = this.context.store.imageRotation.angle.toFixed(2) + '°'
-    }
 
     return (
       <AppConsumer>
@@ -89,14 +70,6 @@ export default class TrackingControl extends Component {
                           <td className="spaced-text">{targetProperty.value}</td>
                         </tr>
                       })}
-                      <tr>
-                        <td className="spaced-text">Image center:</td>
-                        <td className="spaced-text">{imagePosition}</td>
-                      </tr>
-                      <tr>
-                        <td className="spaced-text">Image rotation:</td>
-                        <td className="spaced-text">{imageRotation}</td>
-                      </tr>
                       <tr>
                         <td className="spaced-text">Tracking status:</td>
                         <td className="spaced-text">{store.trackingStatus ? store.trackingStatus.message : '-'}</td>

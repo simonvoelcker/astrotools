@@ -10,8 +10,6 @@ export class AppProvider extends Component {
     this.camera = null
 
     this.state = {
-      imagePosition: null,
-      imageRotation: null,
       initialized: false,  // todo need a state to mean "backend state received"
       trackingStatus: null,
 
@@ -26,7 +24,7 @@ export class AppProvider extends Component {
 
       images: {
         prefix: null,     // common prefix to all image paths. relative to static
-        paths: null
+        paths: null       // todo augment this with image calibration data. also move it to a class: ImageStore, with some nice util stuff
       },
       imageSelection: {
         directoryIndex: null,
@@ -72,27 +70,6 @@ export class AppProvider extends Component {
     }
 
     this.mutations = {
-
-      calibrateImage: (imagePath) => {
-        return $backend.calibrateImage(imagePath).then(response => {
-          this.setState({
-            imagePosition: {
-              ra: parseFloat(response.data.center_deg.ra),
-              dec: parseFloat(response.data.center_deg.dec)
-            },
-            imageRotation: {
-              angle: parseFloat(response.data.rotation.angle),
-              direction: response.data.rotation.direction
-            }
-          })
-        }).catch(error => {
-          this.setState({
-            imagePosition: null,
-            imageRotation: null
-          })
-        })
-      },
-
       capture: (exposure, gain) => {
         return $backend.capture(this.camera, exposure, gain)
       },
@@ -160,6 +137,39 @@ export class AppProvider extends Component {
             filenameIndex: (this.state.imageSelection.filenameIndex + 1) % numFiles
           }
         })
+      },
+
+      calibrateImage () {
+        let imagePath = this.utils.imagePath()
+        return $backend.calibrateImage(imagePath).then(response => {
+          this.setState({
+            imagePosition: {
+              ra: parseFloat(response.data.center_deg.ra),
+              dec: parseFloat(response.data.center_deg.dec)
+            },
+            imageRotation: {
+              angle: parseFloat(response.data.rotation.angle),
+              direction: response.data.rotation.direction
+            }
+          })
+        }).catch(error => {
+          this.setState({
+            imagePosition: null,
+            imageRotation: null
+          })
+        })
+
+        // nice formatting for image calibration data:
+        //            let imagePosition = '-'
+        //    if (this.context.store.imagePosition !== null) {
+        //      imagePosition = this.context.store.imagePosition.ra.toFixed(2) + ', ' +
+        //                      this.context.store.imagePosition.dec.toFixed(2)
+        //    }
+        //    let imageRotation = '-'
+        //    if (this.context.store.imageRotation !== null) {
+        //      imageRotation = this.context.store.imageRotation.angle.toFixed(2) + '°'
+        //    }
+
       }
     }
 

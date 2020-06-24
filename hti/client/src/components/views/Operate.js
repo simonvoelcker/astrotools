@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 
 import CameraView from '../panels/CameraView'
+import ThreeDView from '../panels/ThreeDView'
 import CaptureControl from '../panels/CaptureControl'
 import AxisControl from '../panels/AxisControl'
 import TrackingControl from '../panels/TrackingControl'
@@ -14,7 +15,7 @@ export default class Operate extends Component {
         {({ store, mutations }) => (
           <div className='operate'>
             <div>
-              <CameraView />
+              <ThreeDView />
               <ImageControl />
             </div>
             <div>

@@ -80,7 +80,7 @@ export default class TrackingControl extends Component {
                 <Row className='row button-row'>
                   <StandardButton
                     disabled={store.imagePath === null || store.tracking || this.state.calibrating}
-                    onClick={this.calibrateImage.bind(this)}>CALIBRATE IMAGE</StandardButton>
+                    onClick={() => {}}>CALIBRATE IMAGE</StandardButton>
                   <StandardButton
                     disabled={this.state.target === null || store.tracking || store.imagePosition === null}
                     onClick={mutations.goToTarget}>GO TO TARGET</StandardButton>

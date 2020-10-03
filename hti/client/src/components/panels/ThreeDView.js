@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from '../../utils/OrbitControls';
+import backgroundImage from '../../assets/img/skymap.jpg';
 
 export default class ThreeDView extends Component {
   componentDidMount() {
     const width = this.mount.clientWidth
     const height = this.mount.clientHeight
+
 
     this.scene = new THREE.Scene()
 
@@ -25,11 +27,16 @@ export default class ThreeDView extends Component {
     this.controls.enableZoom = false;
     this.controls.rotateSpeed = -0.2;
 
-    // add geometry
-    const geometry = new THREE.SphereGeometry(500, 36, 18)
-    const material = new THREE.MeshBasicMaterial({ color: '#ffffff', wireframe: true })
-    this.sphere = new THREE.Mesh(geometry, material)
-    this.scene.add(this.sphere)
+    // add grid
+    const gridGeometry = new THREE.SphereGeometry(500, 36, 18)
+    const gridMaterial = new THREE.MeshBasicMaterial({ color: '#ffffff', wireframe: true })
+    this.scene.add(new THREE.Mesh(gridGeometry, gridMaterial))
+
+    var texture = new THREE.TextureLoader().load(backgroundImage)
+    var backgroundGeometry = new THREE.BoxBufferGeometry(200, 200, 200)
+    var backgroundMaterial = new THREE.MeshBasicMaterial({ map: texture })
+    this.scene.add(new THREE.Mesh(backgroundGeometry, backgroundMaterial))
+
     this.start()
   }
 

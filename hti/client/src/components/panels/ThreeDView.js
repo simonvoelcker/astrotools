@@ -32,9 +32,10 @@ export default class ThreeDView extends Component {
     const gridMaterial = new THREE.MeshBasicMaterial({ color: '#ffffff', wireframe: true })
     this.scene.add(new THREE.Mesh(gridGeometry, gridMaterial))
 
-    var texture = new THREE.TextureLoader().load(backgroundImage)
-    var backgroundGeometry = new THREE.BoxBufferGeometry(200, 200, 200)
-    var backgroundMaterial = new THREE.MeshBasicMaterial({ map: texture })
+    let texture = new THREE.TextureLoader().load(backgroundImage)
+    let backgroundGeometry = new THREE.SphereGeometry(600, 36, 18)
+    backgroundGeometry.applyMatrix(new THREE.Matrix4().makeScale( -1, 1, 1 ))
+    let backgroundMaterial = new THREE.MeshBasicMaterial({ map: texture })
     this.scene.add(new THREE.Mesh(backgroundGeometry, backgroundMaterial))
 
     this.start()

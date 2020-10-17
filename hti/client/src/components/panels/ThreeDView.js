@@ -2,6 +2,9 @@ import React, { Component } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from '../../utils/OrbitControls';
 import backgroundImage from '../../assets/img/skymap.jpg';
+import starImage from '../../assets/img/star.png';
+
+import $backend from '../../backend'
 
 export default class ThreeDView extends Component {
   componentDidMount() {
@@ -28,15 +31,34 @@ export default class ThreeDView extends Component {
     this.controls.rotateSpeed = -0.2;
 
     // add grid
-    const gridGeometry = new THREE.SphereGeometry(500, 36, 18)
-    const gridMaterial = new THREE.MeshBasicMaterial({ color: '#ffffff', wireframe: true })
-    this.scene.add(new THREE.Mesh(gridGeometry, gridMaterial))
+    // const gridGeometry = new THREE.SphereGeometry(500, 36, 18)
+    // const gridMaterial = new THREE.MeshBasicMaterial({ color: '#aaaaaa', wireframe: true })
+    // this.scene.add(new THREE.Mesh(gridGeometry, gridMaterial))
 
     let texture = new THREE.TextureLoader().load(backgroundImage)
     let backgroundGeometry = new THREE.SphereGeometry(600, 36, 18)
     backgroundGeometry.applyMatrix(new THREE.Matrix4().makeScale( -1, 1, 1 ))
     let backgroundMaterial = new THREE.MeshBasicMaterial({ map: texture })
     this.scene.add(new THREE.Mesh(backgroundGeometry, backgroundMaterial))
+
+    $backend.getStars().then(response => {
+        let stars = response.data
+
+        var spriteMap = new THREE.TextureLoader().load(starImage);
+        var spriteMaterial = new THREE.SpriteMaterial({ map: spriteMap });
+
+        for (var i=0; i<stars.length; i++) {
+            let ra = stars[i].ra / (2.0 * Math.PI)
+            let dec = stars[i].dec / (2.0 * Math.PI)
+
+            var sprite = new THREE.Sprite(spriteMaterial);
+            let distance = 20.0 * stars[i].mag
+            sprite.position.x = distance * Math.cos(ra) * Math.cos(dec)
+            sprite.position.y = distance * Math.sin(dec)
+            sprite.position.z = distance * Math.sin(ra) * Math.cos(dec)
+            this.scene.add(sprite);
+        }
+    })
 
     this.start()
   }

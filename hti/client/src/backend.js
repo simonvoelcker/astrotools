@@ -77,5 +77,9 @@ export default {
       path: path,
       recursive: recursive
     })
+  },
+
+  getStars () {
+    return $axios.get('/info/stars')
   }
 }

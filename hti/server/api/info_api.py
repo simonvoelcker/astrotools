@@ -84,7 +84,7 @@ class QueryStarsApi(Resource):
         }
     )
     def get(self):
-        stars = get_catalog().get_stars(limit=100)
+        stars = get_catalog().get_stars(limit=1000)
         return stars, 200
 
 

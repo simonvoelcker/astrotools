@@ -1,5 +1,6 @@
-import csv
 import os
+import csv  # NGC catalog
+import sqlite3  # star catalog
 
 
 class Catalog:
@@ -41,3 +42,20 @@ class Catalog:
 		if entry is None:
 			return None
 		return {key: value for key, value in zip(self._header, entry)}
+
+	def get_stars(self, limit=1000):
+		directory = '/home/simon/Hobby/astro/Tycho-2/'
+		db_file = os.path.join(directory, 'tycho2.db')
+		connection = sqlite3.connect(db_file)
+		result = connection.execute(f'''
+			SELECT ra, dec, mag FROM stars ORDER BY mag LIMIT {limit}
+		''')
+
+		return [
+			{
+				'ra': row[0],
+				'dec': row[1],
+				'mag': row[2],
+			}
+			for row in result
+		]

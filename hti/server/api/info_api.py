@@ -75,6 +75,19 @@ class QueryTargetApi(Resource):
         return '', 404
 
 
+@api.route('/stars')
+class QueryStarsApi(Resource):
+    @api.doc(
+        description='Get a list of stars based on query criteria',
+        response={
+            200: 'Success',
+        }
+    )
+    def get(self):
+        stars = get_catalog().get_stars(limit=100)
+        return stars, 200
+
+
 @api.route('/images/calibrate')
 class CalibrateImageApi(Resource):
     @api.doc(

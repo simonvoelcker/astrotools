@@ -79,7 +79,13 @@ export default {
     })
   },
 
-  getStars () {
-    return $axios.get('/info/stars')
+  getStars (count, minRa, maxRa, minDec, maxDec) {
+    return $axios.get('/info/stars', { params: {
+        count: count,
+        minRa: minRa,
+        maxRa: maxRa,
+        minDec: minDec,
+        maxDec: maxDec
+    }})
   }
 }

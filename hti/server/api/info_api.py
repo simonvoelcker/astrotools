@@ -84,7 +84,14 @@ class QueryStarsApi(Resource):
         }
     )
     def get(self):
-        stars = get_catalog().get_stars(limit=1000)
+        count = request.args.get('count') if 'count' in request.args else 1000
+        area = {
+            'raMin': request.args.get('raMin'),
+            'raMax': request.args.get('raMax'),
+            'decMin': request.args.get('decMin'),
+            'decMax': request.args.get('decMax'),
+        } if 'raMin' in request.args else None
+        stars = get_catalog().get_stars(area=area, count=count)
         return stars, 200
 
 

@@ -48,8 +48,9 @@ export default class ThreeDView extends Component {
         var spriteMaterial = new THREE.SpriteMaterial({ map: spriteMap });
 
         for (var i=0; i<stars.length; i++) {
-            let ra = stars[i].ra / (2.0 * Math.PI)
-            let dec = stars[i].dec / (2.0 * Math.PI)
+            // carefully handcrafted coordinate mapping
+            let ra = (180.0 - stars[i].ra) / 180.0 * Math.PI
+            let dec = stars[i].dec / 180.0 * Math.PI
 
             var sprite = new THREE.Sprite(spriteMaterial);
             let distance = 20.0 * stars[i].mag

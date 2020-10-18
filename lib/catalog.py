@@ -43,12 +43,24 @@ class Catalog:
 			return None
 		return {key: value for key, value in zip(self._header, entry)}
 
-	def get_stars(self, limit=1000):
+	def get_stars(self, area=None, count=None):
 		directory = '/home/simon/Hobby/astro/Tycho-2/'
 		db_file = os.path.join(directory, 'tycho2.db')
 		connection = sqlite3.connect(db_file)
+
+		where_clause = f'''
+			WHERE ra > {area["raMin"]}
+			AND ra < {area["raMax"]}
+			AND dec > {area["decMin"]}
+			AND dec < {area["decMax"]}''' if area is not None else ''
+		limit_clause = f'LIMIT {count}' if count is not None else ''
+
 		result = connection.execute(f'''
-			SELECT ra, dec, mag FROM stars ORDER BY mag LIMIT {limit}
+			SELECT ra, dec, mag
+			FROM stars
+			{where_clause}
+			ORDER BY mag
+			{limit_clause}
 		''')
 
 		return [

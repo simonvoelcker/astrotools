@@ -27,7 +27,8 @@ export default class ThreeDView extends Component {
     this.controls = new OrbitControls( this.camera, this.renderer.domElement );
     this.controls.domElement = this.renderer.domElement;
     this.controls.enablePan = false;
-    this.controls.enableZoom = false;
+    this.controls.enableZoom = true;
+    this.controls.zoomSpeed = 0.5;
     this.controls.rotateSpeed = -0.2;
 
     // add grid

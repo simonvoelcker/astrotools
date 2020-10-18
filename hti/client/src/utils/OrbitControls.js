@@ -453,7 +453,11 @@ var OrbitControls = function ( object, domElement ) {
 
 		if ( scope.object.isPerspectiveCamera ) {
 
-			scale /= dollyScale;
+			scope.object.zoom = Math.max( scope.minZoom, Math.min( scope.maxZoom, scope.object.zoom * dollyScale ) );
+			scope.object.updateProjectionMatrix();
+			zoomChanged = true;
+
+			// scale /= dollyScale;
 
 		} else if ( scope.object.isOrthographicCamera ) {
 
@@ -474,7 +478,11 @@ var OrbitControls = function ( object, domElement ) {
 
 		if ( scope.object.isPerspectiveCamera ) {
 
-			scale *= dollyScale;
+			scope.object.zoom = Math.max( scope.minZoom, Math.min( scope.maxZoom, scope.object.zoom / dollyScale ) );
+			scope.object.updateProjectionMatrix();
+			zoomChanged = true;
+
+			// scale *= dollyScale;
 
 		} else if ( scope.object.isOrthographicCamera ) {
 
@@ -517,7 +525,8 @@ var OrbitControls = function ( object, domElement ) {
 
 		rotateEnd.set( event.clientX, event.clientY );
 
-		rotateDelta.subVectors( rotateEnd, rotateStart ).multiplyScalar( scope.rotateSpeed );
+        let effectiveRotateSpeed = scope.rotateSpeed / scope.object.zoom;
+		rotateDelta.subVectors( rotateEnd, rotateStart ).multiplyScalar(effectiveRotateSpeed);
 
 		var element = scope.domElement;
 
@@ -705,7 +714,8 @@ var OrbitControls = function ( object, domElement ) {
 
 		}
 
-		rotateDelta.subVectors( rotateEnd, rotateStart ).multiplyScalar( scope.rotateSpeed );
+        let effectiveRotateSpeed = scope.rotateSpeed / scope.object.zoom;
+		rotateDelta.subVectors( rotateEnd, rotateStart ).multiplyScalar(effectiveRotateSpeed);
 
 		var element = scope.domElement;
 

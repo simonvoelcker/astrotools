@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from '../../utils/OrbitControls';
-import backgroundImage from '../../assets/img/skymap-blurred.jpg';
+import skymapImage from '../../assets/img/skymap.jpg';
+import gridImage from '../../assets/img/grid.png';
 import starImage from '../../assets/img/star.png';
 
 import $backend from '../../backend'
@@ -31,16 +32,12 @@ export default class ThreeDView extends Component {
     this.controls.zoomSpeed = 0.5;
     this.controls.rotateSpeed = -0.2;
 
-    // add grid
-    // const gridGeometry = new THREE.SphereGeometry(500, 36, 18)
-    // const gridMaterial = new THREE.MeshBasicMaterial({ color: '#aaaaaa', wireframe: true })
-    // this.scene.add(new THREE.Mesh(gridGeometry, gridMaterial))
+    // grid
 
-    let texture = new THREE.TextureLoader().load(backgroundImage)
-    let backgroundGeometry = new THREE.SphereGeometry(600, 36, 18)
-    backgroundGeometry.applyMatrix(new THREE.Matrix4().makeScale( -1, 1, 1 ))
-    let backgroundMaterial = new THREE.MeshBasicMaterial({ map: texture })
-    this.scene.add(new THREE.Mesh(backgroundGeometry, backgroundMaterial))
+    this.scene.add( this.getBackground() )
+    this.scene.add( this.getGrid() )
+
+    // stars (todo: use one vertex buffer, not list of sprites)
 
     $backend.getStars().then(response => {
         let stars = response.data
@@ -65,7 +62,40 @@ export default class ThreeDView extends Component {
     this.start()
   }
 
-  componentWillUnmount(){
+  getTexturedSphere (size, material) {
+    let geometry = new THREE.SphereGeometry(size, 90, 45)
+    geometry.applyMatrix(new THREE.Matrix4().makeScale( -1, 1, 1 ))
+    return new THREE.Mesh(geometry, material)
+  }
+
+  getBackground () {
+    let texture = new THREE.TextureLoader().load(skymapImage)
+
+    let material = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: false,
+      depthTest: true,
+      depthWrite: true,
+    })
+    return this.getTexturedSphere(600, material)
+  }
+
+  getGrid (degPerLine = 10) {
+    let texture = new THREE.TextureLoader().load(gridImage)
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(360 / degPerLine, 180 / degPerLine)
+
+    let material = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      depthTest: true,
+      depthWrite: false,
+    })
+    return this.getTexturedSphere(500, material)
+  }
+
+  componentWillUnmount() {
     this.stop()
     this.mount.removeChild(this.renderer.domElement)
   }

@@ -54,7 +54,7 @@ export default class ThreeDView extends Component {
             let dec = stars[i].dec / 180.0 * Math.PI
 
             var sprite = new THREE.Sprite(spriteMaterial);
-            let distance = 20.0 * stars[i].mag
+            let distance = 30.0 * stars[i].mag
             sprite.position.x = distance * Math.cos(ra) * Math.cos(dec)
             sprite.position.y = distance * Math.sin(dec)
             sprite.position.z = distance * Math.sin(ra) * Math.cos(dec)

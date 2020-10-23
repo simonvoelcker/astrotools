@@ -1,21 +1,20 @@
 import React, { Component } from 'react'
 
 import CameraView from '../panels/CameraView'
-import ThreeDView from '../panels/ThreeDView'
 import CaptureControl from '../panels/CaptureControl'
 import AxisControl from '../panels/AxisControl'
 import TrackingControl from '../panels/TrackingControl'
 import ImageControl from '../panels/ImageControl'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 
-export default class Operate extends Component {
+export default class Operator extends Component {
   render () {
     return (
       <AppConsumer>
         {({ store, mutations }) => (
-          <div className='operate'>
+          <div className='operator'>
             <div>
-              <ThreeDView />
+              <CameraView />
               <ImageControl />
             </div>
             <div>
@@ -29,4 +28,4 @@ export default class Operate extends Component {
     )
   }
 }
-Operate.contextType = AppContext
+Operator.contextType = AppContext

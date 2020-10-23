@@ -624,6 +624,8 @@ var OrbitControls = function ( object, domElement ) {
 				needsUpdate = true;
 				break;
 
+            default:
+                break;
 		}
 
 		if ( needsUpdate ) {
@@ -640,7 +642,7 @@ var OrbitControls = function ( object, domElement ) {
 
 	function handleTouchStartRotate( event ) {
 
-		if ( event.touches.length == 1 ) {
+		if ( event.touches.length === 1 ) {
 
 			rotateStart.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
 
@@ -657,7 +659,7 @@ var OrbitControls = function ( object, domElement ) {
 
 	function handleTouchStartPan( event ) {
 
-		if ( event.touches.length == 1 ) {
+		if ( event.touches.length === 1 ) {
 
 			panStart.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
 
@@ -701,7 +703,7 @@ var OrbitControls = function ( object, domElement ) {
 
 	function handleTouchMoveRotate( event ) {
 
-		if ( event.touches.length == 1 ) {
+		if ( event.touches.length === 1 ) {
 
 			rotateEnd.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
 
@@ -729,7 +731,7 @@ var OrbitControls = function ( object, domElement ) {
 
 	function handleTouchMovePan( event ) {
 
-		if ( event.touches.length == 1 ) {
+		if ( event.touches.length === 1 ) {
 
 			panEnd.set( event.touches[ 0 ].pageX, event.touches[ 0 ].pageY );
 
@@ -934,6 +936,9 @@ var OrbitControls = function ( object, domElement ) {
 				handleMouseMovePan( event );
 
 				break;
+
+			default:
+			    break;
 
 		}
 

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from '../../utils/OrbitControls';
-import backgroundImage from '../../assets/img/skymap.jpg';
+import backgroundImage from '../../assets/img/skymap-blurred.jpg';
 import starImage from '../../assets/img/star.png';
 
 import $backend from '../../backend'
@@ -93,7 +93,7 @@ export default class ThreeDView extends Component {
   render () {
     return (
       <div
-        style={{ width: '1180px', height: '600px' }}
+        style={{ width: '100%', height: '100%' }}
         ref={(mount) => { this.mount = mount }}
       />
     )

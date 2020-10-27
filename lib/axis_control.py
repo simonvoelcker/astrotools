@@ -7,16 +7,15 @@ import glob
 
 class AxisSpeeds:
 
-	ra_axis_ratio = 69.0 * 3.0 * 2.0  # 2.0 is magic
-	dec_axis_ratio = 105.6 * 2.0  # 2.0 is magic
+	ra_axis_ratio = 138.0 * 3.0	 # 138: worm gear. 3: belt
+	dec_axis_ratio = 88.0 * 2.4  # 88: worm gear. 2.4: spur gears
 
 	max_speed_dps = 0.3
 
-	# siderial speed plus typical drifting speeds
-	# TODO the drift should not be part of the theoretical resting speed
-	# it should be the default offset applied when the frontend calls /rest
-	ra_resting_speed = -15.0 / 3600.0 + 0.2 / 3600.0
-	dec_resting_speed = 0.0 / 3600.0 + 0.5 / 3600.0
+	# Theoretical resting speed assuming Siderial day
+	# Unit is degrees per second, /3600 makes it arc-secs per second.
+	ra_resting_speed = -15.0 / 3600.0
+	dec_resting_speed = 0.0 / 3600.0
 
 	def __init__(self, ra_dps: float, dec_dps: float, mode: str):
 		self.ra_dps = ra_dps

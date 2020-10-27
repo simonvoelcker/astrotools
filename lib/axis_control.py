@@ -71,7 +71,11 @@ class AxisControl:
 		self.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=AxisSpeeds.dec_resting_speed, mode='resting')
 
 	def set_axis_speeds(self, ra_dps=None, dec_dps=None, mode=None):
-		print(f'setting RA={ra_dps:9.6f}, Dec={dec_dps:9.6f}, mode: {mode}')
+		ra_str = f'RA={ra_dps:9.6f} dps' if ra_dps else ''
+		dec_str = f'Dec={dec_dps:9.6f} dps' if dec_dps else ''
+		mode_str = f'Mode={mode}' if mode else ''
+		print(f'Setting {ra_str} {dec_str} {mode_str}')
+
 		if self.serial is not None:
 			if ra_dps is not None:
 				shaft_speed_rps = AxisSpeeds.ra_dps_to_axis(ra_dps)
@@ -88,7 +92,9 @@ class AxisControl:
 			self.speeds.dec_dps = dec_dps
 
 		self.speeds.mode = mode
-		self.on_speeds_change(self.speeds)
+
+		if self.on_speeds_change is not None:
+			self.on_speeds_change(self.speeds)
 
 	def read_position(self):
 		# this is too slow right now. revive later. also, make it a command of sorts.

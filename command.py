@@ -3,7 +3,7 @@ import glob
 import json
 import os
 
-from lib.axis_control import AxisControl, AxisSpeeds
+from lib.axis_control import AxisControl
 from lib.catalog import Catalog
 from lib.coordinates import Coordinates
 from lib.image_tracker import ImageTracker

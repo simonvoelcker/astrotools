@@ -12,14 +12,11 @@ export default class ThreeDView extends Component {
     const width = this.mount.clientWidth
     const height = this.mount.clientHeight
 
-
     this.scene = new THREE.Scene()
 
-    // ad camera
     this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000)
     this.camera.position.z = 0.1
 
-    // add renderer
     this.renderer = new THREE.WebGLRenderer({ antialias: true })
     this.renderer.setClearColor('#000000')
     this.renderer.setSize(width, height)
@@ -32,42 +29,72 @@ export default class ThreeDView extends Component {
     this.controls.zoomSpeed = 0.5;
     this.controls.rotateSpeed = -0.2;
 
-    // grid
+    // grid and background
 
     this.scene.add( this.getBackground() )
     this.scene.add( this.getGrid() )
 
+    // stars
+
     $backend.getStars().then(response => {
         let stars = response.data
-
-        let indices = []
-        let vertices = []
-        let uvs = []
-
-        for (var i=0; i<stars.length; i++) {
-            // carefully handcrafted coordinate mapping
-            let ra = (270.0 + stars[i].ra) / 180.0 * Math.PI
-            let dec = - stars[i].dec / 180.0 * Math.PI
-            let distance = 30.0 * stars[i].mag
-
-            const spriteVertices = this.getStarSpriteVertices(ra, dec, -distance, 0.5)
-            for (let vertex of spriteVertices) {
-                vertices = vertices.concat([vertex.x, vertex.y, vertex.z])
-            }
-            indices = indices.concat([4*i, 4*i+1, 4*i+2, 4*i+1, 4*i+3, 4*i+2])
-            uvs = uvs.concat([0, 0, 0, 1, 1, 0, 1, 1])
-        }
-
-        const geometry = new THREE.BufferGeometry()
-		geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
-		geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
-        geometry.setIndex(indices)
-        const spriteMap = new THREE.TextureLoader().load(starImage);
-        const material = new THREE.MeshBasicMaterial({ map: spriteMap });
-        this.scene.add(new THREE.Mesh(geometry, material))
+        const geometry = this.getStarsGeometry(stars)
+        const spriteMap = new THREE.TextureLoader().load(starImage)
+        const material = new THREE.MeshBasicMaterial({ map: spriteMap })
+        this.scene.add( new THREE.Mesh(geometry, material) )
     })
 
     this.start()
+  }
+
+  getStarsGeometry (stars, distanceMultiplier = 30) {
+    let vertices = new Array(12*stars.length)
+    let indices = new Array(6*stars.length)
+    let uvs = new Array(8*stars.length)
+
+    for (let i=0; i<stars.length; i++) {
+        // carefully handcrafted coordinate mapping
+        const alpha = (270.0 + stars[i].ra) / 180.0 * Math.PI
+        const beta = - stars[i].dec / 180.0 * Math.PI
+        const distance = distanceMultiplier * stars[i].mag
+
+        const spriteVertices = this.getStarSpriteVertices(alpha, beta, -distance, 0.5)
+
+        vertices[12*i+0] = spriteVertices[0].x
+        vertices[12*i+1] = spriteVertices[0].y
+        vertices[12*i+2] = spriteVertices[0].z
+        vertices[12*i+3] = spriteVertices[1].x
+        vertices[12*i+4] = spriteVertices[1].y
+        vertices[12*i+5] = spriteVertices[1].z
+        vertices[12*i+6] = spriteVertices[2].x
+        vertices[12*i+7] = spriteVertices[2].y
+        vertices[12*i+8] = spriteVertices[2].z
+        vertices[12*i+9] = spriteVertices[3].x
+        vertices[12*i+10] = spriteVertices[3].y
+        vertices[12*i+11] = spriteVertices[3].z
+
+        indices[6*i+0] = 4*i
+        indices[6*i+1] = 4*i+1
+        indices[6*i+2] = 4*i+2
+        indices[6*i+3] = 4*i+1
+        indices[6*i+4] = 4*i+3
+        indices[6*i+5] = 4*i+2
+
+        uvs[8*i+0] = 0
+        uvs[8*i+1] = 0
+        uvs[8*i+2] = 0
+        uvs[8*i+3] = 1
+        uvs[8*i+4] = 1
+        uvs[8*i+5] = 0
+        uvs[8*i+6] = 1
+        uvs[8*i+7] = 1
+    }
+
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+    geometry.setIndex(indices)
+    return geometry
   }
 
   getStarSpriteVertices (ra, dec, distance, size) {

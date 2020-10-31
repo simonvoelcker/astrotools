@@ -37,29 +37,55 @@ export default class ThreeDView extends Component {
     this.scene.add( this.getBackground() )
     this.scene.add( this.getGrid() )
 
-    // stars (todo: use one vertex buffer, not list of sprites)
-
     $backend.getStars().then(response => {
         let stars = response.data
 
-        var spriteMap = new THREE.TextureLoader().load(starImage);
-        var spriteMaterial = new THREE.SpriteMaterial({ map: spriteMap });
+        let indices = []
+        let vertices = []
+        let uvs = []
 
         for (var i=0; i<stars.length; i++) {
             // carefully handcrafted coordinate mapping
-            let ra = (180.0 - stars[i].ra) / 180.0 * Math.PI
-            let dec = stars[i].dec / 180.0 * Math.PI
-
-            var sprite = new THREE.Sprite(spriteMaterial);
+            let ra = (270.0 + stars[i].ra) / 180.0 * Math.PI
+            let dec = - stars[i].dec / 180.0 * Math.PI
             let distance = 30.0 * stars[i].mag
-            sprite.position.x = distance * Math.cos(ra) * Math.cos(dec)
-            sprite.position.y = distance * Math.sin(dec)
-            sprite.position.z = distance * Math.sin(ra) * Math.cos(dec)
-            this.scene.add(sprite);
+
+            const spriteVertices = this.getStarSpriteVertices(ra, dec, -distance, 0.5)
+            for (let vertex of spriteVertices) {
+                vertices = vertices.concat([vertex.x, vertex.y, vertex.z])
+            }
+            indices = indices.concat([4*i, 4*i+1, 4*i+2, 4*i+1, 4*i+3, 4*i+2])
+            uvs = uvs.concat([0, 0, 0, 1, 1, 0, 1, 1])
         }
+
+        const geometry = new THREE.BufferGeometry()
+		geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+		geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+        geometry.setIndex(indices)
+        const spriteMap = new THREE.TextureLoader().load(starImage);
+        const material = new THREE.MeshBasicMaterial({ map: spriteMap });
+        this.scene.add(new THREE.Mesh(geometry, material))
     })
 
     this.start()
+  }
+
+  getStarSpriteVertices (ra, dec, distance, size) {
+
+    let scale = new THREE.Matrix4().makeScale(size, size, 0)
+    let translate = new THREE.Matrix4().makeTranslation(0, 0, -distance)
+    let rotateX = new THREE.Matrix4().makeRotationX(dec)
+    let rotateY = new THREE.Matrix4().makeRotationY(ra)
+
+    let transform = scale.premultiply(translate).premultiply(rotateX).premultiply(rotateY)
+
+    let vertices = [
+        new THREE.Vector3(-1, -1, 0),
+        new THREE.Vector3(-1, +1, 0),
+        new THREE.Vector3(+1, -1, 0),
+        new THREE.Vector3(+1, +1, 0),
+    ]
+    return vertices.map((v) => v.applyMatrix4(transform))
   }
 
   getTexturedSphere (size, material) {

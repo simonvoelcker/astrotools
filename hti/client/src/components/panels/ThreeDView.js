@@ -4,6 +4,7 @@ import { OrbitControls } from '../../utils/OrbitControls';
 import skymapImage from '../../assets/img/skymap.jpg';
 import gridImage from '../../assets/img/grid.png';
 import starImage from '../../assets/img/star.png';
+import stackedImage from '../../assets/img/13_M101_Galaxy.png';
 
 import $backend from '../../backend'
 
@@ -36,15 +37,57 @@ export default class ThreeDView extends Component {
 
     // stars
 
-    $backend.getStars().then(response => {
-        let stars = response.data
-        const geometry = this.getStarsGeometry(stars)
-        const spriteMap = new THREE.TextureLoader().load(starImage)
-        const material = new THREE.MeshBasicMaterial({ map: spriteMap })
-        this.scene.add( new THREE.Mesh(geometry, material) )
-    })
+    if (true) {
+        $backend.getStars().then(response => {
+            let stars = response.data
+            const geometry = this.getStarsGeometry(stars)
+            const spriteMap = new THREE.TextureLoader().load(starImage)
+            const material = new THREE.MeshBasicMaterial({ map: spriteMap })
+            this.scene.add( new THREE.Mesh(geometry, material) )
+        })
+    }
+
+    // image
+
+    const corners = [
+        { ra: 211.1585478725, dec: 54.2492060608 }, // 0,0
+        { ra: 211.1606458588, dec: 54.4829486252 }, // 0,930
+        { ra: 210.3881586528, dec: 54.2490715344 }, // 1790,0
+        { ra: 210.3863435910, dec: 54.4826463763 }, // 1790,930
+    ]
+
+    const geometry = this.getImageGeometry(corners, 300)
+    const imageTexture = new THREE.TextureLoader().load(stackedImage)
+    const material = new THREE.MeshBasicMaterial({ map: imageTexture, side: THREE.DoubleSide })
+    this.scene.add( new THREE.Mesh(geometry, material) )
 
     this.start()
+  }
+
+  getImageGeometry (corners, distance) {
+    // corners: array of 4 objects with ra, dec
+    let vertices = new Array(12)
+    let indices = [0, 1, 2, 1, 3, 2]
+    let uvs = [0, 0, 0, 1, 1, 0, 1, 1]
+
+    for (let i=0; i<corners.length; i++) {
+        // carefully handcrafted coordinate mapping
+        const ra = (270.0 + corners[i].ra) / 180.0 * Math.PI
+        const dec = - corners[i].dec / 180.0 * Math.PI
+
+        const vertex = this.getVertexFromRaDec(ra, dec, -distance)
+        vertices[3*i+0] = vertex.x
+        vertices[3*i+1] = vertex.y
+        vertices[3*i+2] = vertex.z
+    }
+
+    debugger;
+
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+    geometry.setIndex(indices)
+    return geometry
   }
 
   getStarsGeometry (stars, distanceMultiplier = 30) {
@@ -97,6 +140,12 @@ export default class ThreeDView extends Component {
     return geometry
   }
 
+  getVertexFromRaDec (ra, dec, distance) {
+    let rotateX = new THREE.Matrix4().makeRotationX(dec)
+    let rotateY = new THREE.Matrix4().makeRotationY(ra)
+    return new THREE.Vector3(0, 0, -distance).applyMatrix4(rotateX).applyMatrix4(rotateY)
+  }
+
   getStarSpriteVertices (ra, dec, distance, size) {
 
     let scale = new THREE.Matrix4().makeScale(size, size, 0)
@@ -116,8 +165,8 @@ export default class ThreeDView extends Component {
   }
 
   getTexturedSphere (size, material) {
-    let geometry = new THREE.SphereGeometry(size, 90, 45)
-    geometry.applyMatrix(new THREE.Matrix4().makeScale( -1, 1, 1 ))
+    let geometry = new THREE.SphereGeometry(size, 36, 18)
+    geometry.applyMatrix4(new THREE.Matrix4().makeScale( -1, 1, 1 ))
     return new THREE.Mesh(geometry, material)
   }
 

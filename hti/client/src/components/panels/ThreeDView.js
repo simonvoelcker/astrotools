@@ -143,19 +143,14 @@ export default class ThreeDView extends Component {
   }
 
   getStarSpriteVertices (ra, dec, distance, size) {
-
-    let scale = new THREE.Matrix4().makeScale(size, size, 0)
-    let translate = new THREE.Matrix4().makeTranslation(0, 0, -distance)
     let rotateX = new THREE.Matrix4().makeRotationX(dec)
     let rotateY = new THREE.Matrix4().makeRotationY(ra)
-
-    let transform = scale.premultiply(translate).premultiply(rotateX).premultiply(rotateY)
-
+    let transform = rotateX.premultiply(rotateY)
     let vertices = [
-        new THREE.Vector3(-1, -1, 0),
-        new THREE.Vector3(-1, +1, 0),
-        new THREE.Vector3(+1, -1, 0),
-        new THREE.Vector3(+1, +1, 0),
+        new THREE.Vector3(-size, -size, -distance),
+        new THREE.Vector3(-size, +size, -distance),
+        new THREE.Vector3(+size, -size, -distance),
+        new THREE.Vector3(+size, +size, -distance),
     ]
     return vertices.map((v) => v.applyMatrix4(transform))
   }

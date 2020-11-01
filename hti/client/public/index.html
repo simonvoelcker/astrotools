@@ -20,6 +20,33 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>HTI</title>
+
+    <script id="gridVertexShader" type="x-shader/x-vertex">
+        varying vec4 worldCoord;
+        void main() {
+            worldCoord = modelMatrix * vec4(position, 1.0);
+            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+            gl_Position = projectionMatrix * mvPosition;
+        }
+    </script>
+    <script id="gridFragmentShader" type="x-shader/x-fragment">
+        const float PI = 3.141592654;
+        varying vec4 worldCoord;
+
+        float angle(in float x, in float y) {
+            return atan(abs(x), sign(x) * y) + step(0.0, -x) * PI;
+        }
+
+        void main() {
+            float alpha = angle(worldCoord.x, worldCoord.z) / 2.0 / PI;
+            float beta = angle(sqrt(worldCoord.x*worldCoord.x + worldCoord.z*worldCoord.z), worldCoord.y) / 2.0 / PI;
+            float longitudeLines = step(0.98, fract(36.0 * alpha));
+            float latitudeLines = step(0.98, fract(36.0 * beta));
+            gl_FragColor.rgb = vec3(longitudeLines, latitudeLines, 0);
+            gl_FragColor.a = 1.0;
+        }
+    </script>
+
   </head>
   <body oncontextmenu="return true">
     <noscript>

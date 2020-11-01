@@ -37,15 +37,13 @@ export default class ThreeDView extends Component {
 
     // stars
 
-    if (true) {
-        $backend.getStars().then(response => {
-            let stars = response.data
-            const geometry = this.getStarsGeometry(stars)
-            const spriteMap = new THREE.TextureLoader().load(starImage)
-            const material = new THREE.MeshBasicMaterial({ map: spriteMap })
-            this.scene.add( new THREE.Mesh(geometry, material) )
-        })
-    }
+    $backend.getStars().then(response => {
+        let stars = response.data
+        const geometry = this.getStarsGeometry(stars)
+        const spriteMap = new THREE.TextureLoader().load(starImage)
+        const material = new THREE.MeshBasicMaterial({ map: spriteMap })
+        this.scene.add( new THREE.Mesh(geometry, material) )
+    })
 
     // image
 
@@ -80,8 +78,6 @@ export default class ThreeDView extends Component {
         vertices[3*i+1] = vertex.y
         vertices[3*i+2] = vertex.z
     }
-
-    debugger;
 
     const geometry = new THREE.BufferGeometry()
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
@@ -197,6 +193,16 @@ export default class ThreeDView extends Component {
     return this.getTexturedSphere(500, material)
   }
 
+  getShaderGrid () {
+    let geometry = new THREE.BoxGeometry(2, 2, 2);
+    let material = new THREE.ShaderMaterial({
+        side: THREE.DoubleSide,
+        vertexShader: document.getElementById('gridVertexShader').textContent,
+        fragmentShader: document.getElementById('gridFragmentShader').textContent,
+    })
+    return new THREE.Mesh(geometry, material)
+  }
+
   componentWillUnmount() {
     this.stop()
     this.mount.removeChild(this.renderer.domElement)
@@ -224,10 +230,10 @@ export default class ThreeDView extends Component {
 
   render () {
     return (
-      <div
-        style={{ width: '100%', height: '100%' }}
-        ref={(mount) => { this.mount = mount }}
-      />
+        <div
+            style={{ width: '100%', height: '100%' }}
+            ref={(mount) => { this.mount = mount }}
+        />
     )
   }
 }

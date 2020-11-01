@@ -33,7 +33,7 @@ export default class ThreeDView extends Component {
     // grid and background
 
     this.scene.add( this.getBackground() )
-    this.scene.add( this.getGrid() )
+    this.scene.add( this.getLineBasedGrid() )
 
     // stars
 
@@ -173,7 +173,7 @@ export default class ThreeDView extends Component {
     return this.getTexturedSphere(600, material)
   }
 
-  getGrid (degPerLine = 10) {
+  getTextureBasedGrid (degPerLine = 10) {
     let texture = new THREE.TextureLoader().load(gridImage)
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
@@ -188,7 +188,7 @@ export default class ThreeDView extends Component {
     return this.getTexturedSphere(500, material)
   }
 
-  getShaderGrid () {
+  getShaderBasedGrid () {
     let geometry = new THREE.BoxGeometry(2, 2, 2);
     let material = new THREE.ShaderMaterial({
         side: THREE.DoubleSide,
@@ -196,6 +196,48 @@ export default class ThreeDView extends Component {
         fragmentShader: document.getElementById('gridFragmentShader').textContent,
     })
     return new THREE.Mesh(geometry, material)
+  }
+
+  getRingGeometry (degPerSegment, radius) {
+    const numVerts = 360 / degPerSegment + 1
+    const vertices = new Array(numVerts * 3)
+
+    for (var v=0; v<numVerts; v++) {
+        const alpha = 2.0 * Math.PI * v / (numVerts-1)
+        vertices[3*v+0] = Math.sin(alpha) * radius
+        vertices[3*v+1] = 0.0
+        vertices[3*v+2] = Math.cos(alpha) * radius
+    }
+
+    const geometry = new THREE.BufferGeometry()
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3))
+    return geometry
+  }
+
+  getLineBasedGrid (degPerLine = 10, radius = 300) {
+    const material = new THREE.LineBasicMaterial({ color: '#ffffff' });
+    const grid = new THREE.Object3D();
+
+    // latitude rings
+    for (var beta=-90+degPerLine; beta<=90-degPerLine; beta+=degPerLine) {
+        const geometry = this.getRingGeometry(degPerLine, radius)
+        const ring = new THREE.Line(geometry, material)
+        ring.scale.x = Math.cos(beta / 180.0 * Math.PI)
+        ring.scale.z = Math.cos(beta / 180.0 * Math.PI)
+        ring.position.y = radius * Math.sin(beta / 180.0 * Math.PI)
+        grid.add(ring)
+    }
+
+    // longitude rings
+    for (var alpha=0; alpha<180; alpha+=degPerLine) {
+        const geometry = this.getRingGeometry(degPerLine, radius)
+        const ring = new THREE.Line(geometry, material)
+        ring.rotation.z = Math.PI / 2.0
+        ring.rotation.y = alpha / 180.0 * Math.PI
+        grid.add(ring)
+    }
+
+    return grid
   }
 
   componentWillUnmount() {

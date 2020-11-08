@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 import StandardButton from '../panels/StandardButton'
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import $backend from '../../backend'
+
 
 export default class AxisControl extends Component {
   constructor(props) {
@@ -41,12 +43,8 @@ export default class AxisControl extends Component {
     }
   }
 
-  rest () {
-    this.context.mutations.setRest()
-  }
-
   stop () {
-    this.context.mutations.setSpeeds(0.0, 0.0)
+    $backend.setSpeeds(0.0, 0.0)
   }
 
   steer (direction) {
@@ -61,7 +59,7 @@ export default class AxisControl extends Component {
       right: {ra: +this.state.increment.dps, dec: 0.0},
     }[direction]
 
-    this.context.mutations.setSpeeds(
+    $backend.setSpeeds(
       this.context.store.axisSpeeds.raDps + increments.ra,
       this.context.store.axisSpeeds.decDps + increments.dec,
     )
@@ -92,7 +90,7 @@ export default class AxisControl extends Component {
                 <span className='spaced-text'>{store.axisSpeeds ? store.axisSpeeds.mode.toUpperCase() : '-'}</span>
                 <StandardButton
                   disabled={store.axisSpeeds && store.axisSpeeds.mode === 'resting'}
-                  onClick={this.rest.bind(this)}>REST</StandardButton>
+                  onClick={$backend.setRest}>REST</StandardButton>
                 <StandardButton
                   disabled={!store.axisSpeeds || store.axisSpeeds.mode === 'stopped'}
                   onClick={this.stop.bind(this)}>STOP</StandardButton>

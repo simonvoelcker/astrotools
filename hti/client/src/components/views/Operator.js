@@ -4,7 +4,6 @@ import CameraView from '../panels/CameraView'
 import CaptureControl from '../panels/CaptureControl'
 import AxisControl from '../panels/AxisControl'
 import TrackingControl from '../panels/TrackingControl'
-import ImageControl from '../panels/ImageControl'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 
 export default class Operator extends Component {
@@ -15,7 +14,6 @@ export default class Operator extends Component {
           <div className='operator'>
             <div>
               <CameraView />
-              <ImageControl />
             </div>
             <div>
               <TrackingControl />

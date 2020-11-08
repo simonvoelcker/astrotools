@@ -3,6 +3,17 @@ import { AppConsumer, AppContext } from '../../context/AppContext'
 import StandardButton from '../panels/StandardButton'
 import { Table, Row, Col, Input, Label } from 'reactstrap'
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import $backend from '../../backend'
+
+// TODOs from 2020-11-07
+// capture -> grey out other buttons
+// show calibration success and whether it is in progress
+// show age of current frame
+// when capturing, shouldnt be able to start a sequence, and vice verse
+// exposure 10, gain 10000 by default
+// auto-start indi server with backend
+// investigate 16 sec per frame when 10 is configured
+// get sequencing status from BE, same for capturing maybe
 
 export default class TrackingControl extends Component {
   constructor (props) {
@@ -22,7 +33,7 @@ export default class TrackingControl extends Component {
   onSetTarget () {
     let query = this.state.targetInput
     this.setState({targetInputStatus: ''})
-    this.context.mutations.queryTarget(query).then(response => {
+    $backend.queryTarget(query).then(response => {
       this.setState({target: response.data})
     }).catch(error => {
       this.setState({targetInputStatus: 'Not found'})
@@ -80,19 +91,19 @@ export default class TrackingControl extends Component {
                 <Row className='row button-row'>
                   <StandardButton
                     disabled={store.imagePath === null || store.tracking || this.state.calibrating}
-                    onClick={() => {}}>CALIBRATE IMAGE</StandardButton>
+                    onClick={() => mutations.calibrateImage(this.context)}>CALIBRATE IMAGE</StandardButton>
                   <StandardButton
                     disabled={this.state.target === null || store.tracking || store.imagePosition === null}
-                    onClick={mutations.goToTarget}>GO TO TARGET</StandardButton>
+                    onClick={$backend.goToTarget}>GO TO TARGET</StandardButton>
                 </Row>
                 <Row className='row button-row'>
                   { store.tracking ?
                     <StandardButton
-                      onClick={mutations.stopTracking}>STOP TRACKING</StandardButton>
+                      onClick={$backend.stopTracking}>STOP TRACKING</StandardButton>
                   :
                     <StandardButton
                       disabled={this.state.trackingMode === 'target' && this.state.target === null}
-                      onClick={() => {mutations.startTracking(this.state.trackingMode)}}>START TRACKING</StandardButton>
+                      onClick={() => {$backend.startTracking(this.state.trackingMode)}}>START TRACKING</StandardButton>
                   }
                   <UncontrolledDropdown>
                     <DropdownToggle caret>MODE: {this.state.trackingMode}</DropdownToggle>

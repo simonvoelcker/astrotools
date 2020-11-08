@@ -22,6 +22,9 @@ export class AppProvider extends Component {
       target: null,  // todo this is only coordinates, no meta data
       axisSpeeds: null,
 
+      imageUrl: null,
+      imagePath: null,
+
       images: {
         prefix: null,     // common prefix to all image paths. relative to static
         paths: null       // todo augment this with image calibration data. also move it to a class: ImageStore, with some nice util stuff
@@ -34,6 +37,8 @@ export class AppProvider extends Component {
 
     this.utils = {
       imagePath: () => {
+        return this.state.imagePath
+
         if (this.state.images.paths === null) {
           return null
         }
@@ -43,6 +48,8 @@ export class AppProvider extends Component {
       },
 
       imageUrl: () => {
+        return this.state.imageUrl
+
         let imagePath = this.utils.imagePath()
         if (imagePath === null) {
           return null
@@ -82,30 +89,6 @@ export class AppProvider extends Component {
         return $backend.stopSequence(this.camera)
       },
 
-      queryTarget: (query) => {
-        return $backend.queryTarget(query)
-      },
-
-      setSpeeds: (raSpeed, decSpeed) => {
-        return $backend.setSpeeds(raSpeed, decSpeed)
-      },
-
-      setRest: () => {
-        return $backend.setRest()
-      },
-
-      startTracking: (mode) => {
-        return $backend.startTracking(mode)
-      },
-
-      stopTracking: () => {
-        return $backend.stopTracking()
-      },
-
-      goToTarget: () => {
-        return $backend.goToTarget()
-      },
-
       listDirectory: (path, recursive) => {
         return $backend.listDirectory(path, recursive)
       },
@@ -139,24 +122,26 @@ export class AppProvider extends Component {
         })
       },
 
-      calibrateImage () {
-        let imagePath = this.utils.imagePath()
+      calibrateImage (context) {
+        let imagePath = context.store.imagePath
         return $backend.calibrateImage(imagePath).then(response => {
-          this.setState({
-            imagePosition: {
-              ra: parseFloat(response.data.center_deg.ra),
-              dec: parseFloat(response.data.center_deg.dec)
-            },
-            imageRotation: {
-              angle: parseFloat(response.data.rotation.angle),
-              direction: response.data.rotation.direction
-            }
-          })
+          console.log("calibration successful")
+          //this.setState({
+          //  imagePosition: {
+          //    ra: parseFloat(response.data.center_deg.ra),
+          //    dec: parseFloat(response.data.center_deg.dec)
+          //  },
+          //  imageRotation: {
+          //    angle: parseFloat(response.data.rotation.angle),
+          //    direction: response.data.rotation.direction
+          //  }
+          //})
         }).catch(error => {
-          this.setState({
-            imagePosition: null,
-            imageRotation: null
-          })
+          console.log("calibration failed")
+          //this.setState({
+          //  imagePosition: null,
+          //  imageRotation: null
+          //})
         })
 
         // nice formatting for image calibration data:

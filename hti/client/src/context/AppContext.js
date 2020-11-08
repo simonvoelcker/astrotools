@@ -17,13 +17,22 @@ export class AppProvider extends Component {
       steering: null,
       tracking: null,
       calibrating: null,
-      here: null,
       target: null,  // todo this is only coordinates, no meta data
       axisSpeeds: null,
+
+      lastKnownPosition: {
+        timestamp: null,
+        position: null,
+      },
+      lastCalibrationResult: {
+        timestamp: null,
+        success: null,
+      },
 
       imageUrl: null,
       imagePath: null,
 
+      // image browsing stuff - out of order atm
       images: {
         prefix: null,     // common prefix to all image paths. relative to static
         paths: null       // todo augment this with image calibration data. also move it to a class: ImageStore, with some nice util stuff
@@ -36,8 +45,6 @@ export class AppProvider extends Component {
 
     this.utils = {
       imagePath: () => {
-        return this.state.imagePath
-
         if (this.state.images.paths === null) {
           return null
         }
@@ -47,8 +54,6 @@ export class AppProvider extends Component {
       },
 
       imageUrl: () => {
-        return this.state.imageUrl
-
         let imagePath = this.utils.imagePath()
         if (imagePath === null) {
           return null
@@ -111,25 +116,7 @@ export class AppProvider extends Component {
 
       calibrateImage (context) {
         let imagePath = context.store.imagePath
-        return $backend.calibrateImage(imagePath).then(response => {
-          console.log("calibration successful")
-          //this.setState({
-          //  imagePosition: {
-          //    ra: parseFloat(response.data.center_deg.ra),
-          //    dec: parseFloat(response.data.center_deg.dec)
-          //  },
-          //  imageRotation: {
-          //    angle: parseFloat(response.data.rotation.angle),
-          //    direction: response.data.rotation.direction
-          //  }
-          //})
-        }).catch(error => {
-          console.log("calibration failed")
-          //this.setState({
-          //  imagePosition: null,
-          //  imageRotation: null
-          //})
-        })
+        return $backend.calibrateImage(imagePath)
 
         // nice formatting for image calibration data:
         //            let imagePosition = '-'

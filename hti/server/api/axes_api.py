@@ -53,6 +53,10 @@ class GoToApi(Resource):
         # TODO must make steering abortable and therefore run it in a thread which respects app_state.steering
         # TODO also a countdown would be super nice for how long steering will take
         app_state.steering = True
-        axis_control.steer(app_state.here, app_state.target, max_speed_dps=1.0)
+        axis_control.steer(
+            app_state.last_known_position.position,
+            app_state.target,
+            max_speed_dps=1.0,
+        )
         app_state.steering = False
         return '', 200

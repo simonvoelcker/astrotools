@@ -12,9 +12,10 @@ class AppState:
     steering: bool = False
     tracking: bool = False
     calibrating: bool = False
-    here: Coordinates = None
     target: Coordinates = None
     axis_speeds: AxisSpeeds = None
+    last_known_position: dict = None
+    last_calibration_result: dict = None
 
     def __setattr__(self, key, value):
         super().__setattr__(key, value)

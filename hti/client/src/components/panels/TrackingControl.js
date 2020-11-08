@@ -5,11 +5,6 @@ import { Table, Row, Col, Input, Label } from 'reactstrap'
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import $backend from '../../backend'
 
-// TODOs from 2020-11-07
-// show calibration success / data / age of data. distance from target
-// show age of current frame
-// auto-start indi server with backend
-// investigate 16 sec per frame when 10 is configured
 
 export default class TrackingControl extends Component {
   constructor (props) {
@@ -40,9 +35,32 @@ export default class TrackingControl extends Component {
     const name = target && target.name ? target.name : '-'
     const type = target && target.type ? ' (' + target.type + ')' : ''
     const position = target !== null ? target.ra.toFixed(2) + ', ' + target.dec.toFixed(2) : '-'
+
+    const timestamp = Math.floor(Date.now() / 1000)
+
+    // has nothing to do with target, if we're honest
+    let lastPosition = this.context.store.lastKnownPosition
+    if (lastPosition !== null && lastPosition.timestamp !== null && lastPosition.position !== null) {
+      const passedTime = timestamp - lastPosition.timestamp
+      lastPosition = lastPosition.position.ra.toFixed(2) + ', ' +
+                     lastPosition.position.dec.toFixed(2) + ' (' + passedTime + 's ago)'
+    } else {
+      lastPosition = '-'
+    }
+
+    let lastCalibration = this.context.store.lastCalibrationResult
+    if (lastCalibration !== null && lastCalibration.timestamp !== null && lastCalibration.success !== null) {
+      const passedTime = timestamp - lastCalibration.timestamp
+      lastCalibration = (lastCalibration.success ? 'SUCCESS' : 'FAIL') + ' (' + passedTime + 's ago)'
+    } else {
+      lastCalibration = '-'
+    }
+
     return [
         {key: 'Target name', value: name + type},
-        {key: 'Target position', value: position}
+        {key: 'Target position', value: position},
+        {key: 'Last position', value: lastPosition},
+        {key: 'Last calibration', value: lastCalibration},
     ]
   }
 

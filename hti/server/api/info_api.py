@@ -1,6 +1,7 @@
 import queue
 import json
 import os
+import datetime
 
 from flask import Response, request
 from flask_restplus import Namespace, Resource
@@ -116,18 +117,30 @@ class CalibrateImageApi(Resource):
         if not os.path.isfile(image_path):
             return 'Image not found', 404
 
+        app_state = get_app_state()
+
         # TODO move to thread, queue up
-        get_app_state().calibrating = True
+        app_state.calibrating = True
         calibration_data = Solver().analyze_image(image_path, timeout)
-        get_app_state().calibrating = False
+        app_state.calibrating = False
+
+        timestamp = int(datetime.datetime.now().timestamp())
+
+        app_state.last_calibration_result = {
+            'timestamp': timestamp,
+            'success': calibration_data is not None
+        }
 
         if calibration_data is None:
             return 'Failed to calibrate', 404
 
         center = calibration_data['center_deg']
-        get_app_state().here = Coordinates(float(center['ra']), float(center['dec']))
+        app_state.last_known_position = {
+            'timestamp': timestamp,
+            'position': Coordinates(float(center['ra']), float(center['dec'])),
+        }
 
-        return jsonify(calibration_data)
+        return '', 200
 
 
 @api.route('/directory')

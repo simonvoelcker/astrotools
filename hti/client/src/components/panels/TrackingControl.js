@@ -6,14 +6,10 @@ import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from
 import $backend from '../../backend'
 
 // TODOs from 2020-11-07
-// capture -> grey out other buttons
-// show calibration success and whether it is in progress
+// show calibration success / data / age of data. distance from target
 // show age of current frame
-// when capturing, shouldnt be able to start a sequence, and vice verse
-// exposure 10, gain 10000 by default
 // auto-start indi server with backend
 // investigate 16 sec per frame when 10 is configured
-// get sequencing status from BE, same for capturing maybe
 
 export default class TrackingControl extends Component {
   constructor (props) {
@@ -90,7 +86,7 @@ export default class TrackingControl extends Component {
                 </Row>
                 <Row className='row button-row'>
                   <StandardButton
-                    disabled={store.imagePath === null || store.tracking || this.state.calibrating}
+                    disabled={store.imagePath === null || store.tracking || store.calibrating}
                     onClick={() => mutations.calibrateImage(this.context)}>CALIBRATE IMAGE</StandardButton>
                   <StandardButton
                     disabled={this.state.target === null || store.tracking || store.imagePosition === null}

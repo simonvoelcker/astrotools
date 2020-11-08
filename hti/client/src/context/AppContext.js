@@ -7,13 +7,12 @@ export class AppProvider extends Component {
   constructor (props) {
     super(props)
 
-    this.camera = null
-
     this.state = {
       initialized: false,  // todo need a state to mean "backend state received"
       trackingStatus: null,
 
       // from backend (app state events):
+      capturing: null,
       runningSequence: null,
       steering: null,
       tracking: null,
@@ -77,18 +76,6 @@ export class AppProvider extends Component {
     }
 
     this.mutations = {
-      capture: (exposure, gain) => {
-        return $backend.capture(this.camera, exposure, gain)
-      },
-
-      startSequence: (frameType, exposure, gain) => {
-        return $backend.startSequence(this.camera, frameType, exposure, gain)
-      },
-
-      stopSequence: () => {
-        return $backend.stopSequence(this.camera)
-      },
-
       listDirectory: (path, recursive) => {
         return $backend.listDirectory(path, recursive)
       },
@@ -162,14 +149,6 @@ export class AppProvider extends Component {
   }
 
   initialize () {
-    $backend.getDevices().then((response) => {
-      let deviceNames = Object.keys(response.data)
-      if (deviceNames.length > 0) {
-        this.camera = deviceNames[0]
-        this.setState({initialized: true})
-      }
-    })
-
     let eventListener = new EventSource('http://localhost:5000/api/info/events')
     eventListener.onmessage = (event) => {
       event = JSON.parse(event.data)

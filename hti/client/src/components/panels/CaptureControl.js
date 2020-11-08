@@ -3,17 +3,30 @@ import { AppConsumer, AppContext } from '../../context/AppContext'
 import StandardButton from '../panels/StandardButton'
 import { Input, Label } from 'reactstrap'
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
+import $backend from '../../backend'
 
 export default class CameraView extends Component {
   constructor (props) {
     super(props)
 
+    this.camera = null
+
     this.state = {
-      exposure: 1,
-      gain: 100,
-      sequencing: false,
+      exposure: 10,
+      gain: 10000,
       frameType: 'lights'
     }
+  }
+
+  componentDidMount() {
+    // initialize camera
+    $backend.getDevices().then((response) => {
+      let deviceNames = Object.keys(response.data)
+      if (deviceNames.length > 0) {
+        this.camera = deviceNames[0]
+        this.setState({initialized: true})
+      }
+    })
   }
 
   onChangeExposure (event) {
@@ -25,18 +38,15 @@ export default class CameraView extends Component {
   }
 
   capture () {
-    this.context.mutations.capture(this.state.exposure, this.state.gain)
+    $backend.capture(this.camera, this.state.exposure, this.state.gain)
   }
 
   startSequence () {
-    this.setState({sequencing: true})
-    this.context.mutations.startSequence(this.state.frameType, this.state.exposure, this.state.gain)
+    $backend.startSequence(this.camera, this.state.frameType, this.state.exposure, this.state.gain)
   }
 
   stopSequence () {
-    this.context.mutations.stopSequence().then(() => {
-      this.setState({sequencing: false})
-    })
+    $backend.stopSequence(this.camera)
   }
 
   render () {
@@ -64,15 +74,15 @@ export default class CameraView extends Component {
             </div>
             <div className='button-column'>
               <StandardButton id="capture"
-                      disabled={!store.initialized || this.state.sequencing}
+                      disabled={this.camera === null || store.capturing || store.runningSequence}
                       onClick={this.capture.bind(this)}>Capture</StandardButton>
-              { this.state.sequencing ?
+              { store.runningSequence ?
                 <StandardButton id="stop-sequence"
-                        disabled={!store.initialized}
+                        disabled={this.camera === null}
                         onClick={this.stopSequence.bind(this)}>Stop</StandardButton>
               :
                 <StandardButton id="start-sequence"
-                        disabled={!store.initialized}
+                        disabled={this.camera === null || store.capturing}
                         onClick={this.startSequence.bind(this)}>Sequence</StandardButton>
               }
             </div>

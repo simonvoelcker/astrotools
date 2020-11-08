@@ -26,10 +26,13 @@ class CaptureImageApi(Resource):
         def exp():
             controller = get_indi_controller()
             try:
+                get_app_state().capturing = True
                 image_path = controller.capture_image(devicename, frame_type, exposure, gain)
+                get_app_state().capturing = False
                 image_event(image_path)
             except Exception as e:
                 print('Capture error:', e)
+
         threading.Thread(target=exp).start()
         return '', 204
 

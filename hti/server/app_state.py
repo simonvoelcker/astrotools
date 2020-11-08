@@ -7,6 +7,7 @@ from lib.coordinates import Coordinates
 
 @dataclass
 class AppState:
+    capturing: bool = False
     running_sequence: bool = False
     steering: bool = False
     tracking: bool = False

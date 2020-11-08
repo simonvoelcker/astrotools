@@ -116,7 +116,11 @@ class CalibrateImageApi(Resource):
         if not os.path.isfile(image_path):
             return 'Image not found', 404
 
+        # TODO move to thread, queue up
+        get_app_state().calibrating = True
         calibration_data = Solver().analyze_image(image_path, timeout)
+        get_app_state().calibrating = False
+
         if calibration_data is None:
             return 'Failed to calibrate', 404
 

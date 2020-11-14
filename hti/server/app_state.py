@@ -7,10 +7,16 @@ from lib.coordinates import Coordinates
 
 @dataclass
 class AppState:
+    camera_connected: bool = False
+    camera_sim: bool = False
+    axes_connected: bool = False
+    axes_sim: bool = False
+
     capturing: bool = False
     running_sequence: bool = False
     steering: bool = False
     tracking: bool = False
+    tracking_status: dict = None
     calibrating: bool = False
     target: Coordinates = None
     axis_speeds: AxisSpeeds = None

@@ -9,13 +9,17 @@ export class AppProvider extends Component {
 
     this.state = {
       initialized: false,  // todo need a state to mean "backend state received"
-      trackingStatus: null,
 
       // from backend (app state events):
+      cameraConnected: null,
+      cameraSim: null,
+      axesConnected: null,
+      axesSim: null,
       capturing: null,
       runningSequence: null,
       steering: null,
       tracking: null,
+      trackingStatus: null,
       calibrating: null,
       target: null,  // todo this is only coordinates, no meta data
       axisSpeeds: null,
@@ -117,18 +121,6 @@ export class AppProvider extends Component {
       calibrateImage (context) {
         let imagePath = context.store.imagePath
         return $backend.calibrateImage(imagePath)
-
-        // nice formatting for image calibration data:
-        //            let imagePosition = '-'
-        //    if (this.context.store.imagePosition !== null) {
-        //      imagePosition = this.context.store.imagePosition.ra.toFixed(2) + ', ' +
-        //                      this.context.store.imagePosition.dec.toFixed(2)
-        //    }
-        //    let imageRotation = '-'
-        //    if (this.context.store.imageRotation !== null) {
-        //      imageRotation = this.context.store.imageRotation.angle.toFixed(2) + '°'
-        //    }
-
       }
     }
 
@@ -146,14 +138,6 @@ export class AppProvider extends Component {
         this.setState({
           imageUrl: 'http://localhost:5000/static/' + event['imagePath'],
           imagePath: event['imagePath']
-        })
-      } else if (event['type'] === 'tracking_status') {
-        this.setState({
-          trackingStatus: {
-            message: event['message'],
-            unixTimestamp: event['unixTimestamp'],
-            details: event['details']
-          }
         })
       }
     }

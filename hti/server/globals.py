@@ -6,6 +6,8 @@ from lib.axis_control import AxisControl
 from lib.indi.controller import INDIController, INDIControllerMock
 
 _app_state = AppState()
+_app_state.axes_sim = os.environ.get('SIM_AXES', 'false').lower() == 'true'
+_app_state.camera_sim = os.environ.get('SIM_CAMERA', 'false').lower() == 'true'
 _catalog = Catalog()
 _indi_controller = None
 _axis_control = None
@@ -31,6 +33,7 @@ def get_indi_controller():
             _indi_controller = INDIControllerMock(static_dir=hti_static_dir)
         else:
             _indi_controller = INDIController(static_dir=hti_static_dir)
+            get_app_state().camera_connected = bool(_indi_controller.devices())
     return _indi_controller
 
 
@@ -43,4 +46,5 @@ def get_axis_control():
         sim_mode = os.environ.get('SIM_AXES', 'false').lower() == 'true'
         if not sim_mode:
             _axis_control.connect()
+            get_app_state().axes_connected = _axis_control.connected()
     return _axis_control

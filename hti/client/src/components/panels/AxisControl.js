@@ -80,12 +80,13 @@ export default class AxisControl extends Component {
     const store = this.context.store
     const raSpeed = this.formatAxisSpeed(store.axisSpeeds ? store.axisSpeeds.raDps : null)
     const decSpeed = this.formatAxisSpeed(store.axisSpeeds ? store.axisSpeeds.decDps : null)
+    const panelStateClass = store.axesSim ? 'panel-yellow' : (store.axesConnected ? 'panel-green' : 'panel-red')
 
     return (
       <AppConsumer>
         {({ store }) => (
           <div>
-            <div className='panel axis-control-panel'>
+            <div className={'panel axis-control-panel ' + panelStateClass}>
               <div className='button-column'>
                 <span className='spaced-text'>{store.axisSpeeds ? store.axisSpeeds.mode.toUpperCase() : '-'}</span>
                 <StandardButton

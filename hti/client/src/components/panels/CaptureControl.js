@@ -50,10 +50,12 @@ export default class CameraView extends Component {
   }
 
   render () {
+    const store = this.context.store
+    const panelStateClass = store.cameraSim ? 'panel-yellow' : (store.cameraConnected ? 'panel-green' : 'panel-red')
     return (
       <AppConsumer>
         {({ store }) => (
-          <div className='panel capture-control-panel'>
+          <div className={'panel capture-control-panel ' + panelStateClass}>
             <div className='settings-column'>
               <div>
                 <Label className='spaced-text' for="exposure">Exposure (s)</Label>
@@ -90,6 +92,7 @@ export default class CameraView extends Component {
               <UncontrolledDropdown>
                 <DropdownToggle caret>{this.state.frameType}</DropdownToggle>
                 <DropdownMenu>
+                  <DropdownItem onClick={() => {this.setState({frameType: 'preview'})}}>Preview</DropdownItem>
                   <DropdownItem onClick={() => {this.setState({frameType: 'lights'})}}>Lights</DropdownItem>
                   <DropdownItem onClick={() => {this.setState({frameType: 'darks'})}}>Darks</DropdownItem>
                   <DropdownItem onClick={() => {this.setState({frameType: 'flats'})}}>Flats</DropdownItem>

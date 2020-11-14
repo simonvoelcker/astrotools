@@ -1,3 +1,6 @@
+import time
+
+from threading import Thread
 from flask import request
 from flask_restplus import Namespace, Resource
 
@@ -19,6 +22,12 @@ class SetSpeedApi(Resource):
         ra_speed = float(body['ra'])
         dec_speed = float(body['dec'])
 
+        # abort any steering maneuver
+        app_state = get_app_state()
+        if app_state.steering:
+            app_state.steering = False
+            time.sleep(1)
+
         axis_control = get_axis_control()
         mode = 'manual' if ra_speed or dec_speed else 'stopped'
         axis_control.set_axis_speeds(ra_dps=ra_speed, dec_dps=dec_speed, mode=mode)
@@ -35,6 +44,12 @@ class RestApi(Resource):
         }
     )
     def post(self):
+        # abort any steering maneuver
+        app_state = get_app_state()
+        if app_state.steering:
+            app_state.steering = False
+            time.sleep(1)
+
         get_axis_control().set_resting()
         return '', 200
 
@@ -50,13 +65,16 @@ class GoToApi(Resource):
     def post(self):
         app_state = get_app_state()
         axis_control = get_axis_control()
-        # TODO must make steering abortable and therefore run it in a thread which respects app_state.steering
-        # TODO also a countdown would be super nice for how long steering will take
-        app_state.steering = True
-        axis_control.steer(
-            app_state.last_known_position['position'],
-            app_state.target,
-            max_speed_dps=1.0,
-        )
-        app_state.steering = False
+
+        def steer_fun():
+            app_state.steering = True
+            axis_control.steer(
+                app_state.last_known_position['position'],
+                app_state.target,
+                max_speed_dps=1.0,
+                run_callback=lambda: app_state.steering
+            )
+            app_state.steering = False
+
+        Thread(target=steer_fun).start()
         return '', 200

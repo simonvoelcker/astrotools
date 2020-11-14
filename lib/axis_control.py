@@ -4,6 +4,8 @@ import serial
 import time
 import glob
 
+from dataclasses import dataclass
+
 
 class AxisSpeeds:
 
@@ -33,6 +35,14 @@ class AxisSpeeds:
 	@staticmethod
 	def stopped():
 		return AxisSpeeds(0, 0, 'stopped')
+
+
+@dataclass
+class Maneuver:
+	ra_dps: float = 0.0
+	dec_dps: float = 0.0
+	mode: str = ''
+	duration: float = 0.0
 
 
 class AxisControl:
@@ -126,7 +136,7 @@ class AxisControl:
 		speed_dps = math.copysign(speed_dps, revolutions)
 		return speed_dps, duration
 
-	def steer(self, here, target, max_speed_dps=None):
+	def get_steering_maneuvers(self, here, target, max_speed_dps=None):
 		# force slow maneuver if close to target already
 		max_distance_deg = max(abs(here.ra-target.ra), abs(here.dec-target.dec))
 		if max_distance_deg < 1.0:
@@ -145,36 +155,52 @@ class AxisControl:
 			ra_speed_dps *= ra_time / dec_time
 		common_time = max(ra_time, dec_time)
 
+		# superimpose maneuver with resting speeds
 		ra_speed_dps += AxisSpeeds.ra_resting_speed
 		dec_speed_dps += AxisSpeeds.dec_resting_speed
 
-		self.set_axis_speeds(ra_dps=ra_speed_dps, dec_dps=dec_speed_dps, mode=f'steering ({int(common_time)}s)')
-		print(f'Waiting {common_time:6.3f} seconds')
-		time.sleep(common_time)
-		self.set_resting()
+		mode = f'Steering ({int(common_time)}s)'
+		yield Maneuver(ra_speed_dps, dec_speed_dps, mode, common_time)
 
 		# apply backlash compensation if we moved against resting direction
 		compensate_ra = bool(ra_speed_dps * AxisSpeeds.ra_resting_speed < 0)
 		compensate_dec = bool(dec_speed_dps * AxisSpeeds.dec_resting_speed < 0)
 
 		if compensate_ra or compensate_dec:
-			print(f'Compensating backlash for RA={compensate_ra}, Dec={compensate_dec}')
 			dps = 0.1
 			duration = 10.0
 			# move further against backlash on those axes which also did so before
-			self.set_axis_speeds(
-				ra_dps=math.copysign(dps, ra_speed_dps) if compensate_ra else AxisSpeeds.ra_resting_speed,
-				dec_dps=math.copysign(dps, dec_speed_dps) if compensate_dec else AxisSpeeds.dec_resting_speed,
-				mode='BL-compensation'
-			)
-			time.sleep(duration)
+			ra_dps = math.copysign(dps, ra_speed_dps) if compensate_ra else AxisSpeeds.ra_resting_speed
+			dec_dps = math.copysign(dps, dec_speed_dps) if compensate_dec else AxisSpeeds.dec_resting_speed
+			yield Maneuver(ra_dps, dec_dps, 'BL-compensation', duration)
 
 			# move back into backlash
-			self.set_axis_speeds(
-				ra_dps=math.copysign(dps, AxisSpeeds.ra_resting_speed) if compensate_ra else AxisSpeeds.ra_resting_speed,
-				dec_dps=math.copysign(dps, AxisSpeeds.dec_resting_speed) if compensate_dec else AxisSpeeds.dec_resting_speed,
-				mode='BL-compensation')
-			time.sleep(duration)
+			ra_dps = math.copysign(dps, AxisSpeeds.ra_resting_speed) if compensate_ra else AxisSpeeds.ra_resting_speed
+			dec_dps = math.copysign(dps, AxisSpeeds.dec_resting_speed) if compensate_dec else AxisSpeeds.dec_resting_speed
+			yield Maneuver(ra_dps, dec_dps, 'BL-compensation', duration)
 
-			print(f'Done compensating')
-			self.set_resting()
+	def steer(self, here, target, max_speed_dps=None, run_callback=None):
+		"""
+		Perform a steering maneuver from here to target,
+		respecting a max speed given in degrees per second.
+
+		Abort when run_callback returns false.
+		"""
+		maneuvers = self.get_steering_maneuvers(here, target, max_speed_dps)
+		for maneuver in maneuvers:
+			self.set_axis_speeds(
+				ra_dps=maneuver.ra_dps,
+				dec_dps=maneuver.dec_dps,
+				mode=maneuver.mode,
+			)
+			if run_callback is not None:
+				remain_time = maneuver.duration
+				while remain_time > 0 and run_callback():
+					time.sleep(min(remain_time, 1))
+					remain_time -= 1
+				if not run_callback():
+					# no more maneuvers
+					break
+			else:
+				time.sleep(maneuver.duration)
+		self.set_resting()

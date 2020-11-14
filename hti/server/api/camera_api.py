@@ -1,4 +1,4 @@
-import threading
+from threading import Thread
 
 from flask import request
 from flask_restplus import Namespace, Resource
@@ -33,7 +33,7 @@ class CaptureImageApi(Resource):
             except Exception as e:
                 print('Capture error:', e)
 
-        threading.Thread(target=exp).start()
+        Thread(target=exp).start()
         return '', 204
 
 
@@ -61,7 +61,7 @@ class StartSequenceApi(Resource):
                 print('Capture error', e)
 
         get_app_state().running_sequence = True
-        threading.Thread(target=exp).start()
+        Thread(target=exp).start()
         return '', 204
 
 

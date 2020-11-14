@@ -3,6 +3,8 @@ import json
 import os
 import datetime
 
+from threading import Thread
+
 from flask import Response, request
 from flask_restplus import Namespace, Resource
 from flask.json import jsonify
@@ -119,27 +121,28 @@ class CalibrateImageApi(Resource):
 
         app_state = get_app_state()
 
-        # TODO move to thread, queue up
-        app_state.calibrating = True
-        calibration_data = Solver().analyze_image(image_path, timeout)
-        app_state.calibrating = False
+        def analyze_fun():
+            app_state.calibrating = True
+            calibration_data = Solver().analyze_image(image_path, timeout)
+            app_state.calibrating = False
 
-        timestamp = int(datetime.datetime.now().timestamp())
+            timestamp = int(datetime.datetime.now().timestamp())
 
-        app_state.last_calibration_result = {
-            'timestamp': timestamp,
-            'success': calibration_data is not None
-        }
+            app_state.last_calibration_result = {
+                'timestamp': timestamp,
+                'success': calibration_data is not None
+            }
 
-        if calibration_data is None:
-            return 'Failed to calibrate', 404
+            if calibration_data is not None:
+                center = calibration_data['center_deg']
+                ra = float(center['ra'])
+                dec = float(center['dec'])
+                app_state.last_known_position = {
+                    'timestamp': timestamp,
+                    'position': Coordinates(ra, dec),
+                }
 
-        center = calibration_data['center_deg']
-        app_state.last_known_position = {
-            'timestamp': timestamp,
-            'position': Coordinates(float(center['ra']), float(center['dec'])),
-        }
-
+        Thread(target=analyze_fun).start()
         return '', 200
 
 

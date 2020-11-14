@@ -82,9 +82,15 @@ class Solver:
 
 	def analyze_image(self, filepath, timeout=10, hint=None):
 		command = self.get_analyze_command([filepath], timeout, hint)
-		output = self.run_in_thread(command, timeout)
-		if not output:
+
+		try:
+			output = subprocess.check_output(command, timeout=timeout, stderr=subprocess.DEVNULL).decode()
+		except subprocess.TimeoutExpired:
 			return None
+
+		# output = self.run_in_thread(command, timeout)
+		# if not output:
+		# 	return None
 
 		# Output example:
 		#

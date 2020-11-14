@@ -54,7 +54,7 @@ class GoToApi(Resource):
         # TODO also a countdown would be super nice for how long steering will take
         app_state.steering = True
         axis_control.steer(
-            app_state.last_known_position.position,
+            app_state.last_known_position['position'],
             app_state.target,
             max_speed_dps=1.0,
         )

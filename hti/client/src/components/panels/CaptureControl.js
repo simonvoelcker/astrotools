@@ -24,7 +24,6 @@ export default class CameraView extends Component {
       let deviceNames = Object.keys(response.data)
       if (deviceNames.length > 0) {
         this.camera = deviceNames[0]
-        this.setState({initialized: true})
       }
     })
   }

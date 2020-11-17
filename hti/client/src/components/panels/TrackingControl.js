@@ -9,12 +9,22 @@ import $backend from '../../backend'
 export default class TrackingControl extends Component {
   constructor (props) {
     super(props)
+    this.interval = null
     this.state = {
       targetInput: '',
       targetInputStatus: '',
       target: null,
       trackingMode: 'target',
+      time: Date.now(),
     }
+  }
+
+  componentDidMount() {
+    this.interval = setInterval(() => this.setState({ time: Date.now() }), 1000)
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.interval)
   }
 
   onChangeTargetInput (event) {
@@ -36,7 +46,7 @@ export default class TrackingControl extends Component {
     const type = target && target.type ? ' (' + target.type + ')' : ''
     const position = target !== null ? target.ra.toFixed(2) + ', ' + target.dec.toFixed(2) : '-'
 
-    const timestamp = Math.floor(Date.now() / 1000)
+    const timestamp = Math.floor(this.state.time / 1000)
 
     // has nothing to do with target, if we're honest
     let lastPosition = this.context.store.lastKnownPosition
@@ -69,7 +79,7 @@ export default class TrackingControl extends Component {
 
     return (
       <AppConsumer>
-        {({ store, mutations }) => (
+        {({ store }) => (
           <div>
             <div className='panel tracking-control-panel'>
               <span className='spaced-text panel-title'>Tracking Control</span>
@@ -105,7 +115,7 @@ export default class TrackingControl extends Component {
                 <Row className='row button-row'>
                   <StandardButton
                     disabled={store.imagePath === null || store.tracking || store.calibrating}
-                    onClick={() => mutations.calibrateImage(this.context)}>CALIBRATE IMAGE</StandardButton>
+                    onClick={() => $backend.calibrateImage(store.imagePath)}>CALIBRATE IMAGE</StandardButton>
                   <StandardButton
                     disabled={this.state.target === null || store.tracking || store.steering || store.imagePosition === null}
                     onClick={$backend.goToTarget}>GO TO TARGET</StandardButton>

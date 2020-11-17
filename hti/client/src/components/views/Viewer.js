@@ -7,7 +7,7 @@ export default class Viewer extends Component {
   render () {
     return (
       <AppConsumer>
-        {({ store, mutations }) => (
+        {({ store }) => (
           <div className='viewer'>
             <ThreeDView />
           </div>

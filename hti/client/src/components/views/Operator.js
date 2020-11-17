@@ -10,7 +10,7 @@ export default class Operator extends Component {
   render () {
     return (
       <AppConsumer>
-        {({ store, mutations }) => (
+        {({ store }) => (
           <div className='operator'>
             <div>
               <CameraView />

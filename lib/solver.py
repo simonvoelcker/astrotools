@@ -1,15 +1,26 @@
-import threading
 import subprocess
 import re
+import time
 
+from lib.config import (
+	SOLVE_BINARY,
+	SOLVE_PIXEL_SCALE_HIGH,
+	SOLVE_PIXEL_SCALE_LOW,
+)
 from lib.coordinates import Coordinates
 
 
-def run_command(command, timeout, result):
-	try:
-		result['output'] = subprocess.check_output(command, timeout=timeout, stderr=subprocess.DEVNULL).decode()
-	except subprocess.TimeoutExpired:
-		result['timeout'] = True
+def run_command_or_die_trying(command, timeout):
+	# Popen accepts a timeout parameter, but it does not work smh
+	process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+	while timeout > 0:
+		if process.poll() is not None:
+			output = process.stdout.read().decode()
+			return output
+		time.sleep(1)
+		timeout -= 1
+	process.kill()
+	return None
 
 
 class CalibrationData:
@@ -29,10 +40,12 @@ class Solver:
 	(2) subprocess.check_output accepts a timeout. Not effective.
 	(3) check_output runs in a thread which is killed. Very effective.
 	"""
-	SOLVE_BINARY = '/usr/local/astrometry/bin/solve-field'
-
 	@staticmethod
-	def get_common_parameters(timeout=60.0, scale_low=0.8, scale_high=1.0):
+	def get_common_parameters(
+		timeout=60.0,
+		scale_low=SOLVE_PIXEL_SCALE_LOW,
+		scale_high=SOLVE_PIXEL_SCALE_HIGH,
+	):
 		return [
 			'--scale-units', 'arcsecperpix',
 			'--scale-low', str(scale_low),
@@ -63,34 +76,13 @@ class Solver:
 
 	def get_analyze_command(self, filepaths, timeout, hint=None):
 		batch_arg = ['--batch'] if len(filepaths) > 1 else []
-		return [self.SOLVE_BINARY] + filepaths + batch_arg + self.get_common_parameters(timeout) + self.get_hint_parameters(hint)
-
-	@staticmethod
-	def run_in_thread(command, timeout):
-		result = dict()
-		thread = threading.Thread(target=run_command, args=(command, timeout, result))
-		thread.start()
-		thread.join(timeout=timeout)
-		if 'output' in result:
-			return result['output']
-
-		# TODO kill process?
-		# or try: -C / --cancel <filename>: filename whose creation signals the process to stop
-
-		print('Timed out trying to solve field')
-		return None
+		return [SOLVE_BINARY] + filepaths + batch_arg + self.get_common_parameters(timeout) + self.get_hint_parameters(hint)
 
 	def analyze_image(self, filepath, timeout=10, hint=None):
 		command = self.get_analyze_command([filepath], timeout, hint)
-
-		try:
-			output = subprocess.check_output(command, timeout=timeout, stderr=subprocess.DEVNULL).decode()
-		except subprocess.TimeoutExpired:
+		output = run_command_or_die_trying(command, 30)
+		if output is None:
 			return None
-
-		# output = self.run_in_thread(command, timeout)
-		# if not output:
-		# 	return None
 
 		# Output example:
 		#
@@ -135,9 +127,8 @@ class Solver:
 
 	def analyze_images(self, filepaths, timeout=60, hint=None):	
 		command = self.get_analyze_command(filepaths, timeout, hint)
-		print(f'Command:\n{" ".join(command)}')
-		output = self.run_in_thread(command, timeout)
-		if not output:
+		output = run_command_or_die_trying(command, timeout)
+		if output is None:
 			return None
 
 		# Output example:

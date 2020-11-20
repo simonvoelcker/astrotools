@@ -6,14 +6,10 @@ import glob
 
 from dataclasses import dataclass
 
+from lib.config import RA_AXIS_RATIO, DEC_AXIS_RATIO, MAX_AXIS_SPEED_DPS
+
 
 class AxisSpeeds:
-
-	ra_axis_ratio = 138.0 * 3.0	 # 138: worm gear. 3: belt
-	dec_axis_ratio = 88.0 * 2.4  # 88: worm gear. 2.4: spur gears
-
-	max_speed_dps = 0.3
-
 	# Theoretical resting speed assuming Siderial day
 	# Unit is degrees per second, /3600 makes it arc-secs per second.
 	ra_resting_speed = -15.0 / 3600.0
@@ -26,11 +22,11 @@ class AxisSpeeds:
 
 	@classmethod
 	def ra_dps_to_axis(cls, ra_dps):
-		return ra_dps / 360.0 * cls.ra_axis_ratio
+		return ra_dps / 360.0 * RA_AXIS_RATIO
 
 	@classmethod
 	def dec_dps_to_axis(cls, dec_dps):
-		return dec_dps / 360.0 * cls.dec_axis_ratio
+		return dec_dps / 360.0 * DEC_AXIS_RATIO
 
 	@staticmethod
 	def stopped():
@@ -121,7 +117,7 @@ class AxisControl:
 		Compute an axis maneuver consisting of speed and duration.
 		Does not add default resting speed.
 		"""
-		speed_dps = AxisSpeeds.max_speed_dps
+		speed_dps = MAX_AXIS_SPEED_DPS
 		if max_speed_dps is not None:
 			speed_dps = min(speed_dps, max_speed_dps)
 

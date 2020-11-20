@@ -21,14 +21,22 @@ class Tracker:
         self.dec_pid = None
 
         if 'ra' in self.config:
-            self.ra_pid = PID(self.config['ra']['pid_p'], self.config['ra']['pid_i'], self.config['ra']['pid_d'],
-                              setpoint=0)
+            self.ra_pid = PID(
+                self.config['ra']['pid_p'],
+                self.config['ra']['pid_i'],
+                self.config['ra']['pid_d'],
+                setpoint=0,
+            )
             self.ra_pid.output_limits = (-self.config['ra']['range'], self.config['ra']['range'])
             self.ra_pid.sample_time = self.config['sample_time']
 
         if 'dec' in self.config:
-            self.dec_pid = PID(self.config['dec']['pid_p'], self.config['dec']['pid_i'], self.config['dec']['pid_d'],
-                               setpoint=0)
+            self.dec_pid = PID(
+                self.config['dec']['pid_p'],
+                self.config['dec']['pid_i'],
+                self.config['dec']['pid_d'],
+                setpoint=0,
+            )
             self.dec_pid.output_limits = (-self.config['dec']['range'], self.config['dec']['range'])
             self.dec_pid.sample_time = self.config['sample_time']
 

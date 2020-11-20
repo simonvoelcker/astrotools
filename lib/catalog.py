@@ -1,10 +1,11 @@
-import os
 import csv  # NGC catalog
 import sqlite3  # star catalog
 
+from lib.config import TARGETS_CATALOG_FILEPATH, STARS_DB_FILEPATH
+
 
 class Catalog:
-	def __init__(self, path=os.path.join('catalogs', 'NGC.csv'), name_column='Name', name_prefix='NGC'):
+	def __init__(self, path=TARGETS_CATALOG_FILEPATH, name_column='Name', name_prefix='NGC'):
 		self._header = None
 		self._entries = None
 		self.path = path
@@ -44,9 +45,7 @@ class Catalog:
 		return {key: value for key, value in zip(self._header, entry)}
 
 	def get_stars(self, area=None, count=None):
-		directory = '/home/simon/Hobby/astro/Tycho-2/'
-		db_file = os.path.join(directory, 'tycho2.db')
-		connection = sqlite3.connect(db_file)
+		connection = sqlite3.connect(STARS_DB_FILEPATH)
 
 		where_clause = f'''
 			WHERE ra > {area["raMin"]}

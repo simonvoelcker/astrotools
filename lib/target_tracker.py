@@ -1,60 +1,64 @@
-import time
-
-from lib.axis_control import AxisSpeeds
 from lib.solver import Solver
 from lib.tracker import Tracker
 
 
 class TargetTracker(Tracker):
-    def __init__(self, config, axis_control):
-        super().__init__(config, axis_control)
+    def __init__(
+        self,
+        config,
+        axis_control,
+        sample_time,
+        ra_resting_speed_dps,  # not necessarily the siderial speed
+        dec_resting_speed_dps,
+     ):
+        super().__init__(config, axis_control, sample_time)
         self.target = None
+        self.ra_resting_speed_dps = ra_resting_speed_dps
+        self.dec_resting_speed_dps = dec_resting_speed_dps
 
     def set_target(self, target):
         self.target = target
-
-    def _get_tracking_mode_config(self, ra_error, dec_error):
-        # get the appropriate tracking mode config for the current error
-        for mode_config in self.config['modes']:
-            max_error = mode_config['max_error_deg']
-            if max_error is None or (abs(ra_error) < max_error and abs(dec_error) < max_error):
-                print(f'RA err: {ra_error:.2f}, Dec err: {dec_error:.2f} => Mode: {mode_config["name"]}')
-                return mode_config
-        raise RuntimeError(f'Found no tracking mode config for given error: RA={ra_error}, Dec={dec_error}')
 
     def on_new_file(self, filepath, status_change_callback=None):
         image_coordinates = Solver().locate_image(filepath)
 
         if not image_coordinates:
-            self.axis_control.set_resting()
-            status_change_callback(message='Calibration failed, using default speeds', filepath=filepath)
+            self.axis_control.set_axis_speeds(
+                ra_dps=self.ra_resting_speed_dps,
+                dec_dps=self.dec_resting_speed_dps,
+                mode='resting',
+            )
+            status_change_callback(
+                message='Calibration failed, using default speeds',
+                filepath=filepath,
+            )
             return
 
         ra_error = image_coordinates.ra - self.target.ra
         dec_error = image_coordinates.dec - self.target.dec
 
-        mode_config = self._get_tracking_mode_config(ra_error, dec_error)
+        if self.config['ra']['invert']:
+            ra_error = -ra_error
+        if self.config['dec']['invert']:
+            dec_error = -dec_error
 
-        if 'Steering' in mode_config['name']:
-            status_change_callback(message='Steering to target', filepath=filepath, errors=(ra_error, dec_error))
-            self.axis_control.steer(
-                here=image_coordinates,
-                target=self.target,
-                max_speed_dps=mode_config['max_speed_dps'],
-            )
-            status_change_callback(message='Waiting for axes to settle', filepath=filepath)
-            time.sleep(mode_config['delay_after_maneuver_sec'])
-            return
-
-        ra_speed = AxisSpeeds.ra_resting_speed + self.ra_pid(-ra_error if self.config['ra']['invert'] else ra_error)
-        dec_speed = AxisSpeeds.dec_resting_speed + self.dec_pid(-dec_error if self.config['dec']['invert'] else dec_error)
+        ra_speed = self.ra_resting_speed_dps + self.ra_pid(ra_error)
+        dec_speed = self.dec_resting_speed_dps + self.dec_pid(dec_error)
 
         print(f'RA error: {ra_error:8.6f}, DEC error: {dec_error:8.6f}, '
               f'RA speed: {ra_speed:8.6f}, DEC speed: {dec_speed:8.6f}')
 
-        self.axis_control.set_axis_speeds(ra_dps=ra_speed, dec_dps=dec_speed, mode='tracking')
+        self.axis_control.set_axis_speeds(
+            ra_dps=ra_speed,
+            dec_dps=dec_speed,
+            mode='tracking',
+        )
 
-        status_change_callback(message='Tracking', filepath=filepath, errors=(ra_error, dec_error))
+        status_change_callback(
+            message='Tracking',
+            filepath=filepath,
+            errors=(ra_error, dec_error),
+        )
 
         if self.influx_client is not None:
             self.write_frame_stats(

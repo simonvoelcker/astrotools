@@ -10,7 +10,7 @@ from lib.tracker import Tracker
 class PassiveTracker(Tracker):
 
 	def __init__(self, config):
-		super().__init__(config, None)
+		super().__init__(config, None, None)
 		self.reference_image = None
 		self.reference_coordinates = None
 		self.sigma_threshold = config['sigma_threshold']

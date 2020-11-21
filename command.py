@@ -3,7 +3,7 @@ import glob
 import json
 import os
 
-from lib.axis_control import AxisControl
+from lib.axis_control import AxisControl, AxisSpeeds
 from lib.catalog import Catalog
 from lib.coordinates import Coordinates
 from lib.image_tracker import ImageTracker
@@ -137,7 +137,13 @@ class CommandShell(cmd.Cmd):
 		with open(config_file, 'r') as f:
 			config = json.load(f)
 
-		tracker = TargetTracker(config, self.axis_control)
+		tracker = TargetTracker(
+			config,
+			self.axis_control,
+			10,  # sample time - TODO make adjustable via command
+			AxisSpeeds.ra_resting_speed,
+			AxisSpeeds.dec_resting_speed,
+		)
 		tracker.set_target(self.target)
 		try:
 			print(f'Tracking {self.target}')

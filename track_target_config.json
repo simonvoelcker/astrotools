@@ -1,40 +1,17 @@
 {
-	"image_search_pattern": "../beute/**/*.tif",
-	"sample_time": 10.0,
+	"max_speed_dps": 0.0003,
 	"ra": {
-		"center": -0.004725,
-		"range":   0.000500,
+		"range": 0.0002,
 		"invert": false,
 		"pid_p": 0.003,
 		"pid_i": 0.0,
 		"pid_d": 0.0
 	},
 	"dec": {
-		"center": 0.000060,
-		"range":  0.000060,
+		"range":  0.0002,
 		"invert": true,
 		"pid_p": 0.003,
 		"pid_i": 0.0,
 		"pid_d": 0.0
-	},
-	"modes": [
-		{
-			"name": "Continuous Tracking",
-			"max_error_deg": 0.075,
-			"max_speed_dps": 0.0003,
-			"delay_after_maneuver_sec": null
-		},
-		{
-			"name": "Fine Steering",
-			"max_error_deg": 1.0,
-			"max_speed_dps": 0.01,
-			"delay_after_maneuver_sec": 30
-		},
-		{
-			"name": "Steering",
-			"max_error_deg": null,
-			"max_speed_dps": 1.0,
-			"delay_after_maneuver_sec": 45
-		}
-	]
+	}
 }

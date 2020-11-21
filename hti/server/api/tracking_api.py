@@ -41,7 +41,13 @@ class TrackTargetApi(Resource):
         tracker = None
         if mode == 'target':
             axis_control = get_axis_control()
-            tracker = TargetTracker(config, axis_control)
+            tracker = TargetTracker(
+                config,
+                axis_control,
+                10,  # exposure time of current sequence - TODO!
+                axis_control.speeds.ra_dps,  # use current speeds as defaults
+                axis_control.speeds.dec_dps,
+            )
             tracker.set_target(get_app_state().target)
         elif mode == 'image':
             axis_control = get_axis_control()

@@ -1,7 +1,6 @@
 {
 	"image_search_pattern": "../beute/**/*.tif",
 	"sigma_threshold": 5.0,
-	"sample_time": 2.0,
 	"ra": {
 		"center": -0.004725,
 		"range":   0.000500,

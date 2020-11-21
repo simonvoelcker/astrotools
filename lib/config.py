@@ -1,6 +1,6 @@
 # absolute paths that should really not exist
 SOLVE_BINARY = '/usr/local/astrometry/bin/solve-field'
-TARGETS_CATALOG_FILEPATH = '/home/simon/Hobby/astro/astrotools/catalogs/ngc.csv'
+TARGETS_CATALOG_FILEPATH = '/home/simon/Hobby/astro/astrotools/catalogs/NGC.csv'
 STARS_DB_FILEPATH = '/home/simon/Hobby/astro/Tycho-2/tycho2.db'
 
 # pixel scale limits for solve-field. unit is arc seconds per pixel

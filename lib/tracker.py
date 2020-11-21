@@ -9,13 +9,18 @@ from simple_pid import PID
 
 
 class Tracker:
-    def __init__(self, config, axis_control):
+    def __init__(self, config, axis_control, sample_time):
         self.config = config
-        self.image_search_pattern = self.config['image_search_pattern']
+        self.image_search_pattern = self.config.get('image_search_pattern')
 
         self.axis_control = axis_control
-        self.influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root',
-                                            database='tracking')
+        self.influx_client = InfluxDBClient(
+            host='localhost',
+            port=8086,
+            username='root',
+            password='root',
+            database='tracking',
+        )
 
         self.ra_pid = None
         self.dec_pid = None
@@ -28,7 +33,7 @@ class Tracker:
                 setpoint=0,
             )
             self.ra_pid.output_limits = (-self.config['ra']['range'], self.config['ra']['range'])
-            self.ra_pid.sample_time = self.config['sample_time']
+            self.ra_pid.sample_time = sample_time
 
         if 'dec' in self.config:
             self.dec_pid = PID(
@@ -38,7 +43,7 @@ class Tracker:
                 setpoint=0,
             )
             self.dec_pid.output_limits = (-self.config['dec']['range'], self.config['dec']['range'])
-            self.dec_pid.sample_time = self.config['sample_time']
+            self.dec_pid.sample_time = sample_time
 
     def track(self):
         known_files = set(glob.glob(self.image_search_pattern))

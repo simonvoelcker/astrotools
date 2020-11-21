@@ -9,8 +9,8 @@ from lib.tracker import Tracker
 
 class ImageTracker(Tracker):
 
-    def __init__(self, config, axis_control):
-        super().__init__(config, axis_control)
+    def __init__(self, config, axis_control, sample_time=10):
+        super().__init__(config, axis_control, sample_time)
         self.reference_image = None
         self.sigma_threshold = config['sigma_threshold']
 

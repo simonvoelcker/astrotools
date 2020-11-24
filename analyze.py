@@ -8,10 +8,10 @@ from lib.analyzer import Analyzer
 
 parser = argparse.ArgumentParser()
 parser.add_argument('directory', type=str)
-parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Pattern to use when searching for input images')
+parser.add_argument('--filename-pattern', type=str, default='*.png', help='Pattern to use when searching for input images')
 parser.add_argument('--range', type=str, default=None, help='Stack only given range of images, not all')
 parser.add_argument('--sigma-clip', type=int, default=None, help='Apply sigma clipping with given sigma before offset detection')
-parser.add_argument('--batch', action='store_true', help='Run the solver in batch mode. Use only with easy-to-solve images.')
+parser.add_argument('--batch', action='store_true', help='Run the solver in batch mode. Use only with easy-to-solve images, as no frame must fail.')
 
 
 args = parser.parse_args()
@@ -20,7 +20,7 @@ search_pattern = os.path.join(args.directory, args.filename_pattern)
 files = glob.glob(search_pattern)
 
 if not files:
-	print('No files. Use --filename-pattern if the images are not .tif')
+	print('No files. Use --filename-pattern if the images are not .png')
 	sys.exit(1)
 
 print(f'Found {len(files)} files')

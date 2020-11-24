@@ -11,7 +11,7 @@ Python tools for astrophotography. Strongly tied to my personal setup.
  - skimage, simple-pid and PySerial for tracking and motor control
  - matplotlib and influxdb for analytics
  - astrometry.net image calibration CLI tools (specifically solve-field)
- - astropy for FITS files, but propably much more later
+ - astropy for FITS files
 
 # the tools
 
@@ -23,9 +23,7 @@ Performs image calibration and computation of metrics such as brightness and sha
 
 Interactive control. Can set motor speeds, target object, go-to maneuver and target tracking. Data is written to InfluxDB.
 
-## gif.py
-
-Creates greyscale animated gif from a directory full of images.
+I'm phasing out this method of controlling the telescope, in favor of a web-based application.
 
 ## serve_images.py
 

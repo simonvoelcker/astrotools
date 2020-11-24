@@ -15,7 +15,7 @@ from skimage.filters import gaussian
 
 parser = argparse.ArgumentParser()
 parser.add_argument('directory', type=str)
-parser.add_argument('--filename-pattern', type=str, default='*.tif', help='Pattern to use when searching for input images')
+parser.add_argument('--filename-pattern', type=str, default='*.png', help='Pattern to use when searching for input images')
 parser.add_argument('--out', type=str, default='stacked.png', help='Output filename')
 parser.add_argument('--auto-crop', action='store_true', help='Crop the output image to highly sampled region')
 parser.add_argument('--auto-crop-samples', type=int, default=None, help='Num samples to use as threshold for auto-crop')
@@ -51,7 +51,7 @@ search_pattern = os.path.join(args.directory, args.filename_pattern)
 files = glob.glob(search_pattern)
 
 if not files:
-	print('No files. Use --filename-pattern if the images are not .tif')
+	print('No files. Use --filename-pattern if the images are not .png')
 	sys.exit(1)
 
 print(f'Found {len(files)} files to stack. Consider --range if that\'s too many')

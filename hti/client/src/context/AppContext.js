@@ -32,6 +32,11 @@ export class AppProvider extends Component {
 
       imageUrl: null,
       imagePath: null,
+
+      logEntries: [
+        {text: 'dummy line 1'},
+        {text: 'dummy line 2'},
+      ],
     }
 
     this.initialize()

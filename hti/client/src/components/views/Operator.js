@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 
 import CameraView from '../panels/CameraView'
+import LogView from '../panels/LogView'
 import CaptureControl from '../panels/CaptureControl'
 import AxisControl from '../panels/AxisControl'
 import TrackingControl from '../panels/TrackingControl'
@@ -12,10 +13,11 @@ export default class Operator extends Component {
       <AppConsumer>
         {({ store }) => (
           <div className='operator'>
-            <div>
+            <div className='left-column'>
               <CameraView />
+              <LogView />
             </div>
-            <div>
+            <div className='right-column'>
               <TrackingControl />
               <CaptureControl />
               <AxisControl />

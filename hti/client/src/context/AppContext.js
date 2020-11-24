@@ -34,8 +34,7 @@ export class AppProvider extends Component {
       imagePath: null,
 
       logEntries: [
-        {text: 'dummy line 1'},
-        {text: 'dummy line 2'},
+        {timestamp: Date.now(), text: 'Frontend started'},
       ],
     }
 
@@ -43,6 +42,9 @@ export class AppProvider extends Component {
   }
 
   initialize () {
+
+    const maxLogLength = 5
+
     let eventListener = new EventSource('http://localhost:5000/api/info/events')
     eventListener.onmessage = (event) => {
       event = JSON.parse(event.data)
@@ -53,6 +55,13 @@ export class AppProvider extends Component {
         this.setState({
           imageUrl: 'http://localhost:5000/static/' + event['imagePath'],
           imagePath: event['imagePath']
+        })
+      } else if (event['type'] === 'log') {
+        this.setState({
+          logEntries: this.state.logEntries.concat({
+            timestamp: Date.now(),
+            text: event['text'],
+          }).slice(-maxLogLength)
         })
       }
     }

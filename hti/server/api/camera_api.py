@@ -3,7 +3,7 @@ from threading import Thread
 from flask import request
 from flask_restplus import Namespace, Resource
 
-from hti.server.api.events import image_event
+from hti.server.api.events import image_event, log_event
 from hti.server.globals import get_indi_controller, get_app_state
 
 api = Namespace('Control', description='Machine control API endpoints')
@@ -30,6 +30,7 @@ class CaptureImageApi(Resource):
                 image_path = controller.capture_image(devicename, frame_type, exposure, gain)
                 get_app_state().capturing = False
                 image_event(image_path)
+                log_event(f'New image: {image_path}')
             except Exception as e:
                 print('Capture error:', e)
 
@@ -57,6 +58,7 @@ class StartSequenceApi(Resource):
                 while get_app_state().running_sequence:
                     image_path = controller.capture_image(devicename, frame_type, exposure, gain)
                     image_event(image_path)
+                    log_event(f'New image: {image_path}')
             except Exception as e:
                 print('Capture error', e)
 

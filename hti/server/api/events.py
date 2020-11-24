@@ -31,3 +31,11 @@ def image_event(image_path):
         'unix_timestamp': time.time(),
         'image_path': image_path,
     })
+
+
+def log_event(text):
+    put_event({
+        'type': 'log',
+        'unix_timestamp': time.time(),
+        'text': text,
+    })

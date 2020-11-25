@@ -104,9 +104,13 @@ export default class TrackingControl extends Component {
                   </Table>
                 </Row>
                 <Row className='row button-row'>
-                  <StandardButton
-                    disabled={store.imagePath === null || store.tracking || store.calibrating}
-                    onClick={() => $backend.calibrateImage(store.imagePath)}>CALIBRATE IMAGE</StandardButton>
+                  { store.calibrating ?
+                    <StandardButton onClick={$backend.stopCalibration}>STOP CALIBRATION</StandardButton>
+                  :
+                    <StandardButton
+                      disabled={store.imagePath === null || store.tracking}
+                      onClick={() => $backend.calibrateImage(store.imagePath, 30)}>CALIBRATE IMAGE</StandardButton>
+                  }
                   <StandardButton
                     disabled={this.state.target === null || store.tracking || store.steering || store.imagePosition === null}
                     onClick={$backend.goToTarget}>GO TO TARGET</StandardButton>

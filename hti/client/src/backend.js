@@ -51,11 +51,15 @@ export default {
     return $axios.post('/axes/rest')
   },
 
-  calibrateImage (imagePath) {
+  calibrateImage (imagePath, timeout) {
     return $axios.post('/info/images/calibrate', {
       imagePath: imagePath,
-      timeout: 60
+      timeout: timeout,
     })
+  },
+
+  stopCalibration () {
+    return $axios.post('/info/images/calibrate/stop')
   },
 
   startTracking (mode) {

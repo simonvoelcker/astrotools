@@ -123,7 +123,11 @@ class CalibrateImageApi(Resource):
 
         def analyze_fun():
             app_state.calibrating = True
-            calibration_data = Solver().analyze_image(image_path, timeout)
+            calibration_data = Solver().analyze_image(
+                image_path,
+                timeout,
+                run_callback=lambda: app_state.calibrating,
+            )
             app_state.calibrating = False
 
             timestamp = int(datetime.datetime.now().timestamp())
@@ -152,6 +156,19 @@ class CalibrateImageApi(Resource):
                 }
 
         Thread(target=analyze_fun).start()
+        return '', 200
+
+
+@api.route('/images/calibrate/stop')
+class CalibrateImageApi(Resource):
+    @api.doc(
+        description='Stop running calibration',
+        response={
+            200: 'Success',
+        }
+    )
+    def post(self):
+        get_app_state().calibrating = False
         return '', 200
 
 

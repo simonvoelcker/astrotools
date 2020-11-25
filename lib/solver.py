@@ -10,13 +10,16 @@ from lib.config import (
 from lib.coordinates import Coordinates
 
 
-def run_command_or_die_trying(command, timeout):
+def run_command_or_die_trying(command, timeout, run_callback=None):
 	# Popen accepts a timeout parameter, but it does not work smh
 	process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
 	while timeout > 0:
 		if process.poll() is not None:
 			output = process.stdout.read().decode()
 			return output
+		if run_callback is not None and not run_callback():
+			# abort
+			break
 		time.sleep(1)
 		timeout -= 1
 	process.kill()
@@ -78,9 +81,9 @@ class Solver:
 		batch_arg = ['--batch'] if len(filepaths) > 1 else []
 		return [SOLVE_BINARY] + filepaths + batch_arg + self.get_common_parameters(timeout) + self.get_hint_parameters(hint)
 
-	def analyze_image(self, filepath, timeout=10, hint=None):
+	def analyze_image(self, filepath, timeout=30, hint=None, run_callback=None):
 		command = self.get_analyze_command([filepath], timeout, hint)
-		output = run_command_or_die_trying(command, 30)
+		output = run_command_or_die_trying(command, timeout, run_callback)
 		if output is None:
 			return None
 

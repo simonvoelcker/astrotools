@@ -58,19 +58,10 @@ export default class TrackingControl extends Component {
       lastPosition = '-'
     }
 
-    let lastCalibration = this.context.store.lastCalibrationResult
-    if (lastCalibration !== null && lastCalibration.timestamp !== null && lastCalibration.success !== null) {
-      const passedTime = timestamp - lastCalibration.timestamp
-      lastCalibration = (lastCalibration.success ? 'SUCCESS' : 'FAIL') + ' (' + passedTime + 's ago)'
-    } else {
-      lastCalibration = '-'
-    }
-
     return [
         {key: 'Target name', value: name + type},
         {key: 'Target position', value: position},
         {key: 'Last position', value: lastPosition},
-        {key: 'Last calibration', value: lastCalibration},
     ]
   }
 

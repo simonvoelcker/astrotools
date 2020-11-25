@@ -25,10 +25,6 @@ export class AppProvider extends Component {
         timestamp: null,
         position: null,
       },
-      lastCalibrationResult: {
-        timestamp: null,
-        success: null,
-      },
 
       imageUrl: null,
       imagePath: null,
@@ -49,7 +45,6 @@ export class AppProvider extends Component {
     eventListener.onmessage = (event) => {
       event = JSON.parse(event.data)
       if (event['type'] === 'app_state') {
-        console.log(event['appState'])
         this.setState(event['appState'])
       } else if (event['type'] === 'image') {
         this.setState({

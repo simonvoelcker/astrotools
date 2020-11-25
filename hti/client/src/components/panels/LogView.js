@@ -20,7 +20,7 @@ export default class LogView extends Component {
               <span className='spaced-text'>Log</span>
               <div className='entries-list'>
                 {store.logEntries.map(entry => {
-                  return <span>{this.formatTimestamp(entry.timestamp)}: {entry.text}</span>
+                  return <span key={entry.timestamp}>{this.formatTimestamp(entry.timestamp)}: {entry.text}</span>
                 })}
               </div>
             </div>

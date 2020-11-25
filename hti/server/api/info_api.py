@@ -9,7 +9,7 @@ from flask import Response, request
 from flask_restplus import Namespace, Resource
 from flask.json import jsonify
 
-from hti.server.api.events import subscribe_for_events
+from hti.server.api.events import subscribe_for_events, log_event
 from hti.server.api.util import camel_case_keys_recursively, to_dict_recursively
 from hti.server.globals import get_catalog, get_app_state
 
@@ -128,18 +128,27 @@ class CalibrateImageApi(Resource):
 
             timestamp = int(datetime.datetime.now().timestamp())
 
-            app_state.last_calibration_result = {
-                'timestamp': timestamp,
-                'success': calibration_data is not None
-            }
-
-            if calibration_data is not None:
+            if calibration_data is None:
+                log_event('Calibration failed')
+            else:
                 center = calibration_data['center_deg']
+                rotation_angle = calibration_data['rotation']['angle']
                 ra = float(center['ra'])
                 dec = float(center['dec'])
+                position = Coordinates(ra, dec)
+
+                log_event(f'Image center: {position} Rotation: {rotation_angle}')
+
+                if app_state.target is not None:
+                    target_distance = Coordinates(
+                        app_state.target.ra - position.ra,
+                        app_state.target.dec - position.dec
+                    )
+                    log_event(f'Distance to target: {target_distance}')
+
                 app_state.last_known_position = {
                     'timestamp': timestamp,
-                    'position': Coordinates(ra, dec),
+                    'position': position,
                 }
 
         Thread(target=analyze_fun).start()

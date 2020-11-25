@@ -1,20 +1,22 @@
 import PyIndi
 import time
 import sys
-import threading
+import queue
 
 
 class IndiClient(PyIndi.BaseClient):
-    def __init__(self, host, port, blob_event):
+    def __init__(self, host, port):
         super(IndiClient, self).__init__()
-
-        self.blob_event = blob_event
-
+        self.event_queue = None
         # connect
         self.setServer(host, port)
         if not (self.connectServer()):
             print(f'Server not running: {host}:{port}')
             sys.exit(1)
+
+    def subscribe(self):
+        self.event_queue = queue.Queue()
+        return self.event_queue
 
     def newDevice(self, d):
         pass
@@ -26,7 +28,8 @@ class IndiClient(PyIndi.BaseClient):
         pass
 
     def newBLOB(self, bp):
-        self.blob_event.set()
+        if self.event_queue is not None:
+            self.event_queue.put(bp)
 
     def newSwitch(self, svp):
         pass
@@ -52,12 +55,9 @@ class IndiClient(PyIndi.BaseClient):
 
 class IndiCamera:
     def __init__(self, device_name='Toupcam GPCMOS02000KPA'):
-
-        # what a spooky way of getting the data
-        self.blob_event = threading.Event()
-
         # connect the server
-        self.indi_client = IndiClient('localhost', 7624, self.blob_event)
+        self.indi_client = IndiClient('localhost', 7624)
+        self.blob_event_queue = self.indi_client.subscribe()
 
         self.device_ccd = self.indi_client.getDevice(device_name)
         while not self.device_ccd:
@@ -89,45 +89,49 @@ class IndiCamera:
         ccd_active_devices[0].text = "Camera"
         self.indi_client.sendNewText(ccd_active_devices)
 
-        # we should inform the indi server that we want to receive the
-        # "CCD1" blob from this device
+        # inform the indi server that we want to receive the "CCD1" blob
         self.indi_client.setBLOBMode(PyIndi.B_ALSO, device_name, "CCD1")
 
-    def capture(self):
-
-        ccd_ccd1 = self.device_ccd.getBLOB("CCD1")
-        while not ccd_ccd1:
+        self.ccd_ccd1 = self.device_ccd.getBLOB("CCD1")
+        while not self.ccd_ccd1:
             time.sleep(0.5)
-            ccd_ccd1 = self.device_ccd.getBLOB("CCD1")
+            self.ccd_ccd1 = self.device_ccd.getBLOB("CCD1")
 
-        # a list of our exposure times
-        exposures = [1.0, 5.0]
-
-        # we use here the threading.Event facility of Python
-        # we define an event for newBlob event
-        self.blob_event.clear()
-        i = 0
-        self.ccd_exposure[0].value = exposures[i]
+    def capture_single(self, exposure):
+        self.ccd_exposure[0].value = exposure
         self.indi_client.sendNewNumber(self.ccd_exposure)
 
-        while i < len(exposures):
+        # could use the event that comes out of this somehow
+        self.blob_event_queue.get()
+
+        for blob in self.ccd_ccd1:
+            print(f'name: {blob.name} size: {blob.size} format: {blob.format}')
+            fits = blob.getblobdata()
+            print(f'fits data type: {type(fits)}')
+
+    def capture_sequence(self, exposure, count):
+
+        self.ccd_exposure[0].value = exposure
+        self.indi_client.sendNewNumber(self.ccd_exposure)
+
+        for i in range(count):
             # wait for the ith exposure
-            self.blob_event.wait()
+            self.blob_event_queue.get()
             # we can start immediately the next one
-            if i + 1 < len(exposures):
-                self.ccd_exposure[0].value = exposures[i + 1]
-                self.blob_event.clear()
+            if i + 1 < count:
+                self.ccd_exposure[0].value = exposure
                 self.indi_client.sendNewNumber(self.ccd_exposure)
             # and meanwhile process the received one
-            for blob in ccd_ccd1:
+            for blob in self.ccd_ccd1:
                 print(f'name: {blob.name} size: {blob.size} format: {blob.format}')
                 # pyindi-client adds a getblobdata() method to IBLOB item
                 # for accessing the contents of the blob (bytearray in Python)
                 fits = blob.getblobdata()
                 print(f'fits data type: {type(fits)}')
                 # use astropy.io.fits to make use of the data
-            i += 1
 
 
 cam = IndiCamera()
-cam.capture()
+# cam.capture_single(1)
+# 2 FPS max, apparently, and random stalling
+cam.capture_sequence(0.01, 10)

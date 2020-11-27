@@ -81,6 +81,7 @@ class IndiCamera:
             self.ccd_connect[1].s = PyIndi.ISS_OFF  # the "DISCONNECT" switch
             self.indi_client.sendNewSwitch(self.ccd_connect)
 
+        self.ccd_controls = get_retry(lambda: self.device_ccd.getNumber("CCD_CONTROLS"))
         self.ccd_exposure = get_retry(lambda: self.device_ccd.getNumber("CCD_EXPOSURE"))
 
         self.ccd_active_devices = get_retry(lambda: self.device_ccd.getText("ACTIVE_DEVICES"))
@@ -92,9 +93,28 @@ class IndiCamera:
 
         self.ccd_ccd1 = get_retry(lambda: self.device_ccd.getBLOB("CCD1"))
 
+    def set_gain(self, gain):
+        assert self.ccd_controls[0].name == 'Gain'
+        self.ccd_controls[0].value = gain
+        self.indi_client.sendNewNumber(self.ccd_controls)
+
+    def start_exposure(self, exposure, ignore_ready=False):
+        if not ignore_ready:
+            # wait till device is ready
+            while self.ccd_exposure.s != PyIndi.IPS_OK:
+                time.sleep(0.01)
+
+        self.ccd_exposure[0].value = exposure
+        self.indi_client.sendNewNumber(self.ccd_exposure)
+
+    def await_image(self):
+        # could use the event that comes out of this somehow,
+        # especially if it references the ccd_ccd1 property.
+        self.blob_event_queue.get()
+
     def save_image(self, out_filepath):
         blob = self.ccd_ccd1[0]
-        fits_data = blob.getblobdata()
+        fits_data = blob.getblobdata()  # bytearray
         fits_file = io.BytesIO(fits_data)
         with fits.open(fits_file) as fits_file:
             # Useful: fits_file.info()
@@ -102,33 +122,20 @@ class IndiCamera:
             pil_image = Image.fromarray(numpy_image, mode='RGB')
             pil_image.save(out_filepath)
 
-    def capture_single(self, exposure, out_filepath):
-        self.ccd_exposure[0].value = exposure
-        self.indi_client.sendNewNumber(self.ccd_exposure)
+    def capture_single(self, exposure, gain, out_directory, filename):
+        self.set_gain(gain)
+        self.start_exposure(exposure, ignore_ready=True)
+        self.await_image()
+        self.save_image(os.path.join(out_directory, filename))
 
-        # could use the event that comes out of this somehow
-        self.blob_event_queue.get()
-        self.save_image(out_filepath)
-
-    def capture_sequence(self, exposure, out_directory):
-
-        self.ccd_exposure[0].value = exposure
-        self.indi_client.sendNewNumber(self.ccd_exposure)
+    def capture_sequence(self, exposure, gain, out_directory):
+        self.set_gain(gain)
+        self.start_exposure(exposure, ignore_ready=True)
 
         i = 0
         while True:
-            # wait for the ith exposure
-            self.blob_event_queue.get()
-
-            # we can start immediately the next one
-            self.ccd_exposure[0].value = exposure
-            self.indi_client.sendNewNumber(self.ccd_exposure)
-
-            # and meanwhile process the received one
-            filepath = os.path.join(out_directory, f'frame_{i:04}.png')
-            self.save_image(filepath)
+            self.await_image()
+            # TODO must copy blob data before moving this to a thread
+            self.save_image(os.path.join(out_directory, f'frame_{i:04}.png'))
+            self.start_exposure(exposure)
             i += 1
-
-
-cam = IndiCamera()
-cam.capture_sequence(1, '/home/simon/Hobby/astro/beute2')

@@ -1,32 +1,18 @@
 import os
-import numpy as np
 import datetime
 import glob
 import random
 import time
 
-from .camera import INDICamera
-from .client import INDIClient
+
+from .pyindi_camera import IndiCamera
 
 
 from PIL import Image
-from astropy.io import fits
-
-
-def convert_fits_image(fits_filepath, out_filepath):
-    if not os.path.isdir(os.path.dirname(out_filepath)):
-        os.makedirs(os.path.dirname(out_filepath))
-    with fits.open(fits_filepath) as fits_file:
-        # Useful: fits_file.info()
-        numpy_image = np.transpose(fits_file[0].data, (1, 2, 0))
-        pil_image = Image.fromarray(numpy_image, mode='RGB')
-        pil_image.save(out_filepath)
-    os.remove(fits_filepath)
 
 
 class INDIController:
     def __init__(self, static_dir):
-        self.client = INDIClient()
         self.cameras = dict()  # by device name
         self.static_dir = static_dir
         self.shooting = False
@@ -34,32 +20,9 @@ class INDIController:
         if not os.path.isdir(self.static_dir):
             os.makedirs(self.static_dir)
 
-    def devices(self):
-        properties = self.client.get_properties()
-        devices = list(set([property['device'] for property in properties]))
-        result = {}
-        for device in devices:
-            result[device] = [p for p in properties if p['device'] == device]
-        return result
-
-    def properties(self, device):
-        return self.client.get_properties(device)
-
-    def property(self, device, property):
-        property_element = property.split('.')
-        return self.client.get_properties(device, property_element[0], property_element[1])[0]
-
-    def set_property(self, device, property, value):
-        property_element = property.split('.')
-        self.client.set_property_sync(device, property_element[0], property_element[1], value)
-        return self.property(device, property)
-
     def get_camera(self, device_name):
         if device_name not in self.cameras:
-            camera = INDICamera(device_name, self.client)
-            camera.connect()
-            if not camera.is_camera():
-                raise RuntimeError(f'Device {device_name} is not an INDI CCD Camera')
+            camera = IndiCamera()
             self.cameras[device_name] = camera
         return self.cameras[device_name]
 
@@ -71,19 +34,17 @@ class INDIController:
 
         today = datetime.date.today().isoformat()
         path_prefix = os.path.join(today, frame_type)
-        image_name = datetime.datetime.now().isoformat()
+        image_name = f'{datetime.datetime.now().isoformat()}.png'
+
+        out_dir = os.path.join(self.static_dir, path_prefix)
+        os.makedirs(out_dir, exist_ok=True)
+
         camera = self.get_camera(device_name)
-        camera.set_output(self.static_dir, image_name)
-        camera.shoot(exposure, gain)
+        camera.capture_single(exposure, gain, out_dir, image_name)
 
         self.shooting = False
 
-        # TODO convert in a different thread. streamline this whole thing
-
-        convert_fits_image(fits_filepath=os.path.join(self.static_dir, f'{image_name}.fits'),
-                           out_filepath=os.path.join(self.static_dir, path_prefix, f'{image_name}.png'))
-
-        return f'{path_prefix}/{image_name}.png'
+        return os.path.join(path_prefix, image_name)
 
 
 class INDIControllerMock:

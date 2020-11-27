@@ -33,7 +33,8 @@ def get_indi_controller():
             _indi_controller = INDIControllerMock(static_dir=hti_static_dir)
         else:
             _indi_controller = INDIController(static_dir=hti_static_dir)
-            get_app_state().camera_connected = bool(_indi_controller.devices())
+            # TODO get this from the indi client underlying the camera
+            get_app_state().camera_connected = True
     return _indi_controller
 
 

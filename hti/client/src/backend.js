@@ -13,10 +13,6 @@ $axios.interceptors.request.use((config) => {
 })
 
 export default {
-  getDevices () {
-    return $axios.get('/indi/devices')
-  },
-
   capture (deviceName, exposure, gain) {
     return $axios.post('/camera/' + deviceName + '/capture', {
         exposure: exposure,

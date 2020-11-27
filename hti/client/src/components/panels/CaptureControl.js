@@ -9,6 +9,7 @@ export default class CameraView extends Component {
   constructor (props) {
     super(props)
 
+    // TODO restore /devices endpoint with pyindi client, support multiple cameras
     this.camera = null
 
     this.state = {
@@ -16,16 +17,6 @@ export default class CameraView extends Component {
       gain: 10000,
       frameType: 'lights'
     }
-  }
-
-  componentDidMount() {
-    // initialize camera
-    $backend.getDevices().then((response) => {
-      let deviceNames = Object.keys(response.data)
-      if (deviceNames.length > 0) {
-        this.camera = deviceNames[0]
-      }
-    })
   }
 
   onChangeExposure (event) {
@@ -75,15 +66,15 @@ export default class CameraView extends Component {
             </div>
             <div className='button-column'>
               <StandardButton id="capture"
-                      disabled={this.camera === null || store.capturing || store.runningSequence}
+                      disabled={!store.cameraConnected || store.capturing || store.runningSequence}
                       onClick={this.capture.bind(this)}>Capture</StandardButton>
               { store.runningSequence ?
                 <StandardButton id="stop-sequence"
-                        disabled={this.camera === null}
+                        disabled={!store.cameraConnected}
                         onClick={this.stopSequence.bind(this)}>Stop</StandardButton>
               :
                 <StandardButton id="start-sequence"
-                        disabled={this.camera === null || store.capturing}
+                        disabled={!store.cameraConnected || store.capturing}
                         onClick={this.startSequence.bind(this)}>Sequence</StandardButton>
               }
             </div>

@@ -13,8 +13,9 @@ export default class CameraView extends Component {
     this.camera = null
 
     this.state = {
-      exposure: 10,
-      gain: 10000,
+      exposure: 1,
+      gain: 20000,
+      persist: false,
       frameType: 'lights'
     }
   }
@@ -27,12 +28,16 @@ export default class CameraView extends Component {
     this.setState({gain: event.target.value})
   }
 
+  onChangePersist (event) {
+    this.setState({persist: event.target.checked})
+  }
+
   capture () {
-    $backend.capture(this.camera, this.state.exposure, this.state.gain)
+    $backend.capture(this.camera, this.state.exposure, this.state.gain, this.state.persist)
   }
 
   startSequence () {
-    $backend.startSequence(this.camera, this.state.frameType, this.state.exposure, this.state.gain)
+    $backend.startSequence(this.camera, this.state.frameType, this.state.exposure, this.state.gain, this.state.persist)
   }
 
   stopSequence () {
@@ -48,7 +53,7 @@ export default class CameraView extends Component {
           <div className={'panel capture-control-panel ' + panelStateClass}>
             <div className='settings-column'>
               <div>
-                <Label className='spaced-text' for="exposure">Exposure (s)</Label>
+                <Label className='spaced-text'>Exposure (s)</Label>
                 <Input className='number-input'
                        type="number"
                        placeholder={this.state.exposure}
@@ -56,7 +61,7 @@ export default class CameraView extends Component {
                        onChange={(event) => this.onChangeExposure(event)} />
               </div>
               <div>
-                <Label className='spaced-text' for="gain">Gain</Label>
+                <Label className='spaced-text'>Gain</Label>
                 <Input className='number-input'
                        type="number"
                        placeholder={this.state.gain}
@@ -89,6 +94,13 @@ export default class CameraView extends Component {
                   <DropdownItem onClick={() => {this.setState({frameType: 'other'})}}>Other</DropdownItem>
                 </DropdownMenu>
               </UncontrolledDropdown>
+              <div>
+                <Label className='spaced-text'>Persist</Label>
+                <Input className='number-input'
+                       type="checkbox"
+                       value={this.state.persist}
+                       onChange={(event) => this.onChangePersist(event)}/>{' '}
+              </div>
             </div>
           </div>
         )}

@@ -25,6 +25,7 @@ class CaptureImageApi(Resource):
         body = request.json
         exposure = float(body['exposure'])
         gain = float(body['gain'])
+        persist = bool(body['persist'])
         frame_type = body.get('frameType', 'singleCapture')
 
         def exp():
@@ -36,12 +37,13 @@ class CaptureImageApi(Resource):
                 frame = cam_controller.capture_image(
                     devicename, frame_type, exposure, gain
                 )
-                frame_manager.add_frame(frame)
+                frame_manager.add_frame(frame, persist)
                 app_state.capturing = False
                 image_event(frame.path)
                 log_event(f'New frame: {frame.path}')
             except Exception as e:
                 print('Capture error:', e)
+                app_state.capturing = False
 
         Thread(target=exp).start()
         return '', 204
@@ -59,17 +61,19 @@ class StartSequenceApi(Resource):
         body = request.json
         exposure = float(body['exposure'])
         gain = float(body['gain'])
+        persist = bool(body['persist'])
         frame_type = body.get('frameType', 'other')
 
         def exp():
             try:
+                app_state = get_app_state()
                 cam_controller = get_camera_controller()
                 frame_manager = get_frame_manager()
-                while get_app_state().running_sequence:
+                while app_state.running_sequence:
                     frame = cam_controller.capture_image(
                         devicename, frame_type, exposure, gain
                     )
-                    frame_manager.add_frame(frame)
+                    frame_manager.add_frame(frame, persist)
                     image_event(frame.path)
                     log_event(f'New frame: {frame.path}')
             except Exception as e:

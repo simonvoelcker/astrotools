@@ -13,18 +13,20 @@ $axios.interceptors.request.use((config) => {
 })
 
 export default {
-  capture (deviceName, exposure, gain) {
+  capture (deviceName, exposure, gain, persist) {
     return $axios.post('/camera/' + deviceName + '/capture', {
         exposure: exposure,
-        gain: gain
+        gain: gain,
+        persist: persist,
     })
   },
 
-  startSequence (deviceName, frameType, exposure, gain) {
+  startSequence (deviceName, frameType, exposure, gain, persist) {
     return $axios.post('/camera/' + deviceName + '/start_sequence', {
         frameType: frameType,
         exposure: exposure,
-        gain: gain
+        gain: gain,
+        persist: persist,
     })
   },
 
@@ -39,7 +41,7 @@ export default {
   setSpeeds (raSpeed, decSpeed) {
     return $axios.post('/axes/speeds', {
         ra: raSpeed,
-        dec: decSpeed
+        dec: decSpeed,
     })
   },
 
@@ -60,7 +62,7 @@ export default {
 
   startTracking (mode) {
     return $axios.post('/tracking/start', {
-      mode: mode
+      mode: mode,
     })
   },
 
@@ -75,7 +77,7 @@ export default {
   listDirectory (path, recursive) {
     return $axios.post('/info/directory', {
       path: path,
-      recursive: recursive
+      recursive: recursive,
     })
   },
 
@@ -85,7 +87,7 @@ export default {
         minRa: minRa,
         maxRa: maxRa,
         minDec: minDec,
-        maxDec: maxDec
+        maxDec: maxDec,
     }})
   }
 }

@@ -2,7 +2,7 @@ from flask import request
 from flask.json import jsonify
 from flask_restplus import Namespace, Resource
 
-from hti.server.globals import get_indi_controller
+from hti.server.globals import get_camera_controller
 
 api = Namespace('INDI', description='INDI API')
 
@@ -16,7 +16,7 @@ class DevicesApi(Resource):
         }
     )
     def get(self):
-        return jsonify(get_indi_controller().devices())
+        return jsonify(get_camera_controller().devices())
 
 
 @api.route('/device/<devicename>/properties')
@@ -28,7 +28,7 @@ class DevicePropertiesListApi(Resource):
         }
     )
     def get(self, devicename):
-        return jsonify(get_indi_controller().properties(devicename))
+        return jsonify(get_camera_controller().properties(devicename))
 
 
 @api.route('/device/<devicename>/properties/<property>')
@@ -40,7 +40,7 @@ class DevicePropertyApi(Resource):
         }
     )
     def get(self, devicename, property):
-        return jsonify(get_indi_controller().property(devicename, property))
+        return jsonify(get_camera_controller().property(devicename, property))
 
     @api.doc(
         description='Set device property',
@@ -49,4 +49,4 @@ class DevicePropertyApi(Resource):
         }
     )
     def put(self, devicename, property):
-        return jsonify(get_indi_controller().set_property(devicename, property, request.json['value']))
+        return jsonify(get_camera_controller().set_property(devicename, property, request.json['value']))

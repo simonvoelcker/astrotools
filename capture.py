@@ -1,5 +1,4 @@
 import argparse
-import os
 
 from lib.indi.pyindi_camera import IndiCamera
 
@@ -13,9 +12,7 @@ args = parser.parse_args()
 # Start the INDI server: indiserver indi_toupcam_ccd
 ####################
 
-directory, filename = os.path.split(args.out)
-
 camera = IndiCamera()
-camera.capture_single(args.exposure, args.gain, directory, filename)
+camera.capture_single(args.exposure, args.gain, filepath=args.out)
 
 print(f'Wrote {args.out}')

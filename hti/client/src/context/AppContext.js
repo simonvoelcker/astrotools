@@ -7,7 +7,7 @@ export class AppProvider extends Component {
     super(props)
 
     this.state = {
-      // from backend (app state events):
+      // via app_state event
       cameraConnected: null,
       cameraSim: null,
       axesConnected: null,
@@ -18,17 +18,17 @@ export class AppProvider extends Component {
       tracking: null,
       trackingStatus: null,
       calibrating: null,
-      target: null,  // todo this is only coordinates, no meta data
+      target: null,
       axisSpeeds: null,
-
       lastKnownPosition: {
         timestamp: null,
         position: null,
       },
 
-      imageUrl: null,
-      imagePath: null,
+      // via image event
+      framePath: null,
 
+      // via log event
       logEntries: [
         {timestamp: Date.now(), text: 'Frontend started'},
       ],
@@ -48,8 +48,7 @@ export class AppProvider extends Component {
         this.setState(event['appState'])
       } else if (event['type'] === 'image') {
         this.setState({
-          imageUrl: 'http://localhost:5000/static/' + event['imagePath'],
-          imagePath: event['imagePath']
+          framePath: event['imagePath']
         })
       } else if (event['type'] === 'log') {
         this.setState({

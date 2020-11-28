@@ -5,12 +5,13 @@ import random
 import time
 
 
-from .pyindi_camera import IndiCamera
+from lib.indi.pyindi_camera import IndiCamera
+from .frame_manager import Frame
 
 from PIL import Image
 
 
-class INDIController:
+class CameraController:
     def __init__(self, static_dir):
         self.cameras = dict()  # by device name
         self.static_dir = static_dir
@@ -32,21 +33,24 @@ class INDIController:
         self.shooting = True
 
         today = datetime.date.today().isoformat()
+        now = datetime.datetime.now()
         path_prefix = os.path.join(today, frame_type)
-        image_name = f'{datetime.datetime.now().isoformat()}.png'
-
-        out_dir = os.path.join(self.static_dir, path_prefix)
-        os.makedirs(out_dir, exist_ok=True)
+        image_name = f'{now.isoformat()}.png'
 
         camera = self.get_camera(device_name)
-        camera.capture_single(exposure, gain, out_dir, image_name)
+        fits_data = camera.capture_single(exposure, gain)
+        frame = Frame(
+            path=os.path.join(path_prefix, image_name),
+            timestamp=int(now.timestamp()),
+            fits_data=fits_data,
+            persisted=False,
+        )
 
         self.shooting = False
+        return frame
 
-        return os.path.join(path_prefix, image_name)
 
-
-class INDIControllerMock:
+class SimCameraController:
     def __init__(self, static_dir):
         self.static_dir = static_dir
 

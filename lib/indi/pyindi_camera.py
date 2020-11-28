@@ -122,13 +122,16 @@ class IndiCamera:
             pil_image = Image.fromarray(numpy_image, mode='RGB')
             pil_image.save(out_filepath)
 
-    def capture_single(self, exposure, gain, out_directory, filename):
+    def capture_single(self, exposure, gain, filepath=None):
         self.set_gain(gain)
         self.start_exposure(exposure, ignore_ready=True)
         self.await_image()
-        self.save_image(os.path.join(out_directory, filename))
+        if filepath is not None:
+            self.save_image(filepath)
+        return self.ccd_ccd1[0].getblobdata()
 
     def capture_sequence(self, exposure, gain, out_directory):
+        # only supports output to disk atm
         self.set_gain(gain)
         self.start_exposure(exposure, ignore_ready=True)
 
@@ -136,6 +139,7 @@ class IndiCamera:
         while True:
             self.await_image()
             # TODO must copy blob data before moving this to a thread
-            self.save_image(os.path.join(out_directory, f'frame_{i:04}.png'))
+            filepath = os.path.join(out_directory, f'frame_{i:04}.png')
+            self.save_image(filepath)
             self.start_exposure(exposure)
             i += 1

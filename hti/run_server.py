@@ -5,7 +5,7 @@ from flask_cors import CORS
 
 from hti.server.config import Production
 from hti.server.client import api_blueprint, client_blueprint
-from hti.server.globals import get_indi_controller, get_axis_control
+from hti.server.globals import get_camera_controller, get_axis_control
 
 app = Flask(__name__)
 CORS(app)
@@ -16,7 +16,7 @@ app.register_blueprint(client_blueprint)
 app.config.from_object(config)
 app.secret_key = app.config['FLASK_SECRET_KEY']
 
-get_indi_controller()
+get_camera_controller()
 get_axis_control()
 
 if __name__ == '__main__':

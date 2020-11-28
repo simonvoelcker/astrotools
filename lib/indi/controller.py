@@ -7,7 +7,6 @@ import time
 
 from .pyindi_camera import IndiCamera
 
-
 from PIL import Image
 
 
@@ -50,18 +49,6 @@ class INDIController:
 class INDIControllerMock:
     def __init__(self, static_dir):
         self.static_dir = static_dir
-
-    def devices(self):
-        return {"Toupcam GPCMOS02000KPA": []}
-
-    def properties(self, device):
-        raise NotImplementedError
-
-    def property(self, device, property):
-        raise NotImplementedError
-
-    def set_property(self, device, property, value):
-        raise NotImplementedError
 
     def capture_image(self, device_name, frame_type, exposure, gain):
         time.sleep(exposure)

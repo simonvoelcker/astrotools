@@ -32,19 +32,9 @@ class CameraController:
 
         self.shooting = True
 
-        today = datetime.date.today().isoformat()
-        now = datetime.datetime.now()
-        path_prefix = os.path.join(today, frame_type)
-        image_name = f'{now.isoformat()}.png'
-
         camera = self.get_camera(device_name)
         fits_data = camera.capture_single(exposure, gain)
-        frame = Frame(
-            path=os.path.join(path_prefix, image_name),
-            timestamp=int(now.timestamp()),
-            fits_data=fits_data,
-            persisted=False,
-        )
+        frame = Frame(fits_data, frame_type)
 
         self.shooting = False
         return frame

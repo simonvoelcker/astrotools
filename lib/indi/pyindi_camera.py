@@ -128,7 +128,7 @@ class IndiCamera:
         self.await_image()
         if filepath is not None:
             self.save_image(filepath)
-        return self.ccd_ccd1[0].getblobdata()
+        return self.ccd_ccd1[0].getblobdata()[:]
 
     def capture_sequence(self, exposure, gain, out_directory):
         # only supports output to disk atm

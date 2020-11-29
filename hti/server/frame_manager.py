@@ -1,26 +1,36 @@
 import os
+import datetime
 import numpy as np
 from io import BytesIO
-from dataclasses import dataclass
-
 from astropy.io import fits
 from PIL import Image
 
 
-@dataclass
 class Frame:
-    path: str = None
-    timestamp: int = None
-    fits_data: bytearray = None
-    persisted: bool = False
+    def __init__(self, fits_data: bytearray, frame_type: str):
+        self.fits_data = fits_data
+        self.frame_type = frame_type
+        self.timestamp = datetime.datetime.now()
+        self.persisted = False
+        self.pil_image = None
+
+    @property
+    def path(self) -> str:
+        today = datetime.date.today().isoformat()
+        image_name = f'{self.timestamp.isoformat()}.png'
+        return os.path.join(today, self.frame_type, image_name)
+
+    def get_pil_image(self):
+        if self.pil_image is None:
+            fits_file = BytesIO(self.fits_data)
+            with fits.open(fits_file) as fits_file:
+                numpy_image = np.transpose(fits_file[0].data, (1, 2, 0))
+                self.pil_image = Image.fromarray(numpy_image, mode='RGB')
+        return self.pil_image
 
     def get_image_data(self, format: str) -> BytesIO:
-        fits_file = BytesIO(self.fits_data)
         image_data = BytesIO()
-        with fits.open(fits_file) as fits_file:
-            numpy_image = np.transpose(fits_file[0].data, (1, 2, 0))
-            pil_image = Image.fromarray(numpy_image, mode='RGB')
-            pil_image.save(image_data, format=format)
+        self.get_pil_image().save(image_data, format=format)
         image_data.seek(0)
         return image_data
 
@@ -28,17 +38,12 @@ class Frame:
         filepath = os.path.join(path_prefix, self.path)
         directory, filename = os.path.split(filepath)
         os.makedirs(directory, exist_ok=True)
-
-        fits_file = BytesIO(self.fits_data)
-        with fits.open(fits_file) as fits_file:
-            numpy_image = np.transpose(fits_file[0].data, (1, 2, 0))
-            pil_image = Image.fromarray(numpy_image, mode='RGB')
-            pil_image.save(filepath)
+        self.get_pil_image().save(filepath)
         self.persisted = True
 
 
 class FrameManager:
-    MAX_NUM_FRAMES = 5
+    MAX_NUM_FRAMES = 50
     """
     Keep track of recently captured frames.
     """

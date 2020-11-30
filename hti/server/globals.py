@@ -28,15 +28,13 @@ def get_catalog():
 def get_camera_controller():
     global _cam_controller
     if _cam_controller is None:
-        here = os.path.dirname(os.path.abspath(__file__))
-        hti_static_dir = os.path.join(here, '..', 'static')
         sim_mode = os.environ.get('SIM_CAMERA', 'false').lower() == 'true'
         if sim_mode:
-            _cam_controller = SimCameraController(static_dir=hti_static_dir)
+            _cam_controller = SimCameraController()
         else:
-            _cam_controller = CameraController(static_dir=hti_static_dir)
-            # TODO get this from the indi client underlying the camera
-            get_app_state().camera_connected = True
+            _cam_controller = CameraController()
+        # TODO get this from the indi client underlying the camera
+        get_app_state().camera_connected = True
     return _cam_controller
 
 

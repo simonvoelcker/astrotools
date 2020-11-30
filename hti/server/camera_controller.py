@@ -1,5 +1,4 @@
 import os
-import datetime
 import glob
 import random
 import time
@@ -12,13 +11,8 @@ from PIL import Image
 
 
 class CameraController:
-    def __init__(self, static_dir):
+    def __init__(self):
         self.cameras = dict()  # by device name
-        self.static_dir = static_dir
-        self.shooting = False
-
-        if not os.path.isdir(self.static_dir):
-            os.makedirs(self.static_dir)
 
     def get_camera(self, device_name):
         if device_name not in self.cameras:
@@ -27,40 +21,20 @@ class CameraController:
         return self.cameras[device_name]
 
     def capture_image(self, device_name, frame_type, exposure, gain):
-        if self.shooting:
-            raise RuntimeError('Another exposure is already in progress')
-
-        self.shooting = True
-
         camera = self.get_camera(device_name)
         fits_data = camera.capture_single(exposure, gain)
-        frame = Frame(fits_data, frame_type)
-
-        self.shooting = False
-        return frame
+        return Frame(fits_data, frame_type)
 
 
 class SimCameraController:
-    def __init__(self, static_dir):
-        self.static_dir = static_dir
-
     def capture_image(self, device_name, frame_type, exposure, gain):
         time.sleep(exposure)
-
-        today = datetime.date.today().isoformat()
-        path_prefix = os.path.join(today, frame_type)
 
         here = os.path.dirname(os.path.abspath(__file__))
         astro_dir_glob = os.path.join(here, '..', '..', '..', 'NGC*', '**', '*.tif')
         images = glob.glob(astro_dir_glob)
         random_image_path = random.choice(images)
-        out_dir = os.path.join(self.static_dir, path_prefix)
-        if not os.path.isdir(out_dir):
-            os.makedirs(out_dir)
 
-        # convert to jpg while copying to static/path_prefix
-        filename, extension = os.path.splitext(os.path.basename(random_image_path))
-        out_filepath = os.path.join(self.static_dir, path_prefix, f'{filename}.jpg')
-        Image.open(random_image_path).save(out_filepath)
-
-        return os.path.join(path_prefix, f'{filename}.jpg')
+        frame = Frame(fits_data=None, frame_type=frame_type)
+        frame.pil_image = Image.open(random_image_path)
+        return frame

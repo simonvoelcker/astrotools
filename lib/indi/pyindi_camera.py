@@ -137,7 +137,7 @@ class IndiCamera:
     def capture_single(self, exposure, gain, region=None, filepath=None):
         self.set_region(x=region[0], y=region[1], width=region[2], height=region[3])
         self.set_gain(gain)
-        self.start_exposure(exposure, ignore_ready=True)
+        self.start_exposure(exposure)
         self.await_image()
         if filepath is not None:
             self.save_image(filepath)

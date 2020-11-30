@@ -106,8 +106,8 @@ class FrameApi(Resource):
         }
     )
     def get(self):
-        image_path = request.args.get('imagePath')
-        frame = get_frame_manager().get_frame_by_path(image_path)
+        frame_path = request.args.get('framePath')
+        frame = get_frame_manager().get_frame_by_path(frame_path)
         if frame is None:
             return '', 404
 

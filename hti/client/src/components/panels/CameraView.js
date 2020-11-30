@@ -3,7 +3,7 @@ import { AppConsumer, AppContext } from '../../context/AppContext'
 
 export default class CameraView extends Component {
   render () {
-    const endpoint = "http://localhost:5000/api/camera/frames?imagePath="
+    const endpoint = "http://localhost:5000/api/camera/frames?framePath="
     return (
       <AppConsumer>
         {({ store }) => (

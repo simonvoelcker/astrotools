@@ -49,9 +49,9 @@ export default {
     return $axios.post('/axes/rest')
   },
 
-  calibrateImage (imagePath, timeout) {
+  calibrateFrame (framePath, timeout) {
     return $axios.post('/info/images/calibrate', {
-      imagePath: imagePath,
+      framePath: framePath,
       timeout: timeout,
     })
   },

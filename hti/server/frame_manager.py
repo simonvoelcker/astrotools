@@ -40,6 +40,7 @@ class Frame:
         os.makedirs(directory, exist_ok=True)
         self.get_pil_image().save(filepath)
         self.persisted = True
+        return filepath
 
 
 class FrameManager:

@@ -11,7 +11,7 @@ from flask.json import jsonify
 
 from hti.server.api.events import subscribe_for_events, log_event
 from hti.server.api.util import camel_case_keys_recursively, to_dict_recursively
-from hti.server.globals import get_catalog, get_app_state
+from hti.server.globals import get_catalog, get_app_state, get_frame_manager
 
 from lib.coordinates import Coordinates
 from lib.solver import Solver
@@ -109,22 +109,27 @@ class CalibrateImageApi(Resource):
     )
     def post(self):
         body = request.json
-        image_path = body['imagePath']
+        frame_path = body['framePath']
         timeout = float(body['timeout'])
+
+        frame = get_frame_manager().get_frame_by_path(frame_path)
+        if frame is None:
+            return 'Frame not found', 404
 
         here = os.path.dirname(os.path.abspath(__file__))
         hti_static_dir = os.path.join(here, '..', '..', 'static')
-        image_path = os.path.join(hti_static_dir, image_path)
 
-        if not os.path.isfile(image_path):
-            return 'Image not found', 404
+        if not frame.persisted:
+            frame.persist(hti_static_dir)
+
+        filepath = os.path.join(hti_static_dir, frame.path)
 
         app_state = get_app_state()
 
         def analyze_fun():
             app_state.calibrating = True
             calibration_data = Solver().analyze_image(
-                image_path,
+                filepath,
                 timeout,
                 run_callback=lambda: app_state.calibrating,
             )

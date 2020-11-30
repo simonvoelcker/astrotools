@@ -43,7 +43,7 @@ class Frame:
 
 
 class FrameManager:
-    MAX_NUM_FRAMES = 50
+    MAX_NUM_FRAMES = 10
     """
     Keep track of recently captured frames.
     """

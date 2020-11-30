@@ -82,7 +82,13 @@ class IndiCamera:
             self.indi_client.sendNewSwitch(self.ccd_connect)
 
         self.ccd_controls = get_retry(lambda: self.device_ccd.getNumber("CCD_CONTROLS"))
+        assert self.ccd_controls[0].name == 'Gain'
         self.ccd_exposure = get_retry(lambda: self.device_ccd.getNumber("CCD_EXPOSURE"))
+        self.ccd_frame = get_retry(lambda: self.device_ccd.getNumber("CCD_FRAME"))
+        assert self.ccd_frame[0].name == 'X'
+        assert self.ccd_frame[1].name == 'Y'
+        assert self.ccd_frame[2].name == 'WIDTH'
+        assert self.ccd_frame[3].name == 'HEIGHT'
 
         self.ccd_active_devices = get_retry(lambda: self.device_ccd.getText("ACTIVE_DEVICES"))
         self.ccd_active_devices[0].text = "Camera"
@@ -93,8 +99,14 @@ class IndiCamera:
 
         self.ccd_ccd1 = get_retry(lambda: self.device_ccd.getBLOB("CCD1"))
 
+    def set_region(self, x, y, width, height):
+        self.ccd_frame[0].value = x if x is not None else 0
+        self.ccd_frame[1].value = y if y is not None else 0
+        self.ccd_frame[2].value = width if width is not None else 1920
+        self.ccd_frame[3].value = height if height is not None else 1080
+        self.indi_client.sendNewNumber(self.ccd_frame)
+
     def set_gain(self, gain):
-        assert self.ccd_controls[0].name == 'Gain'
         self.ccd_controls[0].value = gain
         self.indi_client.sendNewNumber(self.ccd_controls)
 
@@ -122,7 +134,8 @@ class IndiCamera:
             pil_image = Image.fromarray(numpy_image, mode='RGB')
             pil_image.save(out_filepath)
 
-    def capture_single(self, exposure, gain, filepath=None):
+    def capture_single(self, exposure, gain, region=None, filepath=None):
+        self.set_region(x=region[0], y=region[1], width=region[2], height=region[3])
         self.set_gain(gain)
         self.start_exposure(exposure, ignore_ready=True)
         self.await_image()

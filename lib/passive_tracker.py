@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 from skimage.feature import register_translation
 
@@ -25,7 +26,8 @@ class PassiveTracker(Tracker):
 		cleaned = np.clip(image_greyscale, average + threshold * stddev, 255)
 		return cleaned
 
-	def on_new_file(self, filepath, status_change_callback=None):
+	def on_new_frame(self, frame, path_prefix, status_change_callback=None):
+		filepath = os.path.join(path_prefix, frame.path)
 		image = load_image(filepath, dtype=np.int16)
 		image_for_offset_detection = self._clean_image_for_offset_detection(image)
 

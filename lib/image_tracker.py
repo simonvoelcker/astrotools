@@ -3,7 +3,7 @@ import numpy as np
 from skimage.feature import register_translation
 
 from lib.axis_control import AxisSpeeds
-from lib.util import load_image, sigma_clip_dark_end
+from lib.util import sigma_clip_dark_end
 from lib.tracker import Tracker
 
 
@@ -14,36 +14,34 @@ class ImageTracker(Tracker):
         self.reference_image = None
         self.sigma_threshold = config['sigma_threshold']
 
-    def on_new_file(self, filepath, status_change_callback=None):
-        image = load_image(filepath, dtype=np.int16)
+    def on_new_frame(self, frame, path_prefix, status_change_callback=None):
+
+        pil_image = frame.get_pil_image()
+        image = np.asarray(pil_image)
+
         image_for_offset_detection = sigma_clip_dark_end(image, self.sigma_threshold)
 
         if self.reference_image is None:
-            print(f'Using reference image: {filepath}')
             self.reference_image = image_for_offset_detection
-            status_change_callback(message='Using reference image', filepath=filepath)
+            status_change_callback(message='Using reference frame', filepath=frame.path)
             return
 
         (ra_error, dec_error), _, __ = register_translation(self.reference_image, image_for_offset_detection)
 
         if ra_error == 0 and dec_error == 0:
-            print(f'Image errors are (0,0) in {filepath}. Falling back to resting speed.')
             self.axis_control.set_resting()
-            status_change_callback(message='Fell back to resting speed', filepath=filepath)
+            status_change_callback(message='Errors are (0,0). Fishy.', filepath=frame.path)
             return
 
         ra_speed = AxisSpeeds.ra_resting_speed + self.ra_pid(-ra_error if self.config['ra']['invert'] else ra_error)
         dec_speed = AxisSpeeds.dec_resting_speed + self.dec_pid(-dec_error if self.config['dec']['invert'] else dec_error)
 
-        print(f'RA error: {ra_error:8.6f}, RA speed: {ra_speed:8.6f}, '
-              f'DEC error: {dec_error:8.6f}, DEC speed: {dec_speed:8.6f}')
-
         self.axis_control.set_axis_speeds(ra_dps=ra_speed, dec_dps=dec_speed, mode='tracking')
-        status_change_callback(message='Tracking', filepath=filepath, errors=(ra_error, dec_error))
+        status_change_callback(message='Tracking', filepath=frame.path, errors=(ra_error, dec_error))
 
         if self.influx_client is not None:
             self.write_frame_stats(
-                file_path=filepath,
+                file_path=frame.path,
                 ra_image_error=float(ra_error),
                 ra_speed=float(ra_speed),
                 ra_pid_p=float(self.ra_pid.components[0]),

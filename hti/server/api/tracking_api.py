@@ -6,8 +6,10 @@ import queue
 from flask import request
 from flask_restplus import Namespace, Resource
 
-from hti.server.api.events import subscribe_for_events, unsubscribe_from_events
-from hti.server.globals import get_axis_control, get_app_state
+from hti.server.api.events import subscribe_for_events, \
+    unsubscribe_from_events, log_event
+from hti.server.globals import get_axis_control, get_app_state, \
+    get_frame_manager
 from lib.image_tracker import ImageTracker
 from lib.passive_tracker import PassiveTracker
 from lib.target_tracker import TargetTracker
@@ -60,6 +62,7 @@ class TrackTargetApi(Resource):
             q = queue.LifoQueue()
             subscribe_for_events(q)
             latest_processed_event = None
+            frame_manager = get_frame_manager()
             while get_app_state().tracking:
                 event = q.get()
                 if event['type'] != 'image':
@@ -68,22 +71,16 @@ class TrackTargetApi(Resource):
                     # skip over old events
                     continue
                 latest_processed_event = event
-                image_path = event['image_path']  # relative to static
-                absolute_image_path = os.path.join(root_dir, 'hti', 'static', image_path)
+                frame_path = event['image_path']
+                frame = frame_manager.get_frame_by_path(frame_path)
+                hti_static_dir = os.path.join(root_dir, 'hti', 'static')
 
                 def tracking_status_event(message, **kwargs):
-                    get_app_state().tracking_status = {
-                        'message': message,
-                        'details': kwargs,
-                    }
+                    log_event(f'Tracking status: {message} (Details: {kwargs})')
 
-                tracker.on_new_file(absolute_image_path, status_change_callback=tracking_status_event)
+                tracker.on_new_frame(frame, path_prefix=hti_static_dir, status_change_callback=tracking_status_event)
 
-            # TODO this must also happen on exception
-            get_app_state().tracking_status = {
-                'message': 'Stopped',
-                'details': None
-            }
+            log_event(f'Tracking status: Stopped')
             unsubscribe_from_events(q)
 
         get_app_state().tracking = True

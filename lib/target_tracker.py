@@ -1,3 +1,5 @@
+import os
+
 from lib.solver import Solver
 from lib.tracker import Tracker
 
@@ -19,7 +21,8 @@ class TargetTracker(Tracker):
     def set_target(self, target):
         self.target = target
 
-    def on_new_file(self, filepath, status_change_callback=None):
+    def on_new_frame(self, frame, path_prefix, status_change_callback=None):
+        filepath = os.path.join(path_prefix, frame.path)
         image_coordinates = Solver().locate_image(filepath)
 
         if not image_coordinates:

@@ -16,7 +16,6 @@ class AppState:
     running_sequence: bool = False
     steering: bool = False
     tracking: bool = False
-    tracking_status: dict = None
     calibrating: bool = False
     target: Coordinates = None
     axis_speeds: AxisSpeeds = None

@@ -10,7 +10,7 @@ from lib.tracker import Tracker
 
 class PassiveTracker(Tracker):
 
-	def __init__(self, config):
+	def __init__(self, config, *args):
 		super().__init__(config, None, None)
 		self.reference_image = None
 		self.reference_coordinates = None

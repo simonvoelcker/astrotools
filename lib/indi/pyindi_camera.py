@@ -99,11 +99,11 @@ class IndiCamera:
 
         self.ccd_ccd1 = get_retry(lambda: self.device_ccd.getBLOB("CCD1"))
 
-    def set_region(self, x, y, width, height):
-        self.ccd_frame[0].value = x if x is not None else 0
-        self.ccd_frame[1].value = y if y is not None else 0
-        self.ccd_frame[2].value = width if width is not None else 1920
-        self.ccd_frame[3].value = height if height is not None else 1080
+    def set_region(self, region):
+        if region is None:
+            region = [0, 0, 1920, 1080]
+        for dim in range(4):
+            self.ccd_frame[dim].value = region[dim]
         self.indi_client.sendNewNumber(self.ccd_frame)
 
     def set_gain(self, gain):
@@ -135,9 +135,9 @@ class IndiCamera:
             pil_image.save(out_filepath)
 
     def capture_single(self, exposure, gain, region=None, filepath=None):
-        self.set_region(x=region[0], y=region[1], width=region[2], height=region[3])
+        self.set_region(region)
         self.set_gain(gain)
-        self.start_exposure(exposure)
+        self.start_exposure(exposure, ignore_ready=True)
         self.await_image()
         if filepath is not None:
             self.save_image(filepath)

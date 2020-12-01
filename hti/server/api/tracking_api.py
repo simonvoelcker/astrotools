@@ -40,22 +40,22 @@ class TrackTargetApi(Resource):
         with open(os.path.join(root_dir, config_file), 'r') as f:
             config = json.load(f)
 
-        tracker = None
+        tracker_class = {
+            'target': TargetTracker,
+            'image': ImageTracker,
+            'passive': PassiveTracker,
+        }[mode]
+
+        axis_control = get_axis_control()
+        tracker = tracker_class(
+            config,
+            axis_control,
+            10,  # exposure time of current sequence - TODO!
+            axis_control.speeds.ra_dps,  # use current speeds as defaults
+            axis_control.speeds.dec_dps,
+        )
         if mode == 'target':
-            axis_control = get_axis_control()
-            tracker = TargetTracker(
-                config,
-                axis_control,
-                10,  # exposure time of current sequence - TODO!
-                axis_control.speeds.ra_dps,  # use current speeds as defaults
-                axis_control.speeds.dec_dps,
-            )
             tracker.set_target(get_app_state().target)
-        elif mode == 'image':
-            axis_control = get_axis_control()
-            tracker = ImageTracker(config, axis_control)
-        elif mode == 'passive':
-            tracker = PassiveTracker(config)
 
         def thread_func():
             # process most recent events first and discard old ones

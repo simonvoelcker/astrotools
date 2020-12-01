@@ -42,7 +42,7 @@ class CaptureImageApi(Resource):
                 image_event(frame.path)
                 log_event(f'New frame: {frame.path}')
             except Exception as e:
-                print('Capture error:', e)
+                log_event(f'Capture error: {e}')
                 app_state.capturing = False
 
         Thread(target=exp).start()
@@ -77,7 +77,7 @@ class StartSequenceApi(Resource):
                     image_event(frame.path)
                     log_event(f'New frame: {frame.path}')
             except Exception as e:
-                print('Capture error', e)
+                log_event(f'Capture error: {e}')
 
         get_app_state().running_sequence = True
         Thread(target=exp).start()

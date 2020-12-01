@@ -2,17 +2,25 @@ import numpy as np
 
 from skimage.feature import register_translation
 
-from lib.axis_control import AxisSpeeds
 from lib.util import sigma_clip_dark_end
 from lib.tracker import Tracker
 
 
 class ImageTracker(Tracker):
 
-    def __init__(self, config, axis_control, sample_time=10):
+    def __init__(
+        self,
+        config,
+        axis_control,
+        sample_time,
+        ra_resting_speed_dps,  # not necessarily the siderial speed
+        dec_resting_speed_dps,
+    ):
         super().__init__(config, axis_control, sample_time)
         self.reference_image = None
         self.sigma_threshold = config['sigma_threshold']
+        self.ra_resting_speed_dps = ra_resting_speed_dps
+        self.dec_resting_speed_dps = dec_resting_speed_dps
 
     def on_new_frame(self, frame, path_prefix, status_change_callback=None):
 
@@ -29,12 +37,21 @@ class ImageTracker(Tracker):
         (ra_error, dec_error), _, __ = register_translation(self.reference_image, image_for_offset_detection)
 
         if ra_error == 0 and dec_error == 0:
-            self.axis_control.set_resting()
+            self.axis_control.set_axis_speeds(
+                self.ra_resting_speed_dps,
+                self.dec_resting_speed_dps,
+                mode='resting',
+            )
             status_change_callback(message='Errors are (0,0). Fishy.', filepath=frame.path)
             return
 
-        ra_speed = AxisSpeeds.ra_resting_speed + self.ra_pid(-ra_error if self.config['ra']['invert'] else ra_error)
-        dec_speed = AxisSpeeds.dec_resting_speed + self.dec_pid(-dec_error if self.config['dec']['invert'] else dec_error)
+        if self.config['ra']['invert']:
+            ra_error = -ra_error
+        if self.config['dec']['invert']:
+            dec_error = -dec_error
+
+        ra_speed = self.ra_resting_speed_dps + self.ra_pid(ra_error)
+        dec_speed = self.dec_resting_speed_dps + self.dec_pid(dec_error)
 
         self.axis_control.set_axis_speeds(ra_dps=ra_speed, dec_dps=dec_speed, mode='tracking')
         status_change_callback(message='Tracking', filepath=frame.path, errors=(ra_error, dec_error))

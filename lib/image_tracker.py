@@ -25,8 +25,7 @@ class ImageTracker(Tracker):
     def on_new_frame(self, frame, path_prefix, status_change_callback=None):
 
         pil_image = frame.get_pil_image()
-        image = np.asarray(pil_image)
-
+        image = np.transpose(np.asarray(pil_image), (1, 0, 2))
         image_for_offset_detection = sigma_clip_dark_end(image, self.sigma_threshold)
 
         if self.reference_image is None:

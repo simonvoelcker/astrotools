@@ -28,9 +28,15 @@ class Frame:
                 self.pil_image = Image.fromarray(numpy_image, mode='RGB')
         return self.pil_image
 
-    def get_image_data(self, format: str) -> BytesIO:
+    def get_image_data(self, format: str, downscale: int) -> BytesIO:
+        image: Image = self.get_pil_image()
+        if downscale > 1:
+            width = image.width // downscale
+            height = image.height // downscale
+            image = image.resize(size=(width, height), resample=Image.NEAREST)
+
         image_data = BytesIO()
-        self.get_pil_image().save(image_data, format=format)
+        image.save(image_data, format=format)
         image_data.seek(0)
         return image_data
 

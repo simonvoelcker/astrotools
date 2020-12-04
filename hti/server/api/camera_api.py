@@ -111,5 +111,5 @@ class FrameApi(Resource):
         if frame is None:
             return '', 404
 
-        png_data = frame.get_image_data(format='png')
+        png_data = frame.get_image_data(format='png', downscale=2)
         return send_file(png_data, mimetype='image/png')

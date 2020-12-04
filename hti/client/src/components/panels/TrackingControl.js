@@ -41,80 +41,58 @@ export default class TrackingControl extends Component {
     })
   }
 
-  getTargetProperties (target) {
-    const name = target && target.name ? target.name : '-'
-    const type = target && target.type ? ' (' + target.type + ')' : ''
-    const position = target !== null ? target.ra.toFixed(2) + ', ' + target.dec.toFixed(2) : '-'
-
-    const timestamp = Math.floor(this.state.time / 1000)
-
-    // has nothing to do with target, if we're honest
-    let lastPosition = this.context.store.lastKnownPosition
-    if (lastPosition !== null && lastPosition.timestamp !== null && lastPosition.position !== null) {
-      const passedTime = timestamp - lastPosition.timestamp
-      lastPosition = lastPosition.position.ra.toFixed(2) + ', ' +
-                     lastPosition.position.dec.toFixed(2) + ' (' + passedTime + 's ago)'
-    } else {
-      lastPosition = '-'
+  formatTarget () {
+    if (this.state.target !== null) {
+      return this.state.target.ra.toFixed(2) + ', ' + this.state.target.dec.toFixed(2)
     }
+    return 'Not set'
+  }
 
-    return [
-        {key: 'Target name', value: name + type},
-        {key: 'Target position', value: position},
-        {key: 'Last position', value: lastPosition},
-    ]
+  formatCurrentCoordinates() {
+    let calib = this.context.store.lastKnownPosition
+    if (calib !== null && calib.timestamp !== null && calib.position !== null) {
+      const timestamp = Math.floor(this.state.time / 1000)
+      const passedTime = timestamp - calib.timestamp
+      return calib.position.ra.toFixed(2) + ', ' + calib.position.dec.toFixed(2) + ' (' + passedTime + 's ago)'
+    }
+    return 'Unknown'
   }
 
   render () {
-    const targetProperties = this.getTargetProperties(this.state.target)
-
     return (
       <AppConsumer>
         {({ store }) => (
           <div>
             <div className='panel tracking-control-panel'>
-              <span className='spaced-text panel-title'>Tracking Control</span>
+              <span className='spaced-text panel-title'>Target Control</span>
               <Col>
-                <Row className='row target-select-row'>
-                  <Label className='spaced-text' for='target-input'>Target:</Label>
+                <Row className='row target-selection-row'>
                   <Input
                     id='target-input'
                     className='number-input'
-                    placeholder="Object name or coordinates"
+                    placeholder="Target name or coordinates"
                     type="text"
                     value={this.state.targetInput}
                     onChange={this.onChangeTargetInput.bind(this)} />
                   <span className="spaced-text">{this.state.targetInputStatus}</span>
                   <StandardButton onClick={this.onSetTarget.bind(this)}>SET</StandardButton>
                 </Row>
-                <Row className='row target-display-row'>
-                  <Table>
-                    <tbody>
-                      {targetProperties.map(targetProperty => {
-                        return <tr key={targetProperty.key}>
-                          <td className="spaced-text">{targetProperty.key}: </td>
-                          <td className="spaced-text">{targetProperty.value}</td>
-                        </tr>
-                      })}
-                      <tr>
-                        <td className="spaced-text">Tracking status:</td>
-                        <td className="spaced-text">{store.trackingStatus ? store.trackingStatus.message : '-'}</td>
-                      </tr>
-                    </tbody>
-                  </Table>
-                </Row>
-                <Row className='row button-row'>
-                  { store.calibrating ?
-                    <StandardButton onClick={$backend.stopCalibration}>STOP CALIBRATION</StandardButton>
-                  :
-                    <StandardButton
-                      disabled={store.framePath === null || store.tracking}
-                      onClick={() => $backend.calibrateFrame(store.framePath, 30)}>CALIBRATE FRAME</StandardButton>
-                  }
+                <Row className='row current-target-row'>
+                  <span className="spaced-text">Target coordinates: {this.formatTarget()}</span>
                   <StandardButton
                     disabled={this.state.target === null || store.tracking || store.steering || store.imagePosition === null}
-                    onClick={$backend.goToTarget}>GO TO TARGET</StandardButton>
+                    onClick={$backend.goToTarget}>GO TO</StandardButton>
                 </Row>
+                <Row className='row current-position-row'>
+                  <span className="spaced-text">Current coordinates: {this.formatCurrentCoordinates()}</span>
+                  { store.calibrating ?
+                    <StandardButton onClick={$backend.stopCalibration}>ABORT</StandardButton>
+                  :
+                    <StandardButton disabled={store.framePath === null || store.tracking}
+                      onClick={() => $backend.calibrateFrame(store.framePath, 30)}>UPDATE</StandardButton>
+                  }
+                </Row>
+
                 <Row className='row button-row'>
                   { store.tracking ?
                     <StandardButton

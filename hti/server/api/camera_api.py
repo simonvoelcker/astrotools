@@ -69,10 +69,14 @@ class StartSequenceApi(Resource):
                 app_state = get_app_state()
                 cam_controller = get_camera_controller()
                 frame_manager = get_frame_manager()
-                while app_state.running_sequence:
-                    frame = cam_controller.capture_image(
-                        devicename, frame_type, exposure, gain
-                    )
+
+                for frame in cam_controller.capture_sequence(
+                    devicename,
+                    frame_type,
+                    exposure,
+                    gain,
+                    run_callback=lambda: app_state.running_sequence,
+                ):
                     frame_manager.add_frame(frame, persist)
                     image_event(frame.path)
                     log_event(f'New frame: {frame.path}')

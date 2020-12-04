@@ -9,6 +9,7 @@ from hti.server.globals import (
     get_camera_controller,
     get_frame_manager,
 )
+from lib.image_tracker import ImageTracker
 
 api = Namespace('Camera', description='Camera and frame API endpoints')
 
@@ -117,3 +118,43 @@ class FrameApi(Resource):
 
         png_data = frame.get_image_data(format='png', downscale=2)
         return send_file(png_data, mimetype='image/png')
+
+
+@api.route('/<devicename>/autoguide')
+class StartGuidingApi(Resource):
+    @api.doc(
+        description='Start auto-guiding',
+        response={
+            200: 'Success'
+        }
+    )
+    def post(self, devicename):
+        # TODO guiding must be full auto in the future
+        # exposure time must be low, gain determined via bisecting
+        exposure = 1
+        gain = 20000
+
+        app_state = get_app_state()
+        cam_controller = get_camera_controller()
+
+        app_state.capturing = True
+        frame = cam_controller.capture_image(
+            devicename, 'singleCapture', exposure, gain
+        )
+        app_state.capturing = False
+
+        # TODO find a star that is good enough for guiding
+        region_radius = 100
+        guiding_region = ImageTracker.pick_guiding_region(frame, region_radius)
+        # TODO test region by sending this off to FE and display, will be cool
+
+        return '', 204
+
+    @api.doc(
+        description='Stop auto-guiding',
+        response={
+            200: 'Success'
+        }
+    )
+    def delete(self, devicename):
+        return '', 200

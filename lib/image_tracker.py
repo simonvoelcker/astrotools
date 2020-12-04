@@ -5,6 +5,8 @@ from skimage.feature import register_translation
 from lib.util import sigma_clip_dark_end
 from lib.tracker import Tracker
 
+from PIL import ImageFilter
+
 
 class ImageTracker(Tracker):
 
@@ -60,3 +62,30 @@ class ImageTracker(Tracker):
                 dec_pid_i=float(self.dec_pid.components[1]),
                 dec_pid_d=float(self.dec_pid.components[2]),
             )
+
+    @staticmethod
+    def pick_guiding_region(frame, region_radius):
+        image = frame.get_pil_image()
+        image = image.crop((
+            region_radius,
+            region_radius,
+            image.width-region_radius,
+            image.height-region_radius,
+        ))
+        image = image.filter(filter=ImageFilter.GaussianBlur(5))
+        np_image = np.asarray(image)
+        np_image = np.mean(np_image, axis=2)
+        np_image = np.transpose(np_image, (1, 0))
+
+        max_point = np.argmax(np_image)
+        # "split" pixel coordinates from address to x,y
+        max_point = divmod(max_point.item(), np_image.shape[0])
+
+        # square region of given radius around the brightest pixel
+        # because of cropping earlier, this is offset by 1*region_radius
+        return (
+            max_point[0],
+            max_point[1],
+            max_point[0] + 2*region_radius,
+            max_point[1] + 2*region_radius,
+        )

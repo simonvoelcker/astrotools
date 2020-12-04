@@ -2,12 +2,6 @@ import PyIndi
 import time
 import sys
 import queue
-import io
-import os
-
-import numpy as np
-from PIL import Image
-from astropy.io import fits
 
 
 class IndiClient(PyIndi.BaseClient):
@@ -89,6 +83,9 @@ class IndiCamera:
         assert self.ccd_frame[1].name == 'Y'
         assert self.ccd_frame[2].name == 'WIDTH'
         assert self.ccd_frame[3].name == 'HEIGHT'
+        self.ccd_binning = get_retry(lambda: self.device_ccd.getNumber("CCD_BINNING"))
+        assert self.ccd_binning[0].name == 'HOR_BIN'
+        assert self.ccd_binning[1].name == 'VER_BIN'
 
         self.ccd_active_devices = get_retry(lambda: self.device_ccd.getText("ACTIVE_DEVICES"))
         self.ccd_active_devices[0].text = "Camera"
@@ -105,6 +102,13 @@ class IndiCamera:
         for dim in range(4):
             self.ccd_frame[dim].value = region[dim]
         self.indi_client.sendNewNumber(self.ccd_frame)
+
+    def set_binning(self, binning):
+        if binning is None:
+            binning = (1, 1)
+        self.ccd_binning[0].value = binning[0]
+        self.ccd_binning[1].value = binning[1]
+        self.indi_client.sendNewNumber(self.ccd_binning)
 
     def set_gain(self, gain):
         self.ccd_controls[0].value = gain
@@ -136,7 +140,10 @@ class IndiCamera:
         self.set_gain(gain)
         self.start_exposure(exposure, ignore_ready=True)
 
-        while run_callback is None or run_callback():
+        while True:
             self.await_image()
-            yield self.ccd_ccd1[0].getblobdata()[:]
+            image_data = self.ccd_ccd1[0].getblobdata()[:]
+            if run_callback and not run_callback():
+                break
             self.start_exposure(exposure)
+            yield image_data

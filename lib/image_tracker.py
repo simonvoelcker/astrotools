@@ -35,15 +35,6 @@ class ImageTracker(Tracker):
 
         (ra_error, dec_error), _, __ = register_translation(self.reference_image, image_for_offset_detection)
 
-        if ra_error == 0 and dec_error == 0:
-            self.axis_control.set_axis_speeds(
-                self.ra_resting_speed_dps,
-                self.dec_resting_speed_dps,
-                mode='resting',
-            )
-            status_change_callback(message='Errors are (0,0). Fishy.', filepath=frame.path)
-            return
-
         if self.config['ra']['invert']:
             ra_error = -ra_error
         if self.config['dec']['invert']:

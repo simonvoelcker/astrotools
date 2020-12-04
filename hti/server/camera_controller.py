@@ -25,6 +25,11 @@ class CameraController:
         fits_data = camera.capture_single(exposure, gain)
         return Frame(fits_data, frame_type)
 
+    def capture_sequence(self, device_name, frame_type, exposure, gain, run_callback=None):
+        camera = self.get_camera(device_name)
+        for fits_data in camera.capture_sequence(exposure, gain, run_callback=run_callback):
+            yield Frame(fits_data, frame_type)
+
 
 class SimCameraController:
     def capture_image(self, device_name, frame_type, exposure, gain):

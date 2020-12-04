@@ -124,35 +124,19 @@ class IndiCamera:
         # especially if it references the ccd_ccd1 property.
         self.blob_event_queue.get()
 
-    def save_image(self, out_filepath):
-        blob = self.ccd_ccd1[0]
-        fits_data = blob.getblobdata()  # bytearray
-        fits_file = io.BytesIO(fits_data)
-        with fits.open(fits_file) as fits_file:
-            # Useful: fits_file.info()
-            numpy_image = np.transpose(fits_file[0].data, (1, 2, 0))
-            pil_image = Image.fromarray(numpy_image, mode='RGB')
-            pil_image.save(out_filepath)
-
-    def capture_single(self, exposure, gain, region=None, filepath=None):
+    def capture_single(self, exposure, gain, region=None):
         self.set_region(region)
         self.set_gain(gain)
         self.start_exposure(exposure, ignore_ready=True)
         self.await_image()
-        if filepath is not None:
-            self.save_image(filepath)
         return self.ccd_ccd1[0].getblobdata()[:]
 
-    def capture_sequence(self, exposure, gain, out_directory):
-        # only supports output to disk atm
+    def capture_sequence(self, exposure, gain, region=None, run_callback=None):
+        self.set_region(region)
         self.set_gain(gain)
         self.start_exposure(exposure, ignore_ready=True)
 
-        i = 0
-        while True:
+        while run_callback is None or run_callback():
             self.await_image()
-            # TODO must copy blob data before moving this to a thread
-            filepath = os.path.join(out_directory, f'frame_{i:04}.png')
-            self.save_image(filepath)
+            yield self.ccd_ccd1[0].getblobdata()[:]
             self.start_exposure(exposure)
-            i += 1

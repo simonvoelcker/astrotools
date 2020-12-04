@@ -19,24 +19,21 @@ class Tracker:
         self.dec_pid = None
 
         if 'ra' in self.config:
-            self.ra_pid = PID(
-                self.config['ra']['pid_p'],
-                self.config['ra']['pid_i'],
-                self.config['ra']['pid_d'],
-                setpoint=0,
-            )
-            self.ra_pid.output_limits = (-self.config['ra']['range'], self.config['ra']['range'])
-            self.ra_pid.sample_time = sample_time
+            self.ra_pid = self._create_pid(self.config['ra'], sample_time)
 
         if 'dec' in self.config:
-            self.dec_pid = PID(
-                self.config['dec']['pid_p'],
-                self.config['dec']['pid_i'],
-                self.config['dec']['pid_d'],
-                setpoint=0,
-            )
-            self.dec_pid.output_limits = (-self.config['dec']['range'], self.config['dec']['range'])
-            self.dec_pid.sample_time = sample_time
+            self.dec_pid = self._create_pid(self.config['dec'], sample_time)
+
+    @staticmethod
+    def _create_pid(pid_config, sample_time):
+        return PID(
+            Kp=pid_config['pid_p'],
+            Ki=pid_config['pid_i'],
+            Kd=pid_config['pid_d'],
+            setpoint=0,
+            sample_time=sample_time,
+            output_limits=(-pid_config['range'], pid_config['range']),
+        )
 
     def on_new_frame(self, frame, path_prefix, status_change_callback=None):
         raise NotImplementedError

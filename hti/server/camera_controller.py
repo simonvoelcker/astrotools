@@ -36,8 +36,9 @@ class SimCameraController:
         time.sleep(exposure)
 
         here = os.path.dirname(os.path.abspath(__file__))
-        astro_dir_glob = os.path.join(here, '..', '..', '..', 'NGC*', '**', '*.png')
-        images = glob.glob(astro_dir_glob)
+        astro_dir = os.path.join(here, '..', '..', '..')
+        images_glob = os.path.join(astro_dir, 'NGC 891 - Galaxy', '2020-11-14', '**', '*.png')
+        images = glob.glob(images_glob)
         random_image_path = random.choice(images)
 
         frame = Frame(fits_data=None, frame_type=frame_type)

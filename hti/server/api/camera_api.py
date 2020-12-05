@@ -131,22 +131,23 @@ class StartGuidingApi(Resource):
     def post(self, devicename):
         # TODO guiding must be full auto in the future
         # exposure time must be low, gain determined via bisecting
-        exposure = 1
-        gain = 20000
+        body = request.json
+        exposure = float(body['exposure'])
+        gain = float(body['gain'])
 
         app_state = get_app_state()
         cam_controller = get_camera_controller()
 
         app_state.capturing = True
         frame = cam_controller.capture_image(
-            devicename, 'singleCapture', exposure, gain
+            devicename, 'guiding', exposure, gain
         )
         app_state.capturing = False
 
-        # TODO find a star that is good enough for guiding
         region_radius = 100
         guiding_region = ImageTracker.pick_guiding_region(frame, region_radius)
         # TODO test region by sending this off to FE and display, will be cool
+        # to make it easier to test, use latest frame instead of capturing one
 
         return '', 204
 

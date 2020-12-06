@@ -42,6 +42,12 @@ class CaptureImageApi(Resource):
                 app_state.capturing = False
                 image_event(frame.path)
                 log_event(f'New frame: {frame.path}')
+
+                guiding_region = ImageTracker.pick_guiding_region(
+                    frame, radius=100
+                )
+                app_state.annotations = [guiding_region]
+
             except Exception as e:
                 log_event(f'Capture error: {e}')
                 app_state.capturing = False

@@ -21,6 +21,8 @@ class AppState:
     axis_speeds: AxisSpeeds = None
     last_known_position: dict = None
 
+    annotations: list = None
+
     def __setattr__(self, key, value):
         super().__setattr__(key, value)
         app_state_event(self.__dict__)

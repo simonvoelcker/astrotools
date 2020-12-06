@@ -64,28 +64,26 @@ class ImageTracker(Tracker):
             )
 
     @staticmethod
-    def pick_guiding_region(frame, region_radius):
+    def pick_guiding_region(frame, radius):
         image = frame.get_pil_image()
         image = image.crop((
-            region_radius,
-            region_radius,
-            image.width-region_radius,
-            image.height-region_radius,
+            radius,
+            radius,
+            image.width - radius,
+            image.height - radius,
         ))
         image = image.filter(filter=ImageFilter.GaussianBlur(5))
         np_image = np.asarray(image)
         np_image = np.mean(np_image, axis=2)
-        np_image = np.transpose(np_image, (1, 0))
+        np_image = np.flip(np_image, axis=0)
 
-        max_point = np.argmax(np_image)
-        # "split" pixel coordinates from address to x,y
-        max_point = divmod(max_point.item(), np_image.shape[0])
+        max_point = np.unravel_index(np.argmax(np_image), np_image.shape)
 
         # square region of given radius around the brightest pixel
         # because of cropping earlier, this is offset by 1*region_radius
-        return (
-            max_point[0],
-            max_point[1],
-            max_point[0] + 2*region_radius,
-            max_point[1] + 2*region_radius,
-        )
+        return {
+            'x': max_point[1].item(),
+            'y': max_point[0].item(),
+            'width': 2 * radius,
+            'height': 2 * radius,
+        }

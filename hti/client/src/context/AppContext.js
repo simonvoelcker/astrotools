@@ -25,10 +25,7 @@ export class AppProvider extends Component {
         position: null,
       },
 
-      annotations: [
-        {x: 100, y: 100, width: 1720, height: 880},
-        {x: 1253, y: 378, width: 200, height: 200},
-      ],
+      annotations: null,
 
       // via image event
       framePath: null,

@@ -50,7 +50,7 @@ class TrackTargetApi(Resource):
         tracker = tracker_class(
             config,
             axis_control,
-            10,  # exposure time of current sequence - TODO!
+            2,  # exposure time of current sequence - TODO!
             axis_control.speeds.ra_dps,  # use current speeds as defaults
             axis_control.speeds.dec_dps,
         )

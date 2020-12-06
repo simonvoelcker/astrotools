@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 import StandardButton from '../panels/StandardButton'
-import { Table, Row, Col, Input, Label } from 'reactstrap'
+import { Row, Col, Input } from 'reactstrap'
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import $backend from '../../backend'
 

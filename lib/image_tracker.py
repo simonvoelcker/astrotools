@@ -61,6 +61,7 @@ class ImageTracker(Tracker):
                 dec_pid_p=float(self.dec_pid.components[0]),
                 dec_pid_i=float(self.dec_pid.components[1]),
                 dec_pid_d=float(self.dec_pid.components[2]),
+                brightness=np.average(image),
             )
 
     @staticmethod

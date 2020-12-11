@@ -84,11 +84,11 @@ class AxisControl:
 		if self.serial is not None:
 			if ra_dps is not None:
 				shaft_speed_rps = AxisSpeeds.ra_dps_to_axis(ra_dps)
-				msg = f'A{shaft_speed_rps:9.6f}'
+				msg = f'set spd axis=r value={shaft_speed_rps:9.6f}'
 				self.serial.write(msg.encode())
 			if dec_dps is not None:
 				shaft_speed_rps = AxisSpeeds.dec_dps_to_axis(dec_dps)
-				msg = f'B{shaft_speed_rps:9.6f}'
+				msg = f'set spd axis=d value={shaft_speed_rps:9.6f}'
 				self.serial.write(msg.encode())
 
 		if ra_dps is not None:

@@ -153,10 +153,9 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
 
   // top speed: 1 rev/sec
   if (ticksPerSec > 6400) {
-    Serial.print("WARN: Too many ticks per second. Limiting speed. ");
     ticksPerSec = 6400;
   }
-  
+
   float clockCyclesPerTick = cpuFrequency / ticksPerSec;
 
   float maxTimerCycles = m.timerIndex == 1 ? 65535 : 255;
@@ -165,7 +164,6 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
   long waitCycles = long(clockCyclesPerTick / prescale);
 
   if (waitCycles >= 65536) {
-    Serial.print("WARN: Too many wait cycles! Setting an upper bound. ");
     waitCycles = 65535;
   }
 
@@ -173,7 +171,7 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
 }
 
 void setup() {
-  Serial.begin(9600);  
+  Serial.begin(9600);
   Serial.setTimeout(1000);
 
   initMotor(m1);
@@ -184,7 +182,7 @@ void setup() {
   setMotorSpeed(m2, 0.0);
 }
 
-ISR(TIMER1_OVF_vect)        
+ISR(TIMER1_OVF_vect)
 {
   if (m1.waitCyclesLeft == 0) {
     // toggle step pin
@@ -201,7 +199,7 @@ ISR(TIMER1_OVF_vect)
   }
 }
 
-ISR(TIMER2_OVF_vect)        
+ISR(TIMER2_OVF_vect)
 {
   if (m2.waitCyclesLeft == 0) {
     // toggle step pin
@@ -219,23 +217,39 @@ ISR(TIMER2_OVF_vect)
 }
 
 void loop() {
-  char motor;
-  float newSpeed;
-  
+  // read commands from serial interface.
+  // commands can set or get attributes.
+  // axis must be given, value only on set.
+  // axis may be r (RA) or d (Dec).
+
+  // Ex: set spd axis=r value=-32543.0
+
+  String line;
+  String op;
+  String attr;
+  String axis;
+  float value;
+
   if (Serial.available() > 0) {
-    motor = Serial.read();
-    if (motor == 'A' || motor == 'B') {
-      newSpeed = Serial.parseFloat();
-      Serial.print("M");
-      Serial.print(motor == 'A' ? "1" : "2");
-      Serial.print(" S=");
-      Serial.print(newSpeed, 5);
-      setMotorSpeed(motor == 'A' ? m1 : m2, newSpeed);
-      Serial.print(" P1=");
-      Serial.print(m1.microstepCount);
-      Serial.print(" P2=");
-      Serial.print(m2.microstepCount);
-      Serial.print("\n");
+    line = Serial.readStringUntil('\n');
+
+    op = line.substring(0, 3);
+    attr = line.substring(4, 7);
+    axis = line.substring(13, 14);
+
+    Motor& motor = axis.equals("r") ? m1 : m2;
+
+    if (op.equals("set")) {
+      value = line.substring(21).toFloat();
+      if (attr.equals("spd")) {
+        setMotorSpeed(motor, value);
+      } else if (attr.equals("pos")) {
+        motor.microstepCount = value;
+      }
+    } else {
+      if (attr.equals("pos")) {
+        Serial.println(motor.microstepCount);
+      }
     }
   }
 }

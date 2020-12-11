@@ -2,6 +2,7 @@ import cmd
 import glob
 import json
 import os
+import time
 
 from lib.axis_control import AxisControl, AxisSpeeds
 from lib.catalog import Catalog
@@ -54,7 +55,19 @@ class CommandShell(cmd.Cmd):
 
 	def do_dec(self, arg):
 		print(f'Setting DEC axis speed to {float(arg)}')
-		self.axis_control.set_axis_speeds(dec_dps=float(arg), mode='manual')
+
+		start = float(self.axis_control.speeds.dec_dps)
+		target = float(arg)
+
+		steps = 10
+		for i in range(steps):
+			lerp = float(i) / float(steps-1)
+			current = start * (1.0-lerp) + target * lerp
+			self.axis_control.set_axis_speeds(dec_dps=current, mode='manual')
+			time.sleep(0.1)
+
+	def do_getaxispos(self, arg):
+		self.axis_control.read_axis_position()
 
 	def do_here(self, arg):
 		self.here = Coordinates.parse(arg)

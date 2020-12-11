@@ -1,5 +1,4 @@
 import math
-import re
 import serial
 import time
 import glob
@@ -42,10 +41,6 @@ class Maneuver:
 
 
 class AxisControl:
-	control_response_rx = re.compile(
-		r'\s*M(?P<motor>[12])\s+S=(?P<speed>-?\d+\.\d+)\s+P1=(?P<P1>-?\d+)\s+P2=(?P<P2>-?\d+)\s*'
-	)
-
 	def __init__(self, on_speeds_change=None):
 		self.serial = None
 		self.speeds = AxisSpeeds.stopped()
@@ -76,19 +71,19 @@ class AxisControl:
 		self.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=AxisSpeeds.dec_resting_speed, mode='resting')
 
 	def set_axis_speeds(self, ra_dps=None, dec_dps=None, mode=None):
-		ra_str = f'RA={ra_dps:9.6f} dps' if ra_dps else ''
-		dec_str = f'Dec={dec_dps:9.6f} dps' if dec_dps else ''
+		ra_str = f'RA={ra_dps:.6f} dps' if ra_dps is not None else ''
+		dec_str = f'Dec={dec_dps:.6f} dps' if dec_dps is not None else ''
 		mode_str = f'Mode={mode}' if mode else ''
 		print(f'Setting {ra_str} {dec_str} {mode_str}')
 
 		if self.serial is not None:
 			if ra_dps is not None:
 				shaft_speed_rps = AxisSpeeds.ra_dps_to_axis(ra_dps)
-				msg = f'set spd axis=r value={shaft_speed_rps:9.6f}'
+				msg = f'set spd axis=r value={shaft_speed_rps:.6f}\n'
 				self.serial.write(msg.encode())
 			if dec_dps is not None:
 				shaft_speed_rps = AxisSpeeds.dec_dps_to_axis(dec_dps)
-				msg = f'set spd axis=d value={shaft_speed_rps:9.6f}'
+				msg = f'set spd axis=d value={shaft_speed_rps:.6f}\n'
 				self.serial.write(msg.encode())
 
 		if ra_dps is not None:
@@ -101,15 +96,10 @@ class AxisControl:
 		if self.on_speeds_change is not None:
 			self.on_speeds_change(self.speeds)
 
-	def read_position(self):
-		# this is too slow right now. revive later. also, make it a command of sorts.
-		# pair the response with a timestamp and RA/Dec coordinates.
+	def read_axis_position(self):
+		self.serial.write('get pos axis=r'.encode())
 		response = self.serial.readline().decode()
-		match = self.control_response_rx.match(response)
-		if not match:
-			print('Failed to parse response from the motor control!')
-			print(response)
-		return match.group('P1'), match.group('P2')
+		print(response)
 
 	@staticmethod
 	def _calc_maneuver(axis, from_deg, to_deg, max_speed_dps=None):

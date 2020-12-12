@@ -96,7 +96,11 @@ class AxisControl:
 		if self.on_speeds_change is not None:
 			self.on_speeds_change(self.speeds)
 
-	def read_axis_position(self):
+	def set_ra_axis_acceleration(self, acceleration):
+		msg = f'set acl axis=r value={acceleration:.6f}\n'
+		self.serial.write(msg.encode())
+
+	def read_ra_axis_position(self):
 		self.serial.write('get pos axis=r'.encode())
 		response = self.serial.readline().decode()
 		print(response)

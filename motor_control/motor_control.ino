@@ -14,10 +14,14 @@ struct Motor {
   
   long microstepCount;
   bool clockwise;
+
+  float currentSpeed;
+  float targetSpeed;
+  float acceleration;
 };
 
-Motor m1 = { 3, 4, 6, 5, 7, LOW, 1024, 16, 255, 255, 1, 0, false };
-Motor m2 = { 8, 9, 11, 10, 12, LOW, 1024, 16, 255, 255, 2, 0, false };
+Motor m1 = { 3, 4, 6, 5, 7, LOW, 1024, 16, 255, 255, 1, 0, false, 0.0, 0.0, 1.0 };
+Motor m2 = { 8, 9, 11, 10, 12, LOW, 1024, 16, 255, 255, 2, 0, false, 0.0, 0.0, 1.0 };
 
 void initMotor(Motor m) {
   pinMode(m.directionPin, OUTPUT);
@@ -33,16 +37,17 @@ void initMotor(Motor m) {
 
 void initTimers() {
   noInterrupts();
-  TCCR1A = 0;
-  TCCR1B = 0;
+
+  // motor 1
+  TCCR1A = 0;  // flags
   TCNT1 = 65535;  // set counter till ISR
-  TCCR1B = 0;
-  TCCR1B |= (1 << CS10) | (1 << CS11);  // prescale
+  TCCR1B = (1 << CS10) | (1 << CS11);  // prescale
+
+  // motor 2
   TCCR2A = 0;
-  TCCR2B = 0;
   TCNT2 = 255;
-  TCCR2B = 0;
-  TCCR2B |= (1 << CS10) | (1 << CS12); // 1024
+  TCCR2B = (1 << CS10) | (1 << CS12);
+
   interrupts();
 }
 
@@ -62,7 +67,7 @@ void setTimerEnabled(int timerIndex, bool enable) {
   }
 }
 
-void updateTimerForMotor(Motor& m, long prescale, long waitCycles) {
+void applyPrescale(Motor& m, long prescale) {
   if (m.timerIndex == 1) {
     int setting = 5;
     switch (prescale) {
@@ -86,8 +91,7 @@ void updateTimerForMotor(Motor& m, long prescale, long waitCycles) {
     }
     TCCR2B = (TCCR2B & 0b11111000) | setting;
   }
-  m.waitCycles = waitCycles;
-  m.waitCyclesLeft = waitCycles;
+  m.prescale = prescale;
 }
 
 long getBestPossiblePrescale(int timerIndex, float idealPrescale) {
@@ -144,7 +148,7 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
   m.clockwise = revsPerSec > 0;
   revsPerSec = abs(revsPerSec);
 
-  const float cpuFrequency = 16000000.0; // arduino constant  
+  const float cpuFrequency = 16000000.0; // arduino constant
   const float ticksPerMicrostep = 2.0;   // we toggle high/low in our ISR
   const float microstepsPerStep = float(m.microsteps);
   const float stepsPerRev = 200.0;
@@ -167,7 +171,26 @@ void setMotorSpeed(Motor& m, float revsPerSec) {
     waitCycles = 65535;
   }
 
-  updateTimerForMotor(m, prescale, waitCycles);
+  m.waitCycles = waitCycles;
+
+  if (m.prescale != prescale) {
+    applyPrescale(m, prescale);
+    // reset remaining cycles only if prescale changed
+    // this should result in smoother speed changes
+    m.waitCyclesLeft = waitCycles;
+  }
+}
+
+void updateSpeed(Motor& m) {
+  if (m.currentSpeed == m.targetSpeed) return;
+
+  if (m.currentSpeed < m.targetSpeed) {
+    m.currentSpeed = min(m.currentSpeed + m.acceleration, m.targetSpeed);
+  } else {
+    m.currentSpeed = max(m.currentSpeed - m.acceleration, m.targetSpeed);
+  }
+
+  setMotorSpeed(m, m.currentSpeed);
 }
 
 void setup() {
@@ -216,6 +239,8 @@ ISR(TIMER2_OVF_vect)
   }
 }
 
+int updateSpeedsCountdown = 0;
+
 void loop() {
   // read commands from serial interface.
   // commands can set or get attributes.
@@ -242,14 +267,26 @@ void loop() {
     if (op.equals("set")) {
       value = line.substring(21).toFloat();
       if (attr.equals("spd")) {
-        setMotorSpeed(motor, value);
+        motor.targetSpeed = value;
       } else if (attr.equals("pos")) {
         motor.microstepCount = value;
+      } else if (attr.equals("acl")) {
+        motor.acceleration = value;
       }
     } else {
       if (attr.equals("pos")) {
         Serial.println(motor.microstepCount);
+        Serial.flush();
       }
     }
+  }
+
+  if (updateSpeedsCountdown == 0) {
+    // apply acceleration, if any
+    updateSpeed(m1);
+    updateSpeed(m2);
+    updateSpeedsCountdown = 100;
+  } else {
+    updateSpeedsCountdown -= 1;
   }
 }

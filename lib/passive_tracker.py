@@ -4,16 +4,14 @@ import os
 from skimage.feature import register_translation
 
 from lib.util import load_image
-from lib.solver import Solver
 from lib.tracker import Tracker
 
 
 class PassiveTracker(Tracker):
 
-	def __init__(self, config, *args):
-		super().__init__(config, None, None)
+	def __init__(self, config, axis_control, *args):
+		super().__init__(config, axis_control, None)
 		self.reference_image = None
-		self.reference_coordinates = None
 		self.sigma_threshold = config['sigma_threshold']
 
 	def _clean_image_for_offset_detection(self, image):
@@ -34,36 +32,18 @@ class PassiveTracker(Tracker):
 		if self.reference_image is None:
 			status_change_callback(message='Using reference frame', filepath=filepath)
 			self.reference_image = image_for_offset_detection
-			self.reference_coordinates = Solver().locate_image(filepath, timeout=5)
-			if not self.reference_coordinates:
-				status_change_callback(message='Failed to determine coordinates of reference frame', filepath=filepath)
 			return
 
-		(ra_error, dec_error), _, __ = register_translation(self.reference_image, image_for_offset_detection)
-		
-		ra_coord_error = None
-		dec_coord_error = None
-		if self.reference_coordinates:
-			coordinates = Solver().locate_image(filepath, timeout=5)
-			if coordinates:
-				ra_coord_error = coordinates.ra - self.reference_coordinates.ra
-				dec_coord_error = coordinates.dec - self.reference_coordinates.dec
-				status_change_callback(
-					message='Tracking',
-					filepath=filepath,
-					errors=(ra_error, dec_error),
-					coord_errors=(ra_coord_error, dec_coord_error)
-				)
-			else:
-				status_change_callback(message='Tracking', filepath=filepath, errors=(ra_error, dec_error))
-		else:
-			status_change_callback(message='Tracking', filepath=filepath, errors=(ra_error, dec_error))
+		(ra_error, dec_error), _, __ = register_translation(
+			self.reference_image,
+			image_for_offset_detection,
+		)
+
+		status_change_callback(message='Tracking', filepath=filepath, errors=(ra_error, dec_error))
 
 		if self.influx_client is not None:
 			self.write_frame_stats(
 				file_path=filepath,
 				ra_image_error=float(ra_error),
 				dec_image_error=float(dec_error),
-				ra_coord_error=float(ra_coord_error or 0.0),
-				dec_coord_error=float(dec_coord_error or 0.0),
 			)

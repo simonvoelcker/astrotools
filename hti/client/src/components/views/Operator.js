@@ -5,6 +5,7 @@ import LogView from '../panels/LogView'
 import CaptureControl from '../panels/CaptureControl'
 import AxisControl from '../panels/AxisControl'
 import TrackingControl from '../panels/TrackingControl'
+import PECControl from '../panels/PECControl'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 
 export default class Operator extends Component {
@@ -21,6 +22,7 @@ export default class Operator extends Component {
               <TrackingControl />
               <CaptureControl />
               <AxisControl />
+              <PECControl />
             </div>
           </div>
         )}

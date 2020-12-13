@@ -6,6 +6,15 @@ from lib.coordinates import Coordinates
 
 
 @dataclass
+class PECState:
+    # Periodic Error Correction
+    recording: bool = False
+    ready: bool = False
+    correcting: bool = False
+    factor: float = 0.0
+
+
+@dataclass
 class AppState:
     camera_connected: bool = False
     camera_sim: bool = False
@@ -22,6 +31,8 @@ class AppState:
     last_known_position: dict = None
 
     annotations: list = None
+
+    pec_state: PECState = None
 
     def __setattr__(self, key, value):
         super().__setattr__(key, value)

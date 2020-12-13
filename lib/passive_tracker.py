@@ -54,6 +54,7 @@ class PassiveTracker(Tracker):
 					y_pixel_error=float(y_error),
 				)
 			)
+		# TODO else: apply PEC!
 
 		if self.influx_client is not None:
 			self.write_frame_stats(

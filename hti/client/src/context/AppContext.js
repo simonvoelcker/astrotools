@@ -34,6 +34,13 @@ export class AppProvider extends Component {
       logEntries: [
         {timestamp: Date.now(), text: 'Frontend started'},
       ],
+
+      pecState: {
+        recording: null,
+        ready: null,
+        correcting: null,
+        factor: null,
+      },
     }
 
     this.initialize()

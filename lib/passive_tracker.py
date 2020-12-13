@@ -1,9 +1,8 @@
 import numpy as np
-import os
 
 from skimage.feature import register_translation
 
-from lib.util import load_image
+from lib.periodic_error import ErrorSample
 from lib.tracker import Tracker
 
 
@@ -13,6 +12,10 @@ class PassiveTracker(Tracker):
 		super().__init__(config, axis_control, None)
 		self.reference_image = None
 		self.sigma_threshold = config['sigma_threshold']
+		self.error_recorder = None
+
+	def set_error_recorder(self, recorder):
+		self.error_recorder = recorder
 
 	def _clean_image_for_offset_detection(self, image):
 		# greyscale frame, only width and height
@@ -25,25 +28,36 @@ class PassiveTracker(Tracker):
 		return cleaned
 
 	def on_new_frame(self, frame, path_prefix, status_change_callback=None):
-		filepath = os.path.join(path_prefix, frame.path)
-		image = load_image(filepath, dtype=np.int16)
+
+		pil_image = frame.get_pil_image()
+		image = np.transpose(np.asarray(pil_image), (1, 0, 2))
 		image_for_offset_detection = self._clean_image_for_offset_detection(image)
 
 		if self.reference_image is None:
-			status_change_callback(message='Using reference frame', filepath=filepath)
+			status_change_callback(message='Using reference frame', filepath=frame.path)
 			self.reference_image = image_for_offset_detection
 			return
 
-		(ra_error, dec_error), _, __ = register_translation(
+		(x_error, y_error), _, __ = register_translation(
 			self.reference_image,
 			image_for_offset_detection,
 		)
 
-		status_change_callback(message='Tracking', filepath=filepath, errors=(ra_error, dec_error))
+		status_change_callback(message='Tracking', filepath=frame.path, errors=(x_error, y_error))
+
+		if self.error_recorder is not None and not self.error_recorder.done:
+			ra_wheel_position = self.axis_control.get_ra_wheel_position()
+			self.error_recorder.add_sample(
+				ErrorSample(
+					ra_wheel_position=ra_wheel_position,
+					x_pixel_error=float(x_error),
+					y_pixel_error=float(y_error),
+				)
+			)
 
 		if self.influx_client is not None:
 			self.write_frame_stats(
-				file_path=filepath,
-				ra_image_error=float(ra_error),
-				dec_image_error=float(dec_error),
+				file_path=frame.path,
+				ra_image_error=float(x_error),
+				dec_image_error=float(y_error),
 			)

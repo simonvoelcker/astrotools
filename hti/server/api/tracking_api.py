@@ -6,10 +6,17 @@ import queue
 from flask import request
 from flask_restplus import Namespace, Resource
 
-from hti.server.api.events import subscribe_for_events, \
-    unsubscribe_from_events, log_event
-from hti.server.globals import get_axis_control, get_app_state, \
-    get_frame_manager
+from hti.server.api.events import (
+    subscribe_for_events,
+    unsubscribe_from_events,
+    log_event,
+)
+from hti.server.globals import (
+    get_axis_control,
+    get_app_state,
+    get_frame_manager,
+    get_error_recorder,
+)
 from lib.image_tracker import ImageTracker
 from lib.passive_tracker import PassiveTracker
 from lib.target_tracker import TargetTracker
@@ -56,6 +63,9 @@ class TrackTargetApi(Resource):
         )
         if mode == 'target':
             tracker.set_target(get_app_state().target)
+
+        if mode == 'passive':
+            tracker.set_error_recorder(get_error_recorder())
 
         def thread_func():
             # process most recent events first and discard old ones

@@ -2,6 +2,7 @@ import math
 import serial
 import time
 import glob
+import datetime
 
 from dataclasses import dataclass
 
@@ -100,10 +101,18 @@ class AxisControl:
 		msg = f'set acl axis=r value={acceleration:.6f}\n'
 		self.serial.write(msg.encode())
 
-	def read_ra_axis_position(self):
-		self.serial.write('get pos axis=r'.encode())
-		response = self.serial.readline().decode()
-		print(response)
+	def get_ra_wheel_position(self) -> float:
+		if self.serial is not None:
+			self.serial.write('get pos axis=r'.encode())
+			ms_position = int(self.serial.readline().decode())
+			# 16 microsteps per step
+			# 200 steps per motor shaft revolution
+			# 3 motor shaft revolutions per wheel revolution
+			ms_per_wheel_revolution = 16 * 200 * 3
+			return float(ms_position) / float(ms_per_wheel_revolution)
+
+		# sim mode: pretend we're moving, 1rpm
+		return float(datetime.datetime.now().timestamp() / 30.0)
 
 	@staticmethod
 	def _calc_maneuver(axis, from_deg, to_deg, max_speed_dps=None):

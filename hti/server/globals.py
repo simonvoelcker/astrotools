@@ -5,6 +5,7 @@ from hti.server.frame_manager import FrameManager
 from hti.server.camera_controller import CameraController, SimCameraController
 from lib.catalog import Catalog
 from lib.axis_control import AxisControl
+from lib.periodic_error import PeriodicErrorRecorder
 
 _app_state = AppState()
 _app_state.axes_sim = os.environ.get('SIM_AXES', 'false').lower() == 'true'
@@ -13,6 +14,7 @@ _catalog = Catalog()
 _cam_controller = None
 _axis_control = None
 _frame_manager = None
+_error_recorder = None
 
 
 def get_app_state():
@@ -58,3 +60,10 @@ def get_frame_manager():
         hti_static_dir = os.path.join(here, '..', 'static')
         _frame_manager = FrameManager(hti_static_dir)
     return _frame_manager
+
+
+def get_error_recorder():
+    global _error_recorder
+    if _error_recorder is None:
+        _error_recorder = PeriodicErrorRecorder()
+    return _error_recorder

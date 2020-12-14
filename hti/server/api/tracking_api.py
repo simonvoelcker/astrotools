@@ -1,5 +1,4 @@
 import os
-import json
 import threading
 import queue
 
@@ -17,9 +16,7 @@ from hti.server.globals import (
     get_frame_manager,
     get_error_recorder,
 )
-from lib.image_tracker import ImageTracker
-from lib.passive_tracker import PassiveTracker
-from lib.target_tracker import TargetTracker
+from hti.server.tracking import create_tracker
 
 api = Namespace('Tracking', description='Tracking API')
 
@@ -38,29 +35,11 @@ class TrackTargetApi(Resource):
         here = os.path.dirname(os.path.abspath(__file__))
         root_dir = os.path.normpath(os.path.join(here, '..', '..', '..'))
 
-        config_file = {
-            'target': 'track_target_config.json',
-            'image': 'track_image_config.json',
-            'passive': 'track_passively_config.json',
-        }[mode]
-
-        with open(os.path.join(root_dir, config_file), 'r') as f:
-            config = json.load(f)
-
-        tracker_class = {
-            'target': TargetTracker,
-            'image': ImageTracker,
-            'passive': PassiveTracker,
-        }[mode]
-
         axis_control = get_axis_control()
-        tracker = tracker_class(
-            config,
-            axis_control,
-            2,  # exposure time of current sequence - TODO!
-            axis_control.speeds.ra_dps,  # use current speeds as defaults
-            axis_control.speeds.dec_dps,
-        )
+        # TODO: frame cadence is hardcoded here.
+        # move exposure time to BE state, use that
+        tracker = create_tracker(mode, 2, axis_control)
+
         if mode == 'target':
             tracker.set_target(get_app_state().target)
 

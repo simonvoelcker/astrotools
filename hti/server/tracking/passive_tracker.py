@@ -2,8 +2,8 @@ import numpy as np
 
 from skimage.feature import register_translation
 
-from lib.periodic_error import ErrorSample
-from lib.tracker import Tracker
+from .periodic_error import ErrorSample
+from .tracker import Tracker
 
 
 class PassiveTracker(Tracker):

@@ -1,0 +1,39 @@
+import os
+import json
+
+from .tracker import Tracker
+from .target_tracker import TargetTracker
+from .image_tracker import ImageTracker
+from .passive_tracker import PassiveTracker
+
+from lib.axis_control import AxisControl
+
+
+def create_tracker(
+    mode: str,
+    frame_cadence: float,
+    axis_control: AxisControl,
+) -> Tracker:
+    config_file = {
+        'target': 'track_target_config.json',
+        'image': 'track_image_config.json',
+        'passive': 'track_passively_config.json',
+    }[mode]
+
+    here = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(here, config_file), 'r') as f:
+        config = json.load(f)
+
+    tracker_class = {
+        'target': TargetTracker,
+        'image': ImageTracker,
+        'passive': PassiveTracker,
+    }[mode]
+
+    return tracker_class(
+        config,
+        axis_control,
+        frame_cadence,
+        axis_control.speeds.ra_dps,  # use current speeds as defaults
+        axis_control.speeds.dec_dps,
+    )

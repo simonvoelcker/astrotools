@@ -9,7 +9,7 @@ from hti.server.globals import (
     get_camera_controller,
     get_frame_manager,
 )
-from lib.image_tracker import ImageTracker
+from hti.server.utils import pick_guiding_region
 
 api = Namespace('Camera', description='Camera and frame API endpoints')
 
@@ -43,9 +43,7 @@ class CaptureImageApi(Resource):
                 image_event(frame.path)
                 log_event(f'New frame: {frame.path}')
 
-                guiding_region = ImageTracker.pick_guiding_region(
-                    frame, radius=100
-                )
+                guiding_region = pick_guiding_region(frame, radius=100)
                 app_state.annotations = [guiding_region]
 
             except Exception as e:
@@ -88,9 +86,7 @@ class StartSequenceApi(Resource):
                     image_event(frame.path)
                     log_event(f'New frame: {frame.path}')
 
-                    guiding_region = ImageTracker.pick_guiding_region(
-                        frame, radius=100
-                    )
+                    guiding_region = pick_guiding_region(frame, radius=100)
                     app_state.annotations = [guiding_region]
 
             except Exception as e:
@@ -157,9 +153,9 @@ class StartGuidingApi(Resource):
         app_state.capturing = False
 
         region_radius = 100
-        guiding_region = ImageTracker.pick_guiding_region(frame, region_radius)
-        # TODO test region by sending this off to FE and display, will be cool
-        # to make it easier to test, use latest frame instead of capturing one
+        guiding_region = pick_guiding_region(frame, radius=100)
+
+        # TODO this is incomplete
 
         return '', 204
 

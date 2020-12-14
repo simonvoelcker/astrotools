@@ -1,15 +1,10 @@
 import cmd
 import glob
-import json
 import os
-import time
 
-from lib.axis_control import AxisControl, AxisSpeeds
+from lib.axis_control import AxisControl
 from lib.catalog import Catalog
 from lib.coordinates import Coordinates
-from lib.image_tracker import ImageTracker
-from lib.target_tracker import TargetTracker
-from lib.passive_tracker import PassiveTracker
 from lib.solver import Solver
 
 
@@ -56,9 +51,6 @@ class CommandShell(cmd.Cmd):
 	def do_dec(self, arg):
 		print(f'Setting DEC axis speed to {float(arg)}')
 		self.axis_control.set_axis_speeds(dec_dps=float(arg), mode='manual')
-
-	def do_getaxispos(self, arg):
-		self.axis_control.read_ra_axis_position()
 
 	def do_here(self, arg):
 		self.here = Coordinates.parse(arg)
@@ -124,60 +116,6 @@ class CommandShell(cmd.Cmd):
 		coordinates = Coordinates.parse_csvformat(entry['RA'], entry['Dec'])
 		print(f'Setting target coordinates: {coordinates}')
 		self.target = coordinates
-
-	def do_trackhere(self, arg):
-		if self.here is None:
-			print('Where am I?')
-			return
-		self.target = self.here
-		self.do_tracktarget(arg)
-
-	def do_tracktarget(self, arg):
-		if self.target is None:
-			print('No target set')
-			return
-
-		config_file = arg or 'track_target_config.json'
-		with open(config_file, 'r') as f:
-			config = json.load(f)
-
-		tracker = TargetTracker(
-			config,
-			self.axis_control,
-			10,  # sample time - TODO make adjustable via command
-			AxisSpeeds.ra_resting_speed,
-			AxisSpeeds.dec_resting_speed,
-		)
-		tracker.set_target(self.target)
-		try:
-			print(f'Tracking {self.target}')
-			tracker.track()
-		except KeyboardInterrupt:
-			print('Tracking aborted')
-
-	def do_trackimage(self, arg):
-		config_file = arg or 'track_image_config.json'
-		with open(config_file, 'r') as f:
-			config = json.load(f)
-
-		tracker = ImageTracker(config, self.axis_control)
-		try:
-			print(f'Tracking based on next image')
-			tracker.track()
-		except KeyboardInterrupt:
-			print('Tracking aborted')
-
-	def do_trackpassively(self, arg):
-		config_file = arg or 'track_passively_config.json'
-		with open(config_file, 'r') as f:
-			config = json.load(f)
-
-		tracker = PassiveTracker(config)
-		try:
-			print(f'Tracking based on next image, passively')
-			tracker.track()
-		except KeyboardInterrupt:
-			print('Tracking aborted')
 
 
 if __name__ == '__main__':

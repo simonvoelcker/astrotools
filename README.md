@@ -1,6 +1,6 @@
 # astrotools
 
-Python tools for astrophotography. Strongly tied to my personal setup.
+Python tools for astro-photography. Strongly tied to my personal setup.
 
 ![M3](m3.jpg?raw=true "M3 - Globular Cluster")
 
@@ -15,21 +15,26 @@ Python tools for astrophotography. Strongly tied to my personal setup.
 
 # the tools
 
-## analyze.py
+## HTI - Human Telescope Interface
+
+This is a web application with a rich set of features for controlling a telescope and capturing image data. It is build with Flask and React and is best run on a desktop machine.
+
+Notable features and integrations:
+- Images are captured via INDI
+- Mount is controlled via serial port (interfaces with Arduino to control stepper motors)
+- Current celestial coordinates are computed using the Astrometry CLI
+- An SQLite database is used to store a target catalog (e.g. NGC objects)
+- Guiding is done via a control loop featuring a PID controller for each axis
+
+The HTI is ever-evolving, and may not be very useful to others as a whole just yet.
+
+## CLI tools
+
+### analyze.py
 
 Performs image calibration and computation of metrics such as brightness and sharpness. Data is written to disk and InfluxDB.
 
-## command.py
-
-Interactive control. Can set motor speeds, target object, go-to maneuver and target tracking. Data is written to InfluxDB.
-
-I'm phasing out this method of controlling the telescope, in favor of a web-based application.
-
-## serve_images.py
-
-Serves images from a given directory, one by one, to a target directory. Used for as a mock for the actual camera.
-
-## stack.py
+### stack.py
 
 Stacks a series of images into a single image. Notable features:
 - Image alignment
@@ -39,3 +44,7 @@ Stacks a series of images into a single image. Notable features:
 - Auto-crop most exposed region
 - Gamma correction
 - RGB, Greyscale or R/G/B
+
+### command.py
+
+Interactive control. Can set motor speeds, run go-to maneuvers and little more. This is being phased out as the HTI is much more powerful.

@@ -60,14 +60,12 @@ export default {
     return $axios.post('/info/images/calibrate/stop')
   },
 
-  startTracking (mode) {
-    return $axios.post('/tracking/start', {
-      mode: mode,
-    })
+  startGuiding (mode) {
+    return $axios.post('/guiding/start')
   },
 
-  stopTracking () {
-    return $axios.post('/tracking/stop')
+  stopGuiding () {
+    return $axios.post('/guiding/stop')
   },
 
   goToTarget () {

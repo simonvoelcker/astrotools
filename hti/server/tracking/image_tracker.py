@@ -23,7 +23,7 @@ class ImageTracker(Tracker):
         self.ra_resting_speed_dps = ra_resting_speed_dps
         self.dec_resting_speed_dps = dec_resting_speed_dps
 
-    def on_new_frame(self, frame, path_prefix):
+    def on_new_frame(self, frame):
 
         pil_image = frame.get_pil_image()
         image = np.transpose(np.asarray(pil_image), (1, 0, 2))

@@ -22,8 +22,9 @@ class TargetTracker(Tracker):
     def set_target(self, target):
         self.target = target
 
-    def on_new_frame(self, frame, path_prefix):
-        filepath = os.path.join(path_prefix, frame.path)
+    def on_new_frame(self, frame):
+        here = os.path.dirname(os.path.abspath(__file__))
+        filepath = os.path.normpath(os.path.join(here, '..', '..', 'static', frame.path))
         image_coordinates = Solver().locate_image(filepath)
 
         if not image_coordinates:

@@ -28,7 +28,7 @@ class PassiveTracker(Tracker):
 		cleaned = np.clip(image_greyscale, average + threshold * stddev, 255)
 		return cleaned
 
-	def on_new_frame(self, frame, path_prefix):
+	def on_new_frame(self, frame):
 
 		pil_image = frame.get_pil_image()
 		image = np.transpose(np.asarray(pil_image), (1, 0, 2))

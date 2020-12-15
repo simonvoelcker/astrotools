@@ -2,7 +2,6 @@ import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 import StandardButton from '../panels/StandardButton'
 import { Row, Col, Input } from 'reactstrap'
-import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import $backend from '../../backend'
 
 
@@ -14,7 +13,6 @@ export default class TrackingControl extends Component {
       targetInput: '',
       targetInputStatus: '',
       target: null,
-      trackingMode: 'target',
       time: Date.now(),
     }
   }
@@ -77,39 +75,30 @@ export default class TrackingControl extends Component {
                   <span className="spaced-text">{this.state.targetInputStatus}</span>
                   <StandardButton onClick={this.onSetTarget.bind(this)}>SET</StandardButton>
                 </Row>
+
                 <Row className='row current-target-row'>
                   <span className="spaced-text">Target coordinates: {this.formatTarget()}</span>
                   <StandardButton
                     disabled={this.state.target === null || store.tracking || store.steering || store.imagePosition === null}
                     onClick={$backend.goToTarget}>GO TO</StandardButton>
                 </Row>
+
                 <Row className='row current-position-row'>
                   <span className="spaced-text">Current coordinates: {this.formatCurrentCoordinates()}</span>
                   { store.calibrating ?
                     <StandardButton onClick={$backend.stopCalibration}>ABORT</StandardButton>
                   :
-                    <StandardButton disabled={store.framePath === null || store.tracking}
+                    <StandardButton disabled={store.framePath === null || store.guiding}
                       onClick={() => $backend.calibrateFrame(store.framePath, 30)}>UPDATE</StandardButton>
                   }
                 </Row>
 
                 <Row className='row button-row'>
-                  { store.tracking ?
-                    <StandardButton
-                      onClick={$backend.stopTracking}>STOP TRACKING</StandardButton>
+                  { store.guiding ?
+                    <StandardButton onClick={$backend.stopGuiding}>STOP GUIDING</StandardButton>
                   :
-                    <StandardButton
-                      disabled={this.state.trackingMode === 'target' && this.state.target === null}
-                      onClick={() => {$backend.startTracking(this.state.trackingMode)}}>START TRACKING</StandardButton>
+                    <StandardButton onClick={$backend.startGuiding}>START GUIDING</StandardButton>
                   }
-                  <UncontrolledDropdown>
-                    <DropdownToggle caret>MODE: {this.state.trackingMode}</DropdownToggle>
-                    <DropdownMenu>
-                      <DropdownItem onClick={() => {this.setState({trackingMode: 'target'})}}>Target</DropdownItem>
-                      <DropdownItem onClick={() => {this.setState({trackingMode: 'image'})}}>Image</DropdownItem>
-                      <DropdownItem onClick={() => {this.setState({trackingMode: 'passive'})}}>Passive</DropdownItem>
-                    </DropdownMenu>
-                  </UncontrolledDropdown>
                 </Row>
               </Col>
             </div>

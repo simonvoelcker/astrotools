@@ -24,7 +24,7 @@ class AppState:
     capturing: bool = False
     running_sequence: bool = False
     steering: bool = False
-    tracking: bool = False
+    guiding: bool = False
     calibrating: bool = False
     target: Coordinates = None
     axis_speeds: AxisSpeeds = None

@@ -90,31 +90,31 @@ export default class AxisControl extends Component {
               <div className='button-column'>
                 <span className='spaced-text'>{store.axisSpeeds ? store.axisSpeeds.mode.toUpperCase() : '-'}</span>
                 <StandardButton
-                  disabled={store.tracking || (store.axisSpeeds && store.axisSpeeds.mode === 'resting')}
+                  disabled={store.guiding || (store.axisSpeeds && store.axisSpeeds.mode === 'resting')}
                   onClick={$backend.setRest}>REST</StandardButton>
                 <StandardButton
-                  disabled={store.tracking || !store.axisSpeeds || store.axisSpeeds.mode === 'stopped'}
+                  disabled={store.guiding || !store.axisSpeeds || store.axisSpeeds.mode === 'stopped'}
                   onClick={this.stop.bind(this)}>STOP</StandardButton>
               </div>
               <div className='steering-control'>
                 <StandardButton
                   className='btn steer-left'
-                  disabled={store.tracking}
+                  disabled={store.guiding}
                   onClick={() => this.steer('left')}>&#129136;
                 </StandardButton>
                 <StandardButton
                   className='btn steer-right'
-                  disabled={store.tracking}
+                  disabled={store.guiding}
                   onClick={() => this.steer('right')}>&#129138;
                 </StandardButton>
                 <StandardButton
                   className='btn steer-up'
-                  disabled={store.tracking}
+                  disabled={store.guiding}
                   onClick={() => this.steer('up')}>&#129137;
                 </StandardButton>
                 <StandardButton
                   className='btn steer-down'
-                  disabled={store.tracking}
+                  disabled={store.guiding}
                   onClick={() => this.steer('down')}>&#129139;
                 </StandardButton>
                 <span className='spaced-text steer-left-label'>

@@ -5,7 +5,7 @@ from flask_cors import CORS
 
 from hti.server.config import Production
 from hti.server.client import api_blueprint, client_blueprint
-from hti.server.globals import get_camera_controller, get_axis_control
+from hti.server.state.globals import get_camera_controller, get_axis_control
 
 app = Flask(__name__)
 CORS(app)

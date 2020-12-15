@@ -3,8 +3,8 @@ from threading import Thread
 from flask import request, send_file
 from flask_restplus import Namespace, Resource
 
-from hti.server.api.events import image_event, log_event
-from hti.server.globals import (
+from hti.server.state.events import image_event, log_event
+from hti.server.state.globals import (
     get_app_state,
     get_camera_controller,
     get_frame_manager,

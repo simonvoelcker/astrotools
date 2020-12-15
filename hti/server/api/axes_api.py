@@ -4,7 +4,7 @@ from threading import Thread
 from flask import request
 from flask_restplus import Namespace, Resource
 
-from hti.server.globals import get_axis_control, get_app_state
+from hti.server.state.globals import get_axis_control, get_app_state
 
 api = Namespace('Axes', description='Axes control API endpoints')
 

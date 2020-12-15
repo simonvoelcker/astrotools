@@ -9,9 +9,14 @@ from flask import Response, request
 from flask_restplus import Namespace, Resource
 from flask.json import jsonify
 
-from hti.server.api.events import subscribe_for_events, log_event
-from hti.server.api.util import camel_case_keys_recursively, to_dict_recursively
-from hti.server.globals import get_catalog, get_app_state, get_frame_manager
+from hti.server.state.events import subscribe_for_events, log_event
+from hti.server.state.globals import (
+    get_catalog,
+    get_app_state,
+    get_frame_manager,
+)
+
+from .util import camel_case_keys_recursively, to_dict_recursively
 
 from lib.coordinates import Coordinates
 from lib.solver import Solver

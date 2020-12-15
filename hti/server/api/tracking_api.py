@@ -5,12 +5,12 @@ import queue
 from flask import request
 from flask_restplus import Namespace, Resource
 
-from hti.server.api.events import (
+from hti.server.state.events import (
     subscribe_for_events,
     unsubscribe_from_events,
     log_event,
 )
-from hti.server.globals import (
+from hti.server.state.globals import (
     get_axis_control,
     get_app_state,
     get_frame_manager,

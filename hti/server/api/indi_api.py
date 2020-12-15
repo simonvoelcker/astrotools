@@ -2,7 +2,7 @@ from flask import request
 from flask.json import jsonify
 from flask_restplus import Namespace, Resource
 
-from hti.server.globals import get_camera_controller
+from hti.server.state.globals import get_camera_controller
 
 api = Namespace('INDI', description='INDI API')
 

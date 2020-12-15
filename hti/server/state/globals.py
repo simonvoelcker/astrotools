@@ -1,6 +1,7 @@
 import os
 
-from hti.server.app_state import AppState
+from .app_state import AppState
+
 from hti.server.frame_manager import FrameManager
 from hti.server.camera_controller import CameraController, SimCameraController
 from hti.server.tracking.periodic_error import PeriodicErrorRecorder

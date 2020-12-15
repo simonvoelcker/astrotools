@@ -4,6 +4,7 @@ from skimage.feature import register_translation
 
 from lib.util import sigma_clip_dark_end
 from .tracker import Tracker
+from ..state.events import log_event
 
 
 class ImageTracker(Tracker):
@@ -22,7 +23,7 @@ class ImageTracker(Tracker):
         self.ra_resting_speed_dps = ra_resting_speed_dps
         self.dec_resting_speed_dps = dec_resting_speed_dps
 
-    def on_new_frame(self, frame, path_prefix, status_change_callback=None):
+    def on_new_frame(self, frame, path_prefix):
 
         pil_image = frame.get_pil_image()
         image = np.transpose(np.asarray(pil_image), (1, 0, 2))
@@ -30,7 +31,7 @@ class ImageTracker(Tracker):
 
         if self.reference_image is None:
             self.reference_image = image_for_offset_detection
-            status_change_callback(message='Using reference frame', filepath=frame.path)
+            log_event(f'Using reference frame: {frame.path}')
             return
 
         (ra_error, dec_error), _, __ = register_translation(self.reference_image, image_for_offset_detection)
@@ -44,7 +45,7 @@ class ImageTracker(Tracker):
         dec_speed = self.dec_resting_speed_dps + self.dec_pid(dec_error)
 
         self.axis_control.set_axis_speeds(ra_dps=ra_speed, dec_dps=dec_speed, mode='tracking')
-        status_change_callback(message='Tracking', filepath=frame.path, errors=(ra_error, dec_error))
+        log_event(f'Tracking. File: {frame.path}. Errors: {(ra_error, dec_error)}')
 
         if self.influx_client is not None:
             self.write_frame_stats(

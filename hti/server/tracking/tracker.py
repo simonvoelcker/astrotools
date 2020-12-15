@@ -35,7 +35,7 @@ class Tracker:
             output_limits=(-pid_config['range'], pid_config['range']),
         )
 
-    def on_new_frame(self, frame, path_prefix, status_change_callback=None):
+    def on_new_frame(self, frame, path_prefix):
         raise NotImplementedError
 
     def write_frame_stats(self, **kwargs):

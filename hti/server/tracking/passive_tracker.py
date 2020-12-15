@@ -4,6 +4,7 @@ from skimage.feature import register_translation
 
 from .periodic_error import ErrorSample
 from .tracker import Tracker
+from ..state.events import log_event
 
 
 class PassiveTracker(Tracker):
@@ -27,14 +28,14 @@ class PassiveTracker(Tracker):
 		cleaned = np.clip(image_greyscale, average + threshold * stddev, 255)
 		return cleaned
 
-	def on_new_frame(self, frame, path_prefix, status_change_callback=None):
+	def on_new_frame(self, frame, path_prefix):
 
 		pil_image = frame.get_pil_image()
 		image = np.transpose(np.asarray(pil_image), (1, 0, 2))
 		image_for_offset_detection = self._clean_image_for_offset_detection(image)
 
 		if self.reference_image is None:
-			status_change_callback(message='Using reference frame', filepath=frame.path)
+			log_event(f'Using reference frame: {frame.path}')
 			self.reference_image = image_for_offset_detection
 			return
 
@@ -43,7 +44,7 @@ class PassiveTracker(Tracker):
 			image_for_offset_detection,
 		)
 
-		status_change_callback(message='Tracking', filepath=frame.path, errors=(x_error, y_error))
+		log_event(f'Tracking. File: {frame.path}. Errors: {(x_error, y_error)}')
 
 		if self.error_recorder is not None and not self.error_recorder.done:
 			ra_wheel_position = self.axis_control.get_ra_wheel_position()
@@ -54,7 +55,6 @@ class PassiveTracker(Tracker):
 					y_pixel_error=float(y_error),
 				)
 			)
-		# TODO else: apply PEC!
 
 		if self.influx_client is not None:
 			self.write_frame_stats(

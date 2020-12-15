@@ -2,6 +2,7 @@ import os
 
 from lib.solver import Solver
 from .tracker import Tracker
+from ..state.events import log_event
 
 
 class TargetTracker(Tracker):
@@ -21,7 +22,7 @@ class TargetTracker(Tracker):
     def set_target(self, target):
         self.target = target
 
-    def on_new_frame(self, frame, path_prefix, status_change_callback=None):
+    def on_new_frame(self, frame, path_prefix):
         filepath = os.path.join(path_prefix, frame.path)
         image_coordinates = Solver().locate_image(filepath)
 
@@ -31,10 +32,7 @@ class TargetTracker(Tracker):
                 dec_dps=self.dec_resting_speed_dps,
                 mode='resting',
             )
-            status_change_callback(
-                message='Calibration failed, using default speeds',
-                filepath=filepath,
-            )
+            log_event(f'Calibration failed, using default speeds. File: {filepath}')
             return
 
         ra_error = image_coordinates.ra - self.target.ra
@@ -48,20 +46,13 @@ class TargetTracker(Tracker):
         ra_speed = self.ra_resting_speed_dps + self.ra_pid(ra_error)
         dec_speed = self.dec_resting_speed_dps + self.dec_pid(dec_error)
 
-        print(f'RA error: {ra_error:8.6f}, DEC error: {dec_error:8.6f}, '
-              f'RA speed: {ra_speed:8.6f}, DEC speed: {dec_speed:8.6f}')
-
         self.axis_control.set_axis_speeds(
             ra_dps=ra_speed,
             dec_dps=dec_speed,
             mode='tracking',
         )
 
-        status_change_callback(
-            message='Tracking',
-            filepath=filepath,
-            errors=(ra_error, dec_error),
-        )
+        log_event(f'Tracking. File: {filepath}. Errors: {(ra_error, dec_error)}')
 
         if self.influx_client is not None:
             self.write_frame_stats(

@@ -64,10 +64,7 @@ class TrackTargetApi(Resource):
                 frame = frame_manager.get_frame_by_path(frame_path)
                 hti_static_dir = os.path.join(root_dir, 'hti', 'static')
 
-                def tracking_status_event(message, **kwargs):
-                    log_event(f'Tracking status: {message} (Details: {kwargs})')
-
-                tracker.on_new_frame(frame, path_prefix=hti_static_dir, status_change_callback=tracking_status_event)
+                tracker.on_new_frame(frame, path_prefix=hti_static_dir)
 
             log_event(f'Tracking status: Stopped')
             unsubscribe_from_events(q)

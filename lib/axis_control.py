@@ -102,6 +102,9 @@ class AxisControl:
 		self.serial.write(msg.encode())
 
 	def get_ra_wheel_position(self) -> float:
+		# the "wheel" is the axis that drives the worm gear.
+		# it has the periodic error and is connected to the
+		# motor shaft via a belt+pulley with a 3:1 reduction.
 		if self.serial is not None:
 			self.serial.write('get pos axis=r'.encode())
 			ms_position = int(self.serial.readline().decode())
@@ -109,7 +112,8 @@ class AxisControl:
 			# 200 steps per motor shaft revolution
 			# 3 motor shaft revolutions per wheel revolution
 			ms_per_wheel_revolution = 16 * 200 * 3
-			return float(ms_position) / float(ms_per_wheel_revolution)
+			# also, magic minus, obviously
+			return - float(ms_position) / float(ms_per_wheel_revolution)
 
 		# sim mode: pretend we're moving, 1rpm
 		return float(datetime.datetime.now().timestamp() / 30.0)

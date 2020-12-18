@@ -1,40 +1,20 @@
 import csv
 
 from dataclasses import dataclass
+from itertools import tee
 
 
-class Vect:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-    def __sub__(self, other):
-        return Vect(self.x - other.x, self.y - other.y)
-
-    def __mul__(self, scalar):
-        return Vect(self.x * scalar, self.y * scalar)
+def pairwise(iterable):
+    """s -> (s0,s1), (s1,s2), (s2, s3), ..."""
+    a, b = tee(iterable)
+    next(b, None)
+    return zip(a, b)
 
 
 @dataclass
 class ErrorSample:
-    ra_wheel_position: float = None
-    ra_pixel_error: float = None
-    x_pixel_error: float = None
-    y_pixel_error: float = None
-
-    def __init__(self, ra_wheel_position, x_pixel_error, y_pixel_error):
-        self.ra_wheel_position = ra_wheel_position
-        self.x_pixel_error = x_pixel_error
-        self.y_pixel_error = y_pixel_error
-
-    def as_vect(self):
-        return Vect(self.x_pixel_error, self.y_pixel_error)
-
-
-@dataclass
-class CleanedErrorSample:
-    ra_wheel_position: float = None
-    ra_pixel_error: float = None
+    wheel_position: float = None
+    pixel_error: float = None
 
 
 class PeriodicErrorRecorder:
@@ -44,7 +24,7 @@ class PeriodicErrorRecorder:
 
     def add_sample(self, sample):
         if len(self.samples) > 0:
-            rounds = sample.ra_wheel_position - self.samples[0].ra_wheel_position
+            rounds = sample.wheel_position - self.samples[0].wheel_position
             print(f'PEC recorder: {rounds} rounds completed')
             if rounds > 1:
                 print('PEC recorder: finalizing')
@@ -53,46 +33,64 @@ class PeriodicErrorRecorder:
         self.samples.append(sample)
 
     def finalize(self):
-        self.save_samples()
+        drift = self.samples[-1].pixel_error - self.samples[0].pixel_error
 
-        # compute drift vector: last sample minus first one
-        drift_vect = self.samples[-1].as_vect() - self.samples[0].as_vect()
-
-        # subtract increasing portions of drift_vect from samples' error vects
+        # subtract increasing portions of the drift from samples' pixel errors
         for sample in self.samples:
-            wheel_position = sample.ra_wheel_position - self.samples[0].ra_wheel_position
-            drift_vect_so_far = drift_vect * wheel_position
-            pixel_error_vect = sample.as_vect() - drift_vect_so_far
-            sample.ra_pixel_error = pixel_error_vect.x
+            rounds = sample.wheel_position - self.samples[0].wheel_position
+            sample.pixel_error -= drift * rounds
 
         # normalize wheel positions by subtracting integer part
         for sample in self.samples:
-            sample.ra_wheel_position -= int(sample.ra_wheel_position)
+            sample.wheel_position -= int(sample.wheel_position)
 
         # offset samples to have sampling period start at 0 wheel position
-        while self.samples[0].ra_wheel_position > self.samples[-1].ra_wheel_position:
+        while self.samples[0].wheel_position > self.samples[-1].wheel_position:
             self.samples = self.samples[1:] + self.samples[:1]
 
         self.save_recording()
         self.done = True
-
-    def save_samples(self):
-        with open('pec_samples.csv', 'w', newline='') as csv_file:
-            writer = csv.writer(csv_file, delimiter=';')
-            writer.writerow(['wheel_position', 'x_pixel_error', 'y_pixel_error'])
-            for sample in self.samples:
-                writer.writerow([
-                    sample.ra_wheel_position,
-                    sample.x_pixel_error,
-                    sample.y_pixel_error,
-                ])
 
     def save_recording(self):
         with open('pec_recording.csv', 'w', newline='') as csv_file:
             writer = csv.writer(csv_file, delimiter=';')
             writer.writerow(['wheel_position', 'pixel_error'])
             for sample in self.samples:
-                writer.writerow([
-                    sample.ra_wheel_position,
-                    sample.ra_pixel_error,
-                ])
+                writer.writerow([sample.wheel_position, sample.pixel_error])
+
+    def sample_pixel_error(self, wheel_position):
+        if wheel_position < 0:
+            wheel_position += 1
+        if wheel_position > 1:
+            wheel_position -= 1
+
+        # copy first sample to the end to allow for safe interpolation
+        first_sample_wrapped = ErrorSample(
+            wheel_position=self.samples[0].wheel_position + 1.0,
+            pixel_error=self.samples[0].pixel_error,
+        )
+        samples_ring = self.samples + [first_sample_wrapped]
+
+        def fraction(low, middle, high):
+            return (middle - low) / (high - low)
+
+        def lerp(low_value, high_value, f):
+            return low_value * (1.0-f) + high_value * f
+
+        for s1, s2 in pairwise(samples_ring):
+            if s1.wheel_position <= wheel_position < s2.wheel_position:
+                f = fraction(s1.wheel_position, wheel_position, s2.wheel_position)
+                return lerp(s1.pixel_error, s2.pixel_error, f)
+
+        print('WARN: Sampling pixel error from PEC recording failed')
+        return 0.0
+
+    def sample_slope(self, wheel_position):
+        # sampling radius for slope (=speed) computation
+        epsilon = 0.01
+        s1 = self.sample_pixel_error(wheel_position - epsilon)
+        s2 = self.sample_pixel_error(wheel_position + epsilon)
+        return (s2 - s1) / (2.0 * epsilon)
+
+    def get_speed_correction(self, wheel_position, factor):
+        return self.sample_slope(wheel_position) * factor

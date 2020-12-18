@@ -50,9 +50,8 @@ class PassiveTracker(Tracker):
 			ra_wheel_position = self.axis_control.get_ra_wheel_position()
 			self.error_recorder.add_sample(
 				ErrorSample(
-					ra_wheel_position=ra_wheel_position,
-					x_pixel_error=float(x_error),
-					y_pixel_error=float(y_error),
+					wheel_position=ra_wheel_position,
+					pixel_error=float(x_error),
 				)
 			)
 

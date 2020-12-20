@@ -60,12 +60,20 @@ export default {
     return $axios.post('/info/images/calibrate/stop')
   },
 
-  startGuiding (mode) {
-    return $axios.post('/guiding/start')
+  startGuiding () {
+    return $axios.post('/guiding/guide')
   },
 
   stopGuiding () {
-    return $axios.post('/guiding/stop')
+    return $axios.delete('/guiding/guide')
+  },
+
+  startPECRecording () {
+    return $axios.post('/pec/record')
+  },
+
+  stopPECRecording () {
+    return $axios.delete('/pec/record')
   },
 
   goToTarget () {

@@ -2,20 +2,22 @@ import threading
 
 from flask_restplus import Namespace, Resource
 
+from hti.server.tracking.tracker import Tracker
 from hti.server.state.globals import (
     get_axis_control,
     get_app_state,
+    get_error_recorder,
     get_frame_manager,
 )
-from hti.server.tracking import create_tracker, Tracker
+from hti.server.tracking import create_tracker
 
-api = Namespace('Guiding', description='Guiding API')
+api = Namespace('PEC', description='PEC API')
 
 
-@api.route('/guide')
-class GuidingApi(Resource):
+@api.route('/record')
+class RecordPEC(Resource):
     @api.doc(
-        description='Start guiding',
+        description='Start recording periodic error',
         response={
             200: 'Success'
         }
@@ -23,13 +25,14 @@ class GuidingApi(Resource):
     def post(self):
         # TODO: frame cadence is hardcoded here.
         # move exposure time to BE state, use that
-        tracker = create_tracker('image', 2, get_axis_control())
+        tracker = create_tracker('passive', 2, get_axis_control())
+        tracker.set_error_recorder(get_error_recorder())
 
         def run_while():
-            return get_app_state().guiding
+            return get_app_state().pec_state.recording
 
         frame_manager = get_frame_manager()
-        get_app_state().guiding = True
+        get_app_state().pec_state.recording = True
         threading.Thread(
             target=Tracker.run_tracking_loop,
             args=(tracker, frame_manager, run_while),
@@ -44,5 +47,5 @@ class GuidingApi(Resource):
         }
     )
     def delete(self):
-        get_app_state().guiding = False
+        get_app_state().pec_state.recording = False
         return '', 200

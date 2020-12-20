@@ -32,7 +32,7 @@ class AppState:
 
     annotations: list = None
 
-    pec_state: PECState = None
+    pec_state: PECState = PECState()
 
     def __setattr__(self, key, value):
         super().__setattr__(key, value)

@@ -46,8 +46,8 @@ export default class CameraView extends Component {
             {store.annotations !== null &&
               <svg viewBox="0 0 1920 1080">
                 {store.annotations.map(a => (
-                  <rect x={a.x} y={a.y} width={a.width} height={a.height}
-                   style={{ "fill-opacity": "0", "stroke-width": "2", "stroke": "rgb(0,255,0)" }} />
+                  <rect key={a.x} x={a.x} y={a.y} width={a.width} height={a.height}
+                   style={{ "fillOpacity": "0", "strokeWidth": "2", "stroke": "rgb(0,255,0)" }} />
                 ))}
               </svg>
             }

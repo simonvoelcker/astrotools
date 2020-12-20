@@ -1,6 +1,14 @@
+import queue
+
 from datetime import datetime
 from influxdb import InfluxDBClient
 from simple_pid import PID
+
+from hti.server.state.events import (
+    subscribe_for_events,
+    log_event,
+    unsubscribe_from_events,
+)
 
 
 class Tracker:
@@ -51,3 +59,24 @@ class Tracker:
             }
         ]
         self.influx_client.write_points(body)
+
+    def run_tracking_loop(self, frame_manager, run_while):
+        # process most recent events first and discard old ones
+        q = queue.LifoQueue()
+        subscribe_for_events(q)
+        latest_processed_event = None
+
+        while run_while():
+            event = q.get()
+            if event['type'] != 'image':
+                continue
+            if latest_processed_event and latest_processed_event['unix_timestamp'] >= event['unix_timestamp']:
+                # skip over old events
+                continue
+            latest_processed_event = event
+            frame_path = event['image_path']
+            frame = frame_manager.get_frame_by_path(frame_path)
+            self.on_new_frame(frame)
+
+        log_event(f'Tracking status: Stopped')
+        unsubscribe_from_events(q)

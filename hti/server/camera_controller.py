@@ -45,3 +45,9 @@ class SimCameraController:
         frame.pil_image = Image.open(random_image_path)
         frame.pil_image.load()
         return frame
+
+    def capture_sequence(self, device_name, frame_type, exposure, gain, run_callback=None):
+        while True:
+            yield self.capture_image(device_name, frame_type, exposure, gain)
+            if run_callback is not None and not run_callback():
+                break

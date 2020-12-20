@@ -9,19 +9,10 @@ from ..state.events import log_event
 
 class ImageTracker(Tracker):
 
-    def __init__(
-        self,
-        config,
-        axis_control,
-        sample_time,
-        ra_resting_speed_dps,  # not necessarily the siderial speed
-        dec_resting_speed_dps,
-    ):
-        super().__init__(config, axis_control, sample_time)
+    def __init__(self, config, *args):
+        super().__init__(config, *args)
         self.reference_image = None
         self.sigma_threshold = config['sigma_threshold']
-        self.ra_resting_speed_dps = ra_resting_speed_dps
-        self.dec_resting_speed_dps = dec_resting_speed_dps
 
     def on_new_frame(self, frame):
 

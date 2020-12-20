@@ -4,7 +4,7 @@ from .app_state import AppState
 
 from hti.server.frame_manager import FrameManager
 from hti.server.camera_controller import CameraController, SimCameraController
-from hti.server.tracking.periodic_error import PeriodicErrorRecorder
+from hti.server.tracking.periodic_error import PeriodicErrorManager
 from lib.catalog import Catalog
 from lib.axis_control import AxisControl
 
@@ -15,7 +15,7 @@ _catalog = Catalog()
 _cam_controller = None
 _axis_control = None
 _frame_manager = None
-_error_recorder = None
+_pec_manager = None
 
 
 def get_app_state():
@@ -63,8 +63,8 @@ def get_frame_manager():
     return _frame_manager
 
 
-def get_error_recorder():
-    global _error_recorder
-    if _error_recorder is None:
-        _error_recorder = PeriodicErrorRecorder()
-    return _error_recorder
+def get_pec_manager():
+    global _pec_manager
+    if _pec_manager is None:
+        _pec_manager = PeriodicErrorManager(get_app_state().pec_state)
+    return _pec_manager

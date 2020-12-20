@@ -1,6 +1,7 @@
 import os
 import json
 
+from .periodic_error import PeriodicErrorManager
 from .tracker import Tracker
 from .target_tracker import TargetTracker
 from .image_tracker import ImageTracker
@@ -13,6 +14,7 @@ def create_tracker(
     mode: str,
     frame_cadence: float,
     axis_control: AxisControl,
+    pec_manager: PeriodicErrorManager,
 ) -> Tracker:
     config_file = {
         'target': 'track_target_config.json',
@@ -33,6 +35,7 @@ def create_tracker(
     return tracker_class(
         config,
         axis_control,
+        pec_manager,
         frame_cadence,
         axis_control.speeds.ra_dps,  # use current speeds as defaults
         axis_control.speeds.dec_dps,

@@ -6,16 +6,16 @@ from hti.server.tracking.tracker import Tracker
 from hti.server.state.globals import (
     get_axis_control,
     get_app_state,
-    get_error_recorder,
+    get_pec_manager,
     get_frame_manager,
 )
 from hti.server.tracking import create_tracker
 
-api = Namespace('PEC', description='PEC API')
+api = Namespace('PEC', description='Periodic Error Compensation API')
 
 
 @api.route('/record')
-class RecordPEC(Resource):
+class RecordPeriodicError(Resource):
     @api.doc(
         description='Start recording periodic error',
         response={
@@ -25,8 +25,9 @@ class RecordPEC(Resource):
     def post(self):
         # TODO: frame cadence is hardcoded here.
         # move exposure time to BE state, use that
-        tracker = create_tracker('passive', 2, get_axis_control())
-        tracker.set_error_recorder(get_error_recorder())
+        tracker = create_tracker(
+            'passive', 2, get_axis_control(), get_pec_manager(),
+        )
 
         def run_while():
             return get_app_state().pec_state.recording

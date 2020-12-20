@@ -9,14 +9,10 @@ from ..state.events import log_event
 
 class PassiveTracker(Tracker):
 
-	def __init__(self, config, axis_control, *args):
-		super().__init__(config, axis_control, None)
+	def __init__(self, config, *args):
+		super().__init__(config, *args)
 		self.reference_image = None
 		self.sigma_threshold = config['sigma_threshold']
-		self.error_recorder = None
-
-	def set_error_recorder(self, recorder):
-		self.error_recorder = recorder
 
 	def _clean_image_for_offset_detection(self, image):
 		# greyscale frame, only width and height
@@ -46,14 +42,15 @@ class PassiveTracker(Tracker):
 
 		log_event(f'Tracking. File: {frame.path}. Errors: {(x_error, y_error)}')
 
-		if self.error_recorder is not None and not self.error_recorder.done:
-			ra_wheel_position = self.axis_control.get_ra_wheel_position()
-			self.error_recorder.add_sample(
-				ErrorSample(
-					wheel_position=ra_wheel_position,
-					pixel_error=float(x_error),
+		if self.pec_manager:
+			if self.pec_manager.pec_state.recording:
+				ra_wheel_position = self.axis_control.get_ra_wheel_position()
+				self.pec_manager.add_sample(
+					ErrorSample(
+						wheel_position=ra_wheel_position,
+						pixel_error=float(x_error),
+					)
 				)
-			)
 
 		if self.influx_client is not None:
 			self.write_frame_stats(

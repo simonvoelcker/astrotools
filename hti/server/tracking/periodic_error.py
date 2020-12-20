@@ -17,10 +17,10 @@ class ErrorSample:
     pixel_error: float = None
 
 
-class PeriodicErrorRecorder:
-    def __init__(self):
+class PeriodicErrorManager:
+    def __init__(self, pec_state):
         self.samples = []
-        self.done = False  # a complete round of samples is present
+        self.pec_state = pec_state
 
     def add_sample(self, sample):
         if len(self.samples) > 0:
@@ -28,11 +28,11 @@ class PeriodicErrorRecorder:
             print(f'PEC recorder: {rounds} rounds completed')
             if rounds > 1:
                 print('PEC recorder: finalizing')
-                self.finalize()
+                self._finalize_recording()
                 return
         self.samples.append(sample)
 
-    def finalize(self):
+    def _finalize_recording(self):
         drift = self.samples[-1].pixel_error - self.samples[0].pixel_error
 
         # subtract increasing portions of the drift from samples' pixel errors
@@ -49,7 +49,8 @@ class PeriodicErrorRecorder:
             self.samples = self.samples[1:] + self.samples[:1]
 
         self.save_recording()
-        self.done = True
+        self.pec_state.recording = False
+        self.pec_state.ready = True
 
     def save_recording(self):
         with open('pec_recording.csv', 'w', newline='') as csv_file:
@@ -92,5 +93,5 @@ class PeriodicErrorRecorder:
         s2 = self.sample_pixel_error(wheel_position + epsilon)
         return (s2 - s1) / (2.0 * epsilon)
 
-    def get_speed_correction(self, wheel_position, factor):
-        return self.sample_slope(wheel_position) * factor
+    def get_speed_correction(self, wheel_position):
+        return self.sample_slope(wheel_position) * self.pec_state.factor

@@ -5,7 +5,7 @@ from flask_restplus import Namespace, Resource
 from hti.server.state.globals import (
     get_axis_control,
     get_app_state,
-    get_frame_manager,
+    get_frame_manager, get_pec_manager,
 )
 from hti.server.tracking import create_tracker, Tracker
 
@@ -23,7 +23,9 @@ class GuidingApi(Resource):
     def post(self):
         # TODO: frame cadence is hardcoded here.
         # move exposure time to BE state, use that
-        tracker = create_tracker('image', 2, get_axis_control())
+        tracker = create_tracker(
+            'image', 2, get_axis_control(), get_pec_manager(),
+        )
 
         def run_while():
             return get_app_state().guiding

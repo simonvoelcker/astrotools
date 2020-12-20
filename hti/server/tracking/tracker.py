@@ -12,9 +12,14 @@ from hti.server.state.events import (
 
 
 class Tracker:
-    def __init__(self, config, axis_control, sample_time):
+    def __init__(self, config, axis_control, pec_manager, sample_time, ra_resting_speed_dps, dec_resting_speed_dps):
         self.config = config
         self.axis_control = axis_control
+        self.pec_manager = pec_manager
+        # the speeds at the time the tracking started - they include drift
+        self.ra_resting_speed_dps = ra_resting_speed_dps
+        self.dec_resting_speed_dps = dec_resting_speed_dps
+
         self.influx_client = InfluxDBClient(
             host='localhost',
             port=8086,

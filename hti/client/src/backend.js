@@ -76,6 +76,14 @@ export default {
     return $axios.delete('/pec/record')
   },
 
+  startPECReplay () {
+    return $axios.post('/pec/replay')
+  },
+
+  stopPECReplay () {
+    return $axios.delete('/pec/replay')
+  },
+
   goToTarget () {
     return $axios.post('/axes/gototarget')
   },

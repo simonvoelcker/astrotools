@@ -10,8 +10,8 @@ class PECState:
     # Periodic Error Correction
     recording: bool = False
     ready: bool = False
-    correcting: bool = False
-    factor: float = 0.0
+    replaying: bool = False
+    factor: float = 1.0
 
     def __setattr__(self, key, value):
         super().__setattr__(key, value)

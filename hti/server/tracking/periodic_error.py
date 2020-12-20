@@ -61,9 +61,9 @@ class PeriodicErrorManager:
 
     def sample_pixel_error(self, wheel_position):
         if wheel_position < 0:
-            wheel_position += 1
+            wheel_position += abs(wheel_position) + 1
         if wheel_position > 1:
-            wheel_position -= 1
+            wheel_position -= int(wheel_position)
 
         # copy first sample to the end to allow for safe interpolation
         first_sample_wrapped = ErrorSample(
@@ -93,5 +93,7 @@ class PeriodicErrorManager:
         s2 = self.sample_pixel_error(wheel_position + epsilon)
         return (s2 - s1) / (2.0 * epsilon)
 
-    def get_speed_correction(self, wheel_position):
-        return self.sample_slope(wheel_position) * self.pec_state.factor
+    def get_speed_correction(self, wheel_position, range):
+        correction = self.sample_slope(wheel_position) * self.pec_state.factor
+        correction = min(range, max(-range, correction))
+        return correction

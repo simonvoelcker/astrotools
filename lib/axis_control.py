@@ -116,7 +116,7 @@ class AxisControl:
 			return - float(ms_position) / float(ms_per_wheel_revolution)
 
 		# sim mode: pretend we're moving, 1rpm
-		return float(datetime.datetime.now().timestamp() / 30.0)
+		return float(datetime.datetime.now().timestamp() / 15.0)
 
 	@staticmethod
 	def _calc_maneuver(axis, from_deg, to_deg, max_speed_dps=None):

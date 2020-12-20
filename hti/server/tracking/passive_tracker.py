@@ -53,8 +53,13 @@ class PassiveTracker(Tracker):
 				)
 			if self.pec_manager.pec_state.replaying:
 				ra_wheel_position = self.axis_control.get_ra_wheel_position()
-				print(f'replaying for wheel position {ra_wheel_position}')
-				# TODO set axis speed
+				correction = self.pec_manager.get_speed_correction(ra_wheel_position, range=0.0005)
+				print(f'wheel={ra_wheel_position} correction={correction}')
+				self.axis_control.set_axis_speeds(
+					ra_dps=self.ra_resting_speed_dps + correction,
+					dec_dps=self.dec_resting_speed_dps,
+					mode='resting + pec',
+				)
 
 		if self.influx_client is not None:
 			self.write_frame_stats(

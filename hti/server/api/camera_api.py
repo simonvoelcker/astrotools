@@ -14,7 +14,7 @@ from hti.server.utils import pick_guiding_region
 api = Namespace('Camera', description='Camera and frame API endpoints')
 
 
-@api.route('/<devicename>/capture')
+@api.route('/capture')
 class CaptureImageApi(Resource):
     @api.doc(
         description='Capture an image',
@@ -22,7 +22,7 @@ class CaptureImageApi(Resource):
             200: 'Success'
         }
     )
-    def post(self, devicename):
+    def post(self):
         body = request.json
         exposure = float(body['exposure'])
         gain = float(body['gain'])
@@ -36,7 +36,7 @@ class CaptureImageApi(Resource):
             try:
                 app_state.capturing = True
                 frame = cam_controller.capture_image(
-                    devicename, frame_type, exposure, gain
+                    frame_type, exposure, gain
                 )
                 frame_manager.add_frame(frame, persist)
                 app_state.capturing = False
@@ -54,15 +54,15 @@ class CaptureImageApi(Resource):
         return '', 204
 
 
-@api.route('/<devicename>/start_sequence')
-class StartSequenceApi(Resource):
+@api.route('/sequence')
+class SequenceApi(Resource):
     @api.doc(
-        description='Start image sequence',
+        description='Start sequence',
         response={
             200: 'Success'
         }
     ) 
-    def post(self, devicename):
+    def post(self):
         body = request.json
         exposure = float(body['exposure'])
         gain = float(body['gain'])
@@ -75,12 +75,11 @@ class StartSequenceApi(Resource):
                 cam_controller = get_camera_controller()
                 frame_manager = get_frame_manager()
 
+                def run_while():
+                    return app_state.running_sequence
+
                 for frame in cam_controller.capture_sequence(
-                    devicename,
-                    frame_type,
-                    exposure,
-                    gain,
-                    run_callback=lambda: app_state.running_sequence,
+                    frame_type, exposure, gain, run_while,
                 ):
                     frame_manager.add_frame(frame, persist)
                     image_event(frame.path)
@@ -96,16 +95,13 @@ class StartSequenceApi(Resource):
         Thread(target=exp).start()
         return '', 204
 
-
-@api.route('/<devicename>/stop_sequence')
-class StopSequenceApi(Resource):
     @api.doc(
-        description='Start image sequence',
+        description='Stop sequence',
         response={
             200: 'Success'
         }
     ) 
-    def get(self, devicename):
+    def delete(self):
         get_app_state().running_sequence = False
         return '', 200
 
@@ -128,7 +124,7 @@ class FrameApi(Resource):
         return send_file(png_data, mimetype='image/png')
 
 
-@api.route('/<devicename>/autoguide')
+@api.route('/autoguide')
 class StartGuidingApi(Resource):
     @api.doc(
         description='Start auto-guiding',
@@ -136,7 +132,7 @@ class StartGuidingApi(Resource):
             200: 'Success'
         }
     )
-    def post(self, devicename):
+    def post(self):
         # TODO guiding must be full auto in the future
         # exposure time must be low, gain determined via bisecting
         body = request.json
@@ -147,9 +143,7 @@ class StartGuidingApi(Resource):
         cam_controller = get_camera_controller()
 
         app_state.capturing = True
-        frame = cam_controller.capture_image(
-            devicename, 'guiding', exposure, gain
-        )
+        frame = cam_controller.capture_image('guiding', exposure, gain)
         app_state.capturing = False
 
         region_radius = 100
@@ -165,5 +159,5 @@ class StartGuidingApi(Resource):
             200: 'Success'
         }
     )
-    def delete(self, devicename):
+    def delete(self):
         return '', 200

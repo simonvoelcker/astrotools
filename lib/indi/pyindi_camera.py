@@ -135,7 +135,7 @@ class IndiCamera:
         self.await_image()
         return self.ccd_ccd1[0].getblobdata()[:]
 
-    def capture_sequence(self, exposure, gain, region=None, run_callback=None):
+    def capture_sequence(self, exposure, gain, region=None, run_while=None):
         self.set_region(region)
         self.set_gain(gain)
         self.start_exposure(exposure, ignore_ready=True)
@@ -143,7 +143,7 @@ class IndiCamera:
         while True:
             self.await_image()
             image_data = self.ccd_ccd1[0].getblobdata()[:]
-            if run_callback and not run_callback():
+            if run_while and not run_while():
                 break
             self.start_exposure(exposure)
             yield image_data

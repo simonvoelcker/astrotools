@@ -9,9 +9,6 @@ export default class CameraView extends Component {
   constructor (props) {
     super(props)
 
-    // TODO restore /devices endpoint with pyindi client, support multiple cameras
-    this.camera = null
-
     this.state = {
       exposure: 1,
       gain: 20000,
@@ -33,15 +30,15 @@ export default class CameraView extends Component {
   }
 
   capture () {
-    $backend.capture(this.camera, this.state.exposure, this.state.gain, this.state.persist)
+    $backend.capture(this.state.exposure, this.state.gain, this.state.persist)
   }
 
   startSequence () {
-    $backend.startSequence(this.camera, this.state.frameType, this.state.exposure, this.state.gain, this.state.persist)
+    $backend.startSequence(this.state.frameType, this.state.exposure, this.state.gain, this.state.persist)
   }
 
   stopSequence () {
-    $backend.stopSequence(this.camera)
+    $backend.stopSequence()
   }
 
   render () {

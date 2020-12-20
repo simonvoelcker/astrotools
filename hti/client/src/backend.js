@@ -13,16 +13,16 @@ $axios.interceptors.request.use((config) => {
 })
 
 export default {
-  capture (deviceName, exposure, gain, persist) {
-    return $axios.post('/camera/' + deviceName + '/capture', {
+  capture (exposure, gain, persist) {
+    return $axios.post('/camera/capture', {
         exposure: exposure,
         gain: gain,
         persist: persist,
     })
   },
 
-  startSequence (deviceName, frameType, exposure, gain, persist) {
-    return $axios.post('/camera/' + deviceName + '/start_sequence', {
+  startSequence (frameType, exposure, gain, persist) {
+    return $axios.post('/camera/sequence', {
         frameType: frameType,
         exposure: exposure,
         gain: gain,
@@ -30,8 +30,8 @@ export default {
     })
   },
 
-  stopSequence (deviceName) {
-    return $axios.get('/camera/' + deviceName + '/stop_sequence')
+  stopSequence () {
+    return $axios.delete('/camera/sequence')
   },
 
   queryTarget (query) {

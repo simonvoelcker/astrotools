@@ -12,27 +12,24 @@ from PIL import Image
 
 class CameraController:
     def __init__(self):
-        self.cameras = dict()  # by device name
+        self.camera = None
 
-    def get_camera(self, device_name):
-        if device_name not in self.cameras:
-            camera = IndiCamera()
-            self.cameras[device_name] = camera
-        return self.cameras[device_name]
+    def get_camera(self):
+        if self.camera is None:
+            self.camera = IndiCamera()
+        return self.camera
 
-    def capture_image(self, device_name, frame_type, exposure, gain):
-        camera = self.get_camera(device_name)
-        fits_data = camera.capture_single(exposure, gain)
+    def capture_image(self, frame_type, exposure, gain):
+        fits_data = self.get_camera().capture_single(exposure, gain)
         return Frame(fits_data, frame_type)
 
-    def capture_sequence(self, device_name, frame_type, exposure, gain, run_callback=None):
-        camera = self.get_camera(device_name)
-        for fits_data in camera.capture_sequence(exposure, gain, run_callback=run_callback):
+    def capture_sequence(self, frame_type, exposure, gain, run_while=None):
+        for fits_data in self.get_camera().capture_sequence(exposure, gain, run_while):
             yield Frame(fits_data, frame_type)
 
 
 class SimCameraController:
-    def capture_image(self, device_name, frame_type, exposure, gain):
+    def capture_image(self, frame_type, exposure, gain):
         time.sleep(exposure)
 
         here = os.path.dirname(os.path.abspath(__file__))
@@ -46,8 +43,8 @@ class SimCameraController:
         frame.pil_image.load()
         return frame
 
-    def capture_sequence(self, device_name, frame_type, exposure, gain, run_callback=None):
+    def capture_sequence(self, frame_type, exposure, gain, run_while=None):
         while True:
-            yield self.capture_image(device_name, frame_type, exposure, gain)
-            if run_callback is not None and not run_callback():
+            yield self.capture_image(frame_type, exposure, gain)
+            if run_while is not None and not run_while():
                 break

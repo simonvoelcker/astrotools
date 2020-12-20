@@ -65,12 +65,16 @@ class PeriodicErrorManager:
         if wheel_position > 1:
             wheel_position -= int(wheel_position)
 
-        # copy first sample to the end to allow for safe interpolation
+        # copy first+last sample to the end to allow for safe interpolation
         first_sample_wrapped = ErrorSample(
             wheel_position=self.samples[0].wheel_position + 1.0,
             pixel_error=self.samples[0].pixel_error,
         )
-        samples_ring = self.samples + [first_sample_wrapped]
+        last_sample_wrapped = ErrorSample(
+            wheel_position=self.samples[-1].wheel_position - 1.0,
+            pixel_error=self.samples[-1].pixel_error,
+        )
+        samples_ring = [last_sample_wrapped] + self.samples + [first_sample_wrapped]
 
         def fraction(low, middle, high):
             return (middle - low) / (high - low)
@@ -88,12 +92,15 @@ class PeriodicErrorManager:
 
     def sample_slope(self, wheel_position):
         # sampling radius for slope (=speed) computation
-        epsilon = 0.01
+        # this should roughly equal a 5-second window
+        epsilon = 2.5 / 640.0
         s1 = self.sample_pixel_error(wheel_position - epsilon)
         s2 = self.sample_pixel_error(wheel_position + epsilon)
-        return (s2 - s1) / (2.0 * epsilon)
+        # unit is pixels/second, roughly equal to arcsecs/second
+        return (s2 - s1) / 5.0
 
     def get_speed_correction(self, wheel_position, range):
         correction = self.sample_slope(wheel_position) * self.pec_state.factor
+        print(self.sample_slope(wheel_position), self.pec_state.factor, correction)
         correction = min(range, max(-range, correction))
         return correction

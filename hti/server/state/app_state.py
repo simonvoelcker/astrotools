@@ -13,18 +13,10 @@ class PECState:
     replaying: bool = False
     factor: float = 1.0
 
-    def __setattr__(self, key, value):
-        super().__setattr__(key, value)
-        app_state_event(self.__dict__)
-
 
 @dataclass
 class CaptureState:
     exposure: float = 1.0
-
-    def __setattr__(self, key, value):
-        super().__setattr__(key, value)
-        app_state_event(self.__dict__)
 
 
 @dataclass
@@ -50,4 +42,7 @@ class AppState:
 
     def __setattr__(self, key, value):
         super().__setattr__(key, value)
+        app_state_event(self.__dict__)
+
+    def send_event(self):
         app_state_event(self.__dict__)

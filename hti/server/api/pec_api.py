@@ -1,6 +1,7 @@
 import threading
 
 from flask_restplus import Namespace, Resource
+from flask import request
 
 from hti.server.tracking.tracker import Tracker
 from hti.server.state.globals import (
@@ -92,3 +93,18 @@ class ReplayPeriodicError(Resource):
     def delete(self):
         get_app_state().pec_state.replaying = False
         return '', 200
+
+
+@api.route('/set-factor')
+class SetPECFactor(Resource):
+    @api.doc(
+        description='Set the speed factor used in PEC',
+        response={
+            200: 'Success'
+        }
+    )
+    def post(self):
+        body = request.json
+        factor = float(body['factor'])
+        get_app_state().pec_state.factor = factor
+        get_app_state().send_event()

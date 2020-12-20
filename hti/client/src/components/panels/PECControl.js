@@ -6,16 +6,9 @@ import { Input } from 'reactstrap'
 
 
 export default class PECControl extends Component {
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      factor: 0.0,
-    }
-  }
 
   onChangeFactor (event) {
-    this.setState({factor: event.target.value})
+    $backend.setPECFactor(event.target.value)
   }
 
   render () {
@@ -42,10 +35,10 @@ export default class PECControl extends Component {
                   onClick={$backend.startPECReplay}>REPLAY</StandardButton>
               }
 
-              <Input type="range" min="-10" max="10" step="0.1" className="slider"
-                value={this.state.factor}
+              <Input type="range" min="-1" max="1" step="0.01" className="slider"
+                value={store.pecState.factor || 0.0}
                 onChange={this.onChangeFactor.bind(this)} />
-              <span>{this.state.factor}</span>
+              <span>{store.pecState.factor}</span>
             </div>
           </div>
         )}

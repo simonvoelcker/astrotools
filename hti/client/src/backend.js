@@ -84,6 +84,12 @@ export default {
     return $axios.delete('/pec/replay')
   },
 
+  setPECFactor (factor) {
+    return $axios.post('/pec/set-factor', {
+      factor: factor,
+    })
+  },
+
   goToTarget () {
     return $axios.post('/axes/gototarget')
   },

@@ -23,17 +23,19 @@ class RecordPeriodicError(Resource):
         }
     )
     def post(self):
-        # TODO: frame cadence is hardcoded here.
-        # move exposure time to BE state, use that
+        app_state = get_app_state()
         tracker = create_tracker(
-            'passive', 2, get_axis_control(), get_pec_manager(),
+            'passive',
+            app_state.capture_state.exposure,
+            get_axis_control(),
+            get_pec_manager(),
         )
 
         def run_while():
-            return get_app_state().pec_state.recording
+            return app_state.pec_state.recording
 
         frame_manager = get_frame_manager()
-        get_app_state().pec_state.recording = True
+        app_state.pec_state.recording = True
         threading.Thread(
             target=Tracker.run_tracking_loop,
             args=(tracker, frame_manager, run_while),

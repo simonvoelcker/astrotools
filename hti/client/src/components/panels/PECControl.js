@@ -28,10 +28,13 @@ export default class PECControl extends Component {
               {store.pecState.recording ?
                 <StandardButton onClick={$backend.stopPECRecording}>STOP</StandardButton>
               :
-                <StandardButton onClick={$backend.startPECRecording}>RECORD</StandardButton>
+                <StandardButton
+                  disabled={store.pecState.ready}
+                  onClick={$backend.startPECRecording}>RECORD</StandardButton>
               }
-
-              <StandardButton onClick={() => {}}>CORRECT</StandardButton>
+              <StandardButton
+                disabled={!store.pecState.ready}
+                onClick={() => {}}>REPLAY</StandardButton>
 
               <Input type="range" min="-10" max="10" step="0.1" className="slider"
                 value={this.state.factor}

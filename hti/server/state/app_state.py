@@ -13,6 +13,19 @@ class PECState:
     correcting: bool = False
     factor: float = 0.0
 
+    def __setattr__(self, key, value):
+        super().__setattr__(key, value)
+        app_state_event(self.__dict__)
+
+
+@dataclass
+class CaptureState:
+    exposure: float = 1.0
+
+    def __setattr__(self, key, value):
+        super().__setattr__(key, value)
+        app_state_event(self.__dict__)
+
 
 @dataclass
 class AppState:
@@ -33,6 +46,7 @@ class AppState:
     annotations: list = None
 
     pec_state: PECState = PECState()
+    capture_state: CaptureState = CaptureState()
 
     def __setattr__(self, key, value):
         super().__setattr__(key, value)

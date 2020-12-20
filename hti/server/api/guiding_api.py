@@ -21,17 +21,19 @@ class GuidingApi(Resource):
         }
     )
     def post(self):
-        # TODO: frame cadence is hardcoded here.
-        # move exposure time to BE state, use that
+        app_state = get_app_state()
         tracker = create_tracker(
-            'image', 2, get_axis_control(), get_pec_manager(),
+            'image',
+            app_state.capture_state.exposure,
+            get_axis_control(),
+            get_pec_manager(),
         )
 
         def run_while():
-            return get_app_state().guiding
+            return app_state.guiding
 
         frame_manager = get_frame_manager()
-        get_app_state().guiding = True
+        app_state.guiding = True
         threading.Thread(
             target=Tracker.run_tracking_loop,
             args=(tracker, frame_manager, run_while),

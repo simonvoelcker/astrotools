@@ -13,6 +13,8 @@ Python tools for astro-photography. Strongly tied to my personal setup.
  - astrometry.net image calibration CLI tools (specifically solve-field)
  - astropy for FITS files
 
+Dockerization is planned and will happen on a cloudy day.
+
 # the tools
 
 ## HTI - Human Telescope Interface
@@ -44,7 +46,3 @@ Stacks a series of images into a single image. Notable features:
 - Auto-crop most exposed region
 - Gamma correction
 - RGB, Greyscale or R/G/B
-
-### command.py
-
-Interactive control. Can set motor speeds, run go-to maneuvers and little more. This is being phased out as the HTI is much more powerful.

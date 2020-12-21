@@ -3,8 +3,7 @@ import glob
 import random
 import time
 
-
-from lib.indi.pyindi_camera import IndiCamera
+from .pyindi_camera import IndiCamera
 from .frame_manager import Frame
 
 from PIL import Image
@@ -33,7 +32,7 @@ class SimCameraController:
         time.sleep(exposure)
 
         here = os.path.dirname(os.path.abspath(__file__))
-        astro_dir = os.path.join(here, '..', '..', '..')
+        astro_dir = os.path.join(here, '..', '..', '..', '..')
         images_glob = os.path.join(astro_dir, 'NGC 891 - Galaxy', '2020-11-14', '**', '*.png')
         images = glob.glob(images_glob)
         random_image_path = random.choice(images)

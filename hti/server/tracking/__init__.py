@@ -7,7 +7,7 @@ from .target_tracker import TargetTracker
 from .image_tracker import ImageTracker
 from .passive_tracker import PassiveTracker
 
-from lib.axis_control import AxisControl
+from hti.server.axes.axis_control import AxisControl
 
 
 def create_tracker(

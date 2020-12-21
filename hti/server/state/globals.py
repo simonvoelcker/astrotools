@@ -2,11 +2,11 @@ import os
 
 from .app_state import AppState
 
-from hti.server.frame_manager import FrameManager
-from hti.server.camera_controller import CameraController, SimCameraController
+from hti.server.capture.frame_manager import FrameManager
+from hti.server.capture.camera_controller import CameraController, SimCameraController
 from hti.server.tracking.periodic_error import PeriodicErrorManager
-from lib.catalog import Catalog
-from lib.axis_control import AxisControl
+from hti.server.catalog import Catalog
+from hti.server.axes.axis_control import AxisControl
 
 _app_state = AppState()
 _app_state.axes_sim = os.environ.get('SIM_AXES', 'false').lower() == 'true'

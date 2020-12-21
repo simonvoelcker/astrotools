@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from .events import app_state_event
-from lib.axis_control import AxisSpeeds
+from hti.server.axes.axis_control import AxisSpeeds
 from lib.coordinates import Coordinates
 
 

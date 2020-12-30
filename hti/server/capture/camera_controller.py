@@ -19,11 +19,11 @@ class CameraController:
         return self.camera
 
     def capture_image(self, frame_type, exposure, gain):
-        fits_data = self.get_camera().capture_single(exposure, gain)
+        fits_data = self.get_camera().capture_single(exposure, gain, None)
         return Frame(fits_data, frame_type)
 
     def capture_sequence(self, frame_type, exposure, gain, run_while=None):
-        for fits_data in self.get_camera().capture_sequence(exposure, gain, run_while):
+        for fits_data in self.get_camera().capture_sequence(exposure, gain, None, run_while):
             yield Frame(fits_data, frame_type)
 
 

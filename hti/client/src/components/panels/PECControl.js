@@ -35,7 +35,7 @@ export default class PECControl extends Component {
                   onClick={$backend.startPECReplay}>REPLAY</StandardButton>
               }
 
-              <Input type="range" min="-1" max="1" step="0.01" className="slider"
+              <Input type="range" min="-0.01" max="0.01" step="0.0001" className="slider"
                 value={store.pecState.factor || 0.0}
                 onChange={this.onChangeFactor.bind(this)} />
               <span>{store.pecState.factor}</span>

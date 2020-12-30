@@ -10,9 +10,10 @@ export default class AxisControl extends Component {
     super(props)
 
     this.incrementOptions = [
-      {label: 'slow',   dps: 0.1 / 3600.0},
-      {label: 'medium', dps: 0.1 / 60.0},
-      {label: 'fast',   dps: 0.1},
+      {label: 'very slow',  dps: 0.01 / 3600.0},
+      {label: 'slow',       dps: 0.1 / 3600.0},
+      {label: 'medium',     dps: 0.1 / 60.0},
+      {label: 'fast',       dps: 0.1},
     ]
 
     this.state = {
@@ -118,16 +119,16 @@ export default class AxisControl extends Component {
                   onClick={() => this.steer('down')}>&#129139;
                 </StandardButton>
                 <span className='spaced-text steer-left-label'>
-                  {raSpeed.value < 0 ? -raSpeed.value.toFixed(1) + raSpeed.unit : ''}
+                  {raSpeed.value < 0 ? -raSpeed.value.toFixed(2) + raSpeed.unit : ''}
                 </span>
                 <span className='spaced-text steer-right-label'>
-                  {raSpeed.value > 0 ? raSpeed.value.toFixed(1) + raSpeed.unit : ''}
+                  {raSpeed.value > 0 ? raSpeed.value.toFixed(2) + raSpeed.unit : ''}
                 </span>
                 <span className='spaced-text steer-up-label'>
-                  {decSpeed.value > 0 ? decSpeed.value.toFixed(1) + decSpeed.unit : ''}
+                  {decSpeed.value > 0 ? decSpeed.value.toFixed(2) + decSpeed.unit : ''}
                 </span>
                 <span className='spaced-text steer-down-label'>
-                  {decSpeed.value < 0 ? -decSpeed.value.toFixed(1) + decSpeed.unit : ''}
+                  {decSpeed.value < 0 ? -decSpeed.value.toFixed(2) + decSpeed.unit : ''}
                 </span>
               </div>
               <div className='button-column'>

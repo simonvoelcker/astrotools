@@ -51,19 +51,27 @@ class PassiveTracker(Tracker):
 						pixel_error=float(x_error),
 					)
 				)
+				if self.influx_client is not None:
+					self.write_frame_stats(
+						file_path=frame.path,
+						ra_image_error=float(x_error),
+						dec_image_error=float(y_error),
+					)
+
 			if self.pec_manager.pec_state.replaying:
 				ra_wheel_position = self.axis_control.get_ra_wheel_position()
-				correction = self.pec_manager.get_speed_correction(ra_wheel_position, range=0.0005)
+				correction = self.pec_manager.get_speed_correction(
+					ra_wheel_position,
+					range_dps=2.0/3600.0,
+				)
 				print(f'wheel={ra_wheel_position} correction={correction}')
 				self.axis_control.set_axis_speeds(
 					ra_dps=self.ra_resting_speed_dps + correction,
-					dec_dps=self.dec_resting_speed_dps,
 					mode='resting + pec',
 				)
-
-		if self.influx_client is not None:
-			self.write_frame_stats(
-				file_path=frame.path,
-				ra_image_error=float(x_error),
-				dec_image_error=float(y_error),
-			)
+				if self.influx_client is not None:
+					self.write_frame_stats(
+						file_path=frame.path,
+						ra_speed=float(self.ra_resting_speed_dps + correction),
+						ra_pec=float(correction),
+					)

@@ -20,8 +20,20 @@ struct Motor {
   float acceleration;
 };
 
+struct SimpleMotor {
+  int directionPin;
+  int stepPin;
+
+  int stepPinState;
+  int targetStepCount;      // target position to move to
+};
+
+// RA and Dec motors
 Motor m1 = { 3, 4, 6, 5, 7, LOW, 1024, 16, 255, 255, 1, 0, false, 0.0, 0.0, 1.0 };
 Motor m2 = { 8, 9, 11, 10, 12, LOW, 1024, 16, 255, 255, 2, 0, false, 0.0, 0.0, 1.0 };
+
+// Focuser
+SimpleMotor m3 = { 2, 13, LOW, 0 };
 
 void initMotor(Motor m) {
   pinMode(m.directionPin, OUTPUT);
@@ -33,6 +45,11 @@ void initMotor(Motor m) {
   digitalWrite(m.enablePin, HIGH); // high is disable
   digitalWrite(m.microstepsPin1, m.microsteps == 2 || m.microsteps == 16 ? HIGH : LOW);
   digitalWrite(m.microstepsPin2, m.microsteps == 4 || m.microsteps == 16 ? HIGH : LOW);
+}
+
+void initSimpleMotor(SimpleMotor m) {
+  pinMode(m.directionPin, OUTPUT);
+  pinMode(m.stepPin, OUTPUT);
 }
 
 void initTimers() {
@@ -193,12 +210,28 @@ void updateSpeed(Motor& m) {
   setMotorSpeed(m, m.currentSpeed);
 }
 
+void updateSimpleMotor(SimpleMotor& m) {
+  if (m.targetStepCount == 0) return;
+
+  if (m.targetStepCount > 0) {
+    digitalWrite(m.directionPin, LOW);
+    m.targetStepCount -= 1;
+  } else {
+    digitalWrite(m.directionPin, HIGH);
+    m.targetStepCount += 1;
+  }
+
+  m.stepPinState = m.stepPinState == LOW ? HIGH : LOW;
+  digitalWrite(m.stepPin, m.stepPinState);
+}
+
 void setup() {
   Serial.begin(9600);
   Serial.setTimeout(1000);
 
   initMotor(m1);
   initMotor(m2);
+  initSimpleMotor(m3);
   initTimers();
 
   setMotorSpeed(m1, 0.0);
@@ -240,6 +273,9 @@ ISR(TIMER2_OVF_vect)
 }
 
 int updateSpeedsCountdown = 0;
+int updateSpeedsCycle = 100;
+int updateSimpleMotorCountdown = 25;
+int updateSimpleMotorCycle = 50;
 
 void loop() {
   // read commands from serial interface.
@@ -262,21 +298,34 @@ void loop() {
     attr = line.substring(4, 7);
     axis = line.substring(13, 14);
 
-    Motor& motor = axis.equals("r") ? m1 : m2;
+    if (axis.equals("r") || axis.equals("d")) {
+      // feature-rich axes. support speed, acceleration, position commands
+      Motor& motor = axis.equals("r") ? m1 : m2;
 
-    if (op.equals("set")) {
-      value = line.substring(21).toFloat();
-      if (attr.equals("spd")) {
-        motor.targetSpeed = value;
-      } else if (attr.equals("pos")) {
-        motor.microstepCount = value;
-      } else if (attr.equals("acl")) {
-        motor.acceleration = value;
+      if (op.equals("set")) {
+        value = line.substring(21).toFloat();
+        if (attr.equals("spd")) {
+          motor.targetSpeed = value;
+        } else if (attr.equals("pos")) {
+          motor.microstepCount = value;
+        } else if (attr.equals("acl")) {
+          motor.acceleration = value;
+        }
+      } else {
+        if (attr.equals("pos")) {
+          Serial.println(motor.microstepCount);
+          Serial.flush();
+        }
       }
     } else {
-      if (attr.equals("pos")) {
-        Serial.println(motor.microstepCount);
-        Serial.flush();
+      // less feature-rich axes. support only setting target position
+      SimpleMotor& motor = m3;
+
+      if (op.equals("set")) {
+        value = line.substring(21).toFloat();
+        if (attr.equals("pos")) {
+          motor.targetStepCount = value;
+        }
       }
     }
   }
@@ -285,8 +334,15 @@ void loop() {
     // apply acceleration, if any
     updateSpeed(m1);
     updateSpeed(m2);
-    updateSpeedsCountdown = 100;
+    updateSpeedsCountdown = updateSpeedsCycle;
   } else {
     updateSpeedsCountdown -= 1;
+  }
+
+  if (updateSimpleMotorCountdown == 0) {
+    updateSimpleMotor(m3);
+    updateSimpleMotorCountdown = updateSimpleMotorCycle;
+  } else {
+    updateSimpleMotorCountdown -= 1;
   }
 }

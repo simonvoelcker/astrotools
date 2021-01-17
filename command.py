@@ -1,6 +1,6 @@
 import cmd
 
-from .axis_control import AxisControl
+from hti.server.axes.axis_control import AxisControl
 
 
 class CommandShell(cmd.Cmd):

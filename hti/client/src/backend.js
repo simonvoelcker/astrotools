@@ -109,5 +109,11 @@ export default {
         minDec: minDec,
         maxDec: maxDec,
     }})
+  },
+
+  moveFocus (steps) {
+    return $axios.post('/axes/focus', {
+      steps: steps,
+    })
   }
 }

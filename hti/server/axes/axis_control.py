@@ -98,8 +98,14 @@ class AxisControl:
 			self.on_speeds_change(self.speeds)
 
 	def set_ra_axis_acceleration(self, acceleration):
-		msg = f'set acl axis=r value={acceleration:.6f}\n'
-		self.serial.write(msg.encode())
+		if self.serial is not None:
+			msg = f'set acl axis=r value={acceleration:.6f}\n'
+			self.serial.write(msg.encode())
+
+	def move_focus_axis(self, steps):
+		if self.serial is not None:
+			msg = f'set pos axis=f value={steps}\n'
+			self.serial.write(msg.encode())
 
 	def get_ra_wheel_position(self) -> float:
 		# the "wheel" is the axis that drives the worm gear.

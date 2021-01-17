@@ -78,3 +78,18 @@ class GoToApi(Resource):
 
         Thread(target=steer_fun).start()
         return '', 200
+
+
+@api.route('/focus')
+class FocusApi(Resource):
+    @api.doc(
+        description='Move focus axis by given number of steps',
+        response={
+            200: 'Success'
+        }
+    )
+    def post(self):
+        body = request.json
+        steps = int(body['steps'])
+        get_axis_control().move_focus_axis(steps)
+        return '', 200

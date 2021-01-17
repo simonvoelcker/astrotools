@@ -6,6 +6,7 @@ import CaptureControl from '../panels/CaptureControl'
 import AxisControl from '../panels/AxisControl'
 import TrackingControl from '../panels/TrackingControl'
 import PECControl from '../panels/PECControl'
+import FocusControl from '../panels/FocusControl'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 
 export default class Operator extends Component {
@@ -23,6 +24,7 @@ export default class Operator extends Component {
               <CaptureControl />
               <AxisControl />
               <PECControl />
+              <FocusControl />
             </div>
           </div>
         )}

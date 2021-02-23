@@ -101,7 +101,7 @@ class Solver:
 
 		metadata_regexes = {
 			'pixel_scale': r'^.*pixel scale (?P<scale>[\d\.]*) (?P<unit>[\w\/]*)\..*$',
-			'center_deg': r'^.*Field center: \(RA,Dec\) = \((?P<ra>[\d\.]*), (?P<dec>[\d\.]*)\) deg\..*$',
+			'center_deg': r'^.*Field center: \(RA,Dec\) = \((?P<ra>[\d\.]*), (?P<dec>[\-\d\.]*)\) deg\..*$',
 			'center': r'^.*Field center: \(RA H:M:S, Dec D:M:S\) = \((?P<ra>[\d\.\:]*), (?P<dec>[\d\.\:\+\-]*)\)\..*$',
 			'size': r'^.*Field size: (?P<width>[\d\.]*) x (?P<height>[\d\.]*) (?P<unit>\w*).*$',
 			'rotation': r'^.*Field rotation angle: up is (?P<angle>[\-\d\.]*) degrees (?P<direction>[WE]) of N.*$',
@@ -114,7 +114,7 @@ class Solver:
 			match = rx.match(output)
 			if not match:
 				print(f'WARN: No match found for "{metadata_key}" in output of solve-field of file {filepath}.')
-				print('Field may not have been solved or the output of the solver could not be parsed.')
+				print(f'Field may not have been solved or the output of the solver could not be parsed. Full output:\n{output}')
 				return None
 			metadata[metadata_key] = match.groupdict() if match else None
 

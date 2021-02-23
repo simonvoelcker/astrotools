@@ -62,7 +62,7 @@ class Frame:
         return self.to_pixels(offset_deg, pixel_scale_aspp)
 
     def compute_astrometric_metadata(self, hint):
-        return Solver().analyze_image(filepath=self.filepath, timeout=60, hint=hint)
+        return Solver().analyze_image(filepath=self.filepath, timeout=15, hint=hint)
 
     @classmethod
     def compute_frame_offsets(cls, frames, custom_offset=None):

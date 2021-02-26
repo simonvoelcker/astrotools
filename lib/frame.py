@@ -1,7 +1,5 @@
 import math
 
-from lib.solver import Solver
-
 
 class Frame:
 
@@ -60,9 +58,6 @@ class Frame:
         offset_deg = (self.center[0] - reference_frame.center[0],
                       self.center[1] - reference_frame.center[1])
         return self.to_pixels(offset_deg, pixel_scale_aspp)
-
-    def compute_astrometric_metadata(self, hint):
-        return Solver().analyze_image(filepath=self.filepath, timeout=15, hint=hint)
 
     @classmethod
     def compute_frame_offsets(cls, frames, custom_offset=None):

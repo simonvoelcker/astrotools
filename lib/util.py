@@ -2,12 +2,32 @@ import glob
 import itertools
 import numpy as np
 import os
+import subprocess
+import time
 
 from PIL import Image
 from influxdb import InfluxDBClient
 from skimage.filters import laplace, sobel
 
+# TODO utils should not import from lib
 from lib.image_stack import ImageStack
+
+
+def run_command_or_die_trying(command, timeout, run_callback=None):
+    # Popen accepts a timeout parameter, but it does not work smh
+    process = subprocess.Popen(command, stdout=subprocess.PIPE,
+                               stderr=subprocess.DEVNULL)
+    while timeout > 0:
+        if process.poll() is not None:
+            output = process.stdout.read().decode()
+            return output
+        if run_callback is not None and not run_callback():
+            # abort
+            break
+        time.sleep(1)
+        timeout -= 1
+    process.kill()
+    return None
 
 
 def load_image(filename, dtype=np.int16):
@@ -29,8 +49,10 @@ def create_average_frame(directory, search_pattern, color_mode):
         return None
     full_search_pattern = os.path.join(directory, search_pattern)
     files = glob.glob(full_search_pattern)
-    print(f'Found {len(files)} frames in {directory} - Creating an average frame')
-    average_frame = ImageStack.create_average_frame(directory, files, color_mode)
+    print(
+        f'Found {len(files)} frames in {directory} - Creating an average frame')
+    average_frame = ImageStack.create_average_frame(directory, files,
+                                                    color_mode)
     return average_frame
 
 
@@ -49,7 +71,8 @@ def save_image_greyscale(image, filename):
     yx_image = np.transpose(image, (1, 0))
     yx_image = yx_image.astype(np.int8)
     # convert to RGB, ghetto style
-    yxc_image = np.zeros((yx_image.shape[0], yx_image.shape[1], 3), dtype=np.int8)
+    yxc_image = np.zeros((yx_image.shape[0], yx_image.shape[1], 3),
+                         dtype=np.int8)
     yxc_image[:, :, 0] = yx_image
     yxc_image[:, :, 1] = yx_image
     yxc_image[:, :, 2] = yx_image
@@ -65,7 +88,8 @@ def save_animation(frames, filename, dtype=np.int8):
         yxc_image = yxc_image.astype(np.int8)[:, :, 0]
         pil_image = Image.fromarray(yxc_image, mode='L')
         pil_images.append(pil_image)
-    pil_images[0].save(filename, save_all=True, append_images=pil_images[1:], duration=50, loop=0)
+    pil_images[0].save(filename, save_all=True, append_images=pil_images[1:],
+                       duration=50, loop=0)
 
 
 def get_sharpness_aog(frame):
@@ -100,14 +124,17 @@ def query_offsets(path_prefix):
 
     # Usage: query_offsets('../beute/191013')
     path_prefix = path_prefix.replace('/', '\\/')
-    influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root', database='tracking')
+    influx_client = InfluxDBClient(host='localhost', port=8086,
+                                   username='root', password='root',
+                                   database='tracking')
     offsets_query = f'SELECT ra_image_error, dec_image_error, file_path ' \
                     f'FROM axis_log WHERE file_path =~ /{path_prefix}*/ ORDER BY time ASC'
 
     offsets_result = influx_client.query(offsets_query)
     # it will remain influxDBs secret why this is so complicated
     rows = offsets_result.items()[0][1]
-    return {row['file_path']: (row['ra_image_error'], row['dec_image_error']) for row in rows}
+    return {row['file_path']: (row['ra_image_error'], row['dec_image_error'])
+            for row in rows}
 
 
 def pairwise(iterable):

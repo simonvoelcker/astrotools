@@ -68,8 +68,8 @@ if args.range is not None:
 # with open(offsets_file, 'r') as f:
 # 	frame_offsets = json.load(f)
 
-print('Loading frame metadata')
-metadata_file = os.path.join(args.directory, 'astrometric_metadata.json')
+print('Loading calibration data')
+metadata_file = os.path.join(args.directory, 'calibration_data.json')
 with open(metadata_file, 'r') as f:
 	frame_metadata = json.load(f)
 

@@ -16,7 +16,9 @@ class TargetTracker(Tracker):
     def on_new_frame(self, frame):
         here = os.path.dirname(os.path.abspath(__file__))
         filepath = os.path.normpath(os.path.join(here, '..', '..', 'static', frame.path))
-        image_coordinates = Solver().locate_image(filepath)
+
+        calib_data = Solver().analyze_image(filepath, timeout=10)
+        image_coordinates = calib_data.center_deg if calib_data else None
 
         if not image_coordinates:
             self.axis_control.set_axis_speeds(

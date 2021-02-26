@@ -9,6 +9,7 @@ from skimage.feature import register_translation
 
 from lib.frame import Frame
 from lib.util import load_image_greyscale, sigma_clip_dark_end
+from lib.solver import Solver
 
 
 class Analyzer:
@@ -17,20 +18,10 @@ class Analyzer:
         self.sigma_threshold = sigma_threshold
         self.reference_frame_image = None
 
-        # map frames to frame metadata
+        # map frames to analysis results
         self.frame_offsets = {}
-        self.astrometric_metadata = {}
+        self.calibration_data = {}
         self.frame_brightness = {}
-
-    def get_astrometric_metadata_hint(self):
-        for metadata in self.astrometric_metadata.values():
-            if metadata is not None:
-                return {
-                    'ra': metadata['center_deg']['ra'],
-                    'dec': metadata['center_deg']['dec'],
-                    'radius': 1.0,
-                }
-        return None
 
     def analyze(self, files):
         for frame_index, filepath in enumerate(files):
@@ -40,8 +31,7 @@ class Analyzer:
             print(f'Processed frame {frame_index + 1}/{len(files)}: {filepath}. Took {(after - before).seconds}s')
 
     def analyze_frame(self, frame):
-        hint = self.get_astrometric_metadata_hint()
-        self.astrometric_metadata[frame] = frame.compute_astrometric_metadata(hint)
+        self.calibration_data[frame] = Solver().analyze_image(frame.filepath, timeout=15)
         image_greyscale = load_image_greyscale(frame.filepath, dtype=np.int16)
         self.frame_brightness[frame] = np.average(image_greyscale)
         self.frame_offsets[frame] = self.get_offsets(image_greyscale)
@@ -58,14 +48,14 @@ class Analyzer:
         (offset_x, offset_y), error, _ = register_translation(self.reference_frame_image, curr_image)
         return offset_x, offset_y
 
-    def write_astrometric_metadata(self, directory, filename='astrometric_metadata.json'):
+    def write_calibration_data(self, directory, filename='calibration_data.json'):
         filepath = os.path.join(directory, filename)
-        metadata_by_file = {
+        calibration_data_by_file = {
             os.path.basename(frame.filepath): metadata
-            for frame, metadata in self.astrometric_metadata.items()
+            for frame, metadata in self.calibration_data.items()
         }
         with open(filepath, 'w') as f:
-            json.dump(metadata_by_file, f, indent=4, sort_keys=True)
+            json.dump(calibration_data_by_file, f, indent=4, sort_keys=True)
 
     def write_offsets_file(self, directory, filename='offsets.json'):
         filepath = os.path.join(directory, filename)
@@ -90,12 +80,19 @@ class Analyzer:
         plt.savefig(filename)
 
     def write_to_influx(self):
-        influx_client = InfluxDBClient(host='localhost', port=8086, username='root', password='root',
-                                       database='tracking')
+        influx_client = InfluxDBClient(
+            host='localhost',
+            port=8086,
+            username='root',
+            password='root',
+            database='tracking',
+        )
 
         frames = list(self.frame_offsets.keys())
 
         frame_0_time_posix = os.path.getctime(frames[0].filepath)
+
+        # TODO I remember this hack now. should parse filename instead.
         exposure = 15
 
         for frame_index, frame in enumerate(frames):
@@ -108,7 +105,7 @@ class Analyzer:
                 'basename': os.path.basename(frame.filepath),
                 'time_posix': float(frame_time_posix),
             }
-            metadata = self.astrometric_metadata[frame]
+            metadata = self.calibration_data[frame]
             if metadata is not None:
                 fields.update({
                     'center_ra': metadata['center']['ra'],

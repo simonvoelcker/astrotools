@@ -31,7 +31,7 @@ if args.range is not None:
 
 analyzer = Analyzer(args.sigma_clip)
 analyzer.analyze(files)
-analyzer.write_astrometric_metadata(args.directory)
+analyzer.write_calibration_data(args.directory)
 analyzer.write_offsets_file(args.directory)
 analyzer.create_offsets_plot('out/offsets_plot.png')
 analyzer.write_to_influx()

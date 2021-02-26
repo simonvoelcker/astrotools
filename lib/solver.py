@@ -1,6 +1,6 @@
-import subprocess
 import re
-import time
+from dataclasses import dataclass
+from typing import Union
 
 from lib.config import (
 	SOLVE_BINARY,
@@ -8,31 +8,17 @@ from lib.config import (
 	SOLVE_PIXEL_SCALE_LOW,
 )
 from lib.coordinates import Coordinates
+from lib.util import run_command_or_die_trying
 
 
-def run_command_or_die_trying(command, timeout, run_callback=None):
-	# Popen accepts a timeout parameter, but it does not work smh
-	process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
-	while timeout > 0:
-		if process.poll() is not None:
-			output = process.stdout.read().decode()
-			return output
-		if run_callback is not None and not run_callback():
-			# abort
-			break
-		time.sleep(1)
-		timeout -= 1
-	process.kill()
-	return None
-
-
+@dataclass
 class CalibrationData:
-	def __init__(self, pixel_scale, ra_deg, dec_deg, angle, direction, parity, **kwargs):
-		self.pixel_scale = float(pixel_scale)
-		self.center_deg = Coordinates(float(ra_deg), float(dec_deg))
-		self.rotation_angle = float(angle)
-		self.rotation_direction = direction
-		self.parity = parity
+	pixel_scale: float
+	pixel_scale_unit: str  # "arcsecpix" or so
+	center_deg: Coordinates
+	rotation_angle: float
+	rotation_direction: str  # "E of N"/"W of N"
+	parity: str  # "pos"/"neg"
 
 
 class Solver:
@@ -67,22 +53,11 @@ class Solver:
 			'--wcs', 'temp/last_match.wcs',  # must be non-none so the detailed output is available
 		]
 
-	@staticmethod
-	def get_hint_parameters(hint):
-		if hint is None:
-			return []
-		return [
-			'--ra', str(hint['ra']),
-			'--dec', str(hint['dec']),
-			'--radius', str(hint['radius']),
-		]
+	def get_analyze_command(self, filepaths, timeout):
+		return [SOLVE_BINARY] + filepaths + self.get_common_parameters(timeout)
 
-	def get_analyze_command(self, filepaths, timeout, hint=None):
-		batch_arg = ['--batch'] if len(filepaths) > 1 else []
-		return [SOLVE_BINARY] + filepaths + batch_arg + self.get_common_parameters(timeout) + self.get_hint_parameters(hint)
-
-	def analyze_image(self, filepath, timeout=30, hint=None, run_callback=None):
-		command = self.get_analyze_command([filepath], timeout, hint)
+	def analyze_image(self, filepath, timeout=30, run_callback=None) -> Union[CalibrationData, None]:
+		command = self.get_analyze_command([filepath], timeout)
 		output = run_command_or_die_trying(command, timeout, run_callback)
 		if output is None:
 			return None
@@ -99,7 +74,7 @@ class Solver:
 		# Field parity: pos
 		# [...]
 
-		metadata_regexes = {
+		output_regexes = {
 			'pixel_scale': r'^.*pixel scale (?P<scale>[\d\.]*) (?P<unit>[\w\/]*)\..*$',
 			'center_deg': r'^.*Field center: \(RA,Dec\) = \((?P<ra>[\d\.]*), (?P<dec>[\-\d\.]*)\) deg\..*$',
 			'center': r'^.*Field center: \(RA H:M:S, Dec D:M:S\) = \((?P<ra>[\d\.\:]*), (?P<dec>[\d\.\:\+\-]*)\)\..*$',
@@ -108,22 +83,24 @@ class Solver:
 			'parity': r'^.*Field parity: (?P<parity>pos|neg).*$',
 		}
 
-		metadata = {}
-		for metadata_key, metadata_regex in metadata_regexes.items():
-			rx = re.compile(metadata_regex, re.DOTALL)
+		parsed_data = {}
+		for output_key, output_regex in output_regexes.items():
+			rx = re.compile(output_regex, re.DOTALL)
 			match = rx.match(output)
 			if not match:
-				print(f'WARN: No match found for "{metadata_key}" in output of solve-field of file {filepath}.')
+				print(f'WARN: No match found for "{output_key}" in output of solve-field of file {filepath}.')
 				print(f'Field may not have been solved or the output of the solver could not be parsed. Full output:\n{output}')
 				return None
-			metadata[metadata_key] = match.groupdict() if match else None
+			parsed_data[output_key] = match.groupdict()
 
-		return metadata
-
-	def locate_image(self, filepath, timeout=10, hint=None):
-		metadata = self.analyze_image(filepath, timeout, hint)
-		if metadata is None:
-			return None
-		ra = float(metadata['center_deg']['ra'])
-		dec = float(metadata['center_deg']['dec'])
-		return Coordinates(ra, dec)
+		return CalibrationData(
+			pixel_scale=float(parsed_data['pixel_scale']['scale']),
+			pixel_scale_unit=str(parsed_data['pixel_scale']['unit']),
+			center_deg=Coordinates(
+				float(parsed_data['center_deg']['ra']),
+				float(parsed_data['center_deg']['dec'])
+			),
+			rotation_angle=float(parsed_data['rotation']['angle']),
+			rotation_direction=str(parsed_data['rotation']['direction']),
+			parity=str(parsed_data['parity']),
+		)

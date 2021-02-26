@@ -145,11 +145,8 @@ class CalibrateImageApi(Resource):
             if calibration_data is None:
                 log_event('Calibration failed')
             else:
-                center = calibration_data['center_deg']
-                rotation_angle = calibration_data['rotation']['angle']
-                ra = float(center['ra'])
-                dec = float(center['dec'])
-                position = Coordinates(ra, dec)
+                rotation_angle = calibration_data.rotation_angle
+                position = calibration_data.center_deg
 
                 log_event(f'Image center: {position} Rotation: {rotation_angle}')
 

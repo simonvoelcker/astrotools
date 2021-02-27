@@ -1,83 +1,42 @@
 import datetime
-import json
-import matplotlib.pyplot as plt
-import numpy as np
 import os
 
 from influxdb import InfluxDBClient
-from skimage.feature import register_translation
 
 from lib.frame import Frame
-from lib.util import load_image_greyscale, sigma_clip_dark_end
-from lib.solver import Solver
+
+
+class BaseAnalyzer:
+    def analyze_frame(self, frame: Frame):
+        pass
+
+    def get_results_dict(self, frame: Frame) -> dict:
+        # output data to be written to influx
+        return {}
+
+    def write_results(self):
+        # persist output data in analyzer-specific format
+        pass
 
 
 class Analyzer:
-
-    def __init__(self, sigma_threshold):
-        self.sigma_threshold = sigma_threshold
-        self.reference_frame_image = None
-
-        # map frames to analysis results
-        self.frame_offsets = {}
-        self.calibration_data = {}
-        self.frame_brightness = {}
+    def __init__(self, analyzers):
+        self.analyzers = analyzers
+        self.frames = []
 
     def analyze(self, files):
-        for frame_index, filepath in enumerate(files):
+        self.frames = [Frame(filepath) for filepath in files]
+
+        for frame_index, frame in enumerate(self.frames):
             before = datetime.datetime.now()
-            self.analyze_frame(Frame(filepath))
+            for analyzer in self.analyzers:
+                analyzer.analyze_frame(frame)
             after = datetime.datetime.now()
-            print(f'Processed frame {frame_index + 1}/{len(files)}: {filepath}. Took {(after - before).seconds}s')
+            print(f'[{frame_index + 1}/{len(files)}]: {frame.filepath}. Took {(after - before).seconds}s')
 
-    def analyze_frame(self, frame):
-        self.calibration_data[frame] = Solver().analyze_image(frame.filepath, timeout=15)
-        image_greyscale = load_image_greyscale(frame.filepath, dtype=np.int16)
-        self.frame_brightness[frame] = np.average(image_greyscale)
-        self.frame_offsets[frame] = self.get_offsets(image_greyscale)
-
-    def get_offsets(self, image_greyscale):
-        curr_image = image_greyscale
-        if self.sigma_threshold is not None:
-            curr_image = sigma_clip_dark_end(curr_image, self.sigma_threshold)
-
-        if self.reference_frame_image is None:
-            self.reference_frame_image = curr_image
-            return 0, 0
-
-        (offset_x, offset_y), error, _ = register_translation(self.reference_frame_image, curr_image)
-        return offset_x, offset_y
-
-    def write_calibration_data(self, directory, filename='calibration_data.json'):
-        filepath = os.path.join(directory, filename)
-        calibration_data_by_file = {
-            os.path.basename(frame.filepath): metadata
-            for frame, metadata in self.calibration_data.items()
-        }
-        with open(filepath, 'w') as f:
-            json.dump(calibration_data_by_file, f, indent=4, sort_keys=True)
-
-    def write_offsets_file(self, directory, filename='offsets.json'):
-        filepath = os.path.join(directory, filename)
-        offsets_by_file = {
-            os.path.basename(frame.filepath): offsets
-            for frame, offsets in self.frame_offsets.items()
-        }
-        with open(filepath, 'w') as f:
-            json.dump(offsets_by_file, f, indent=4, sort_keys=True)
-
-    def create_offsets_plot(self, filename):
-        x_offsets = np.array([x for x, y in self.frame_offsets.values()])
-        y_offsets = np.array([y for x, y in self.frame_offsets.values()])
-
-        colors = (0, 0, 0)
-        area = np.pi * 3
-
-        plt.scatter(x_offsets, y_offsets, s=area, c=colors, alpha=0.5)
-        plt.title('Frame offsets')
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.savefig(filename)
+    def write_results(self):
+        for analyzer in self.analyzers:
+            analyzer.write_results()
 
     def write_to_influx(self):
         influx_client = InfluxDBClient(
@@ -88,42 +47,16 @@ class Analyzer:
             database='tracking',
         )
 
-        frames = list(self.frame_offsets.keys())
-
-        frame_0_time_posix = os.path.getctime(frames[0].filepath)
-
-        # TODO I remember this hack now. should parse filename instead.
-        exposure = 15
-
-        for frame_index, frame in enumerate(frames):
-            frame_time_posix = frame_0_time_posix + frame_index * exposure
-            frame_time = datetime.datetime.utcfromtimestamp(frame_time_posix).strftime('%Y-%m-%dT%H:%M:%S%Z')
-            print(f'Frame {os.path.basename(frame.filepath)}: Time={frame_time}')
+        for frame_index, frame in enumerate(self.frames):
+            frame_time_posix = frame.get_capture_timestamp()
+            frame_time = frame_time_posix.strftime('%Y-%m-%dT%H:%M:%S%Z')
 
             fields = {
                 'filepath': frame.filepath,
                 'basename': os.path.basename(frame.filepath),
-                'time_posix': float(frame_time_posix),
             }
-            metadata = self.calibration_data[frame]
-            if metadata is not None:
-                fields.update({
-                    'center_ra': metadata['center']['ra'],
-                    'center_dec': metadata['center']['dec'],
-                    'center_ra_deg': float(metadata['center_deg']['ra']),
-                    'center_dec_deg': float(metadata['center_deg']['dec']),
-                    'parity': bool(metadata['parity']['parity'] == 'pos'),
-                    'pixel_scale': float(metadata['pixel_scale']['scale']),
-                    'pixel_scale_unit': metadata['pixel_scale']['unit'],
-                    'rotation_angle': float(metadata['rotation']['angle']),
-                    'rotation_direction': metadata['rotation']['direction'],
-                    'size_width': float(metadata['size']['width']),
-                    'size_height': float(metadata['size']['height']),
-                    'size_unit': metadata['size']['unit'],
-                    'offset_x': float(self.frame_offsets[frame][0]),
-                    'offset_y': float(self.frame_offsets[frame][1]),
-                    'brightness': float(self.frame_brightness[frame]),
-                })
+            for analyzer in self.analyzers:
+                fields.update(analyzer.get_results_dict(frame))
 
             body = [
                 {

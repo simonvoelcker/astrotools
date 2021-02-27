@@ -4,7 +4,9 @@ import os
 import sys
 
 from lib.analyzer import Analyzer
-
+from lib.calibration_analyzer import CalibrationAnalyzer
+from lib.frame_quality_analyzer import FrameQualityAnalyzer
+from lib.offset_analyzer import OffsetAnalyzer
 
 parser = argparse.ArgumentParser()
 parser.add_argument('directory', type=str)
@@ -29,11 +31,22 @@ if args.range is not None:
 	files = files[int(image_range[0]):int(image_range[1])]
 	print(f'Only {len(files)} files selected')
 
-analyzer = Analyzer(args.sigma_clip)
-analyzer.analyze(files)
-analyzer.write_calibration_data(args.directory)
-analyzer.write_offsets_file(args.directory)
-analyzer.create_offsets_plot('out/offsets_plot.png')
-analyzer.write_to_influx()
+analyzer = Analyzer(analyzers=[
+	OffsetAnalyzer(
+		args.sigma_clip,
+		os.path.join(args.directory, 'offsets.json'),
+		os.path.join('out', 'offsets_plot.png'),
+	),
+	CalibrationAnalyzer(
+		os.path.join(args.directory, 'calibration_data.json'),
+	),
+	FrameQualityAnalyzer()
+])
 
+print('Starting analysis')
+analyzer.analyze(files)
+print('Writing results')
+analyzer.write_results()
+print('Writing to InfluxDB')
+analyzer.write_to_influx()
 print('Done')

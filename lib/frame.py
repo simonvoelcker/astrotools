@@ -1,4 +1,6 @@
+import os
 import math
+import datetime
 
 
 class Frame:
@@ -9,6 +11,18 @@ class Frame:
 
         self._pixel_offset = None
         self._angle = None
+
+    def get_capture_timestamp(self):
+        # take this info from the filename, if properly formatted.
+        basename = os.path.basename(self.filepath)
+
+        try:
+            # filename example: 2021-02-22T20:28:40.162488.png
+            timestamp = datetime.datetime.strptime(basename, '%Y-%m-%dT%H:%M:%S.%f.png')
+        except ValueError:
+            # fall back to timestamp of file creation.
+            timestamp = os.path.getctime(self.filepath)
+        return timestamp
 
     @property
     def center(self):

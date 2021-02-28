@@ -1,4 +1,3 @@
-import datetime
 import os
 
 from influxdb import InfluxDBClient
@@ -19,24 +18,27 @@ class BaseAnalyzer:
         pass
 
 
-class Analyzer:
-    def __init__(self, analyzers):
-        self.analyzers = analyzers
+class AnalyzerGroup(BaseAnalyzer):
+    def __init__(self):
+        self.analyzers = []
         self.frames = []
 
-    def analyze(self, files):
-        self.frames = [Frame(filepath) for filepath in files]
+    def add_analyzer(self, analyzer):
+        self.analyzers.append(analyzer)
 
-        for frame_index, frame in enumerate(self.frames):
-            before = datetime.datetime.now()
-            for analyzer in self.analyzers:
-                analyzer.analyze_frame(frame)
-            after = datetime.datetime.now()
-            print(f'[{frame_index + 1}/{len(files)}]: {frame.filepath}. Took {(after - before).seconds}s')
+    def analyze_frame(self, frame: Frame):
+        for analyzer in self.analyzers:
+            analyzer.analyze_frame(frame)
 
     def write_results(self):
         for analyzer in self.analyzers:
             analyzer.write_results()
+
+    def get_results_dict(self, frame: Frame) -> dict:
+        results = {}
+        for analyzer in self.analyzers:
+            results.update(analyzer.get_results_dict(frame))
+        return results
 
     def write_to_influx(self):
         influx_client = InfluxDBClient(
@@ -55,8 +57,7 @@ class Analyzer:
                 'filepath': frame.filepath,
                 'basename': os.path.basename(frame.filepath),
             }
-            for analyzer in self.analyzers:
-                fields.update(analyzer.get_results_dict(frame))
+            fields.update(self.get_results_dict(frame))
 
             body = [
                 {

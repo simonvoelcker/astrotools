@@ -29,6 +29,7 @@ class AnalyzerGroup(BaseAnalyzer):
     def analyze_frame(self, frame: Frame):
         for analyzer in self.analyzers:
             analyzer.analyze_frame(frame)
+        self.frames.append(frame)
 
     def write_results(self):
         for analyzer in self.analyzers:

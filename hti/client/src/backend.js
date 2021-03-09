@@ -115,5 +115,9 @@ export default {
     return $axios.post('/axes/focus', {
       steps: steps,
     })
+  },
+
+  autoFocus () {
+    return $axios.post('/axes/auto-focus')
   }
 }

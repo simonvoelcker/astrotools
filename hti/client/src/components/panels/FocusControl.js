@@ -2,9 +2,18 @@ import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 import StandardButton from '../panels/StandardButton'
 import $backend from '../../backend'
+import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 
 
 export default class FocusControl extends Component {
+  constructor (props) {
+    super(props)
+
+    this.state = {
+      increment: 1000
+    }
+  }
+
   render () {
     const store = this.context.store
     const panelStateClass = store.axesSim ? 'panel-yellow' : (store.axesConnected ? 'panel-green' : 'panel-red')
@@ -18,22 +27,21 @@ export default class FocusControl extends Component {
               <div className='button-row'>
                 <StandardButton
                   disabled={!store.axesSim && !store.axesConnected}
-                  onClick={() => {$backend.moveFocus(-1000)}}>-1000</StandardButton>
+                  onClick={() => {$backend.autoFocus()}}>Auto</StandardButton>
                 <StandardButton
                   disabled={!store.axesSim && !store.axesConnected}
-                  onClick={() => {$backend.moveFocus(-100)}}>-100</StandardButton>
+                  onClick={() => {$backend.moveFocus(+this.state.increment)}}>+</StandardButton>
                 <StandardButton
                   disabled={!store.axesSim && !store.axesConnected}
-                  onClick={() => {$backend.moveFocus(-10)}}>-10</StandardButton>
-                <StandardButton
-                  disabled={!store.axesSim && !store.axesConnected}
-                  onClick={() => {$backend.moveFocus(+10)}}>+10</StandardButton>
-                <StandardButton
-                  disabled={!store.axesSim && !store.axesConnected}
-                  onClick={() => {$backend.moveFocus(+100)}}>+100</StandardButton>
-                <StandardButton
-                  disabled={!store.axesSim && !store.axesConnected}
-                  onClick={() => {$backend.moveFocus(+1000)}}>+1000</StandardButton>
+                  onClick={() => {$backend.moveFocus(-this.state.increment)}}>-</StandardButton>
+                <UncontrolledDropdown>
+                  <DropdownToggle caret>{this.state.increment}</DropdownToggle>
+                  <DropdownMenu>
+                    <DropdownItem onClick={() => {this.setState({increment: 1000})}}>1000</DropdownItem>
+                    <DropdownItem onClick={() => {this.setState({increment: 100})}}>100</DropdownItem>
+                    <DropdownItem onClick={() => {this.setState({increment: 10})}}>10</DropdownItem>
+                  </DropdownMenu>
+                </UncontrolledDropdown>
               </div>
             </div>
           </div>

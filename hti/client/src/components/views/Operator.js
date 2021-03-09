@@ -22,9 +22,9 @@ export default class Operator extends Component {
             <div className='right-column'>
               <TrackingControl />
               <CaptureControl />
+              <FocusControl />
               <AxisControl />
               <PECControl />
-              <FocusControl />
             </div>
           </div>
         )}

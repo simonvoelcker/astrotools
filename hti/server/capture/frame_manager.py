@@ -14,6 +14,7 @@ class Frame:
         self.timestamp = datetime.datetime.now()
         self.persisted = False
         self.pil_image = None
+        self.numpy_image = None
 
     @property
     def path(self) -> str:
@@ -21,12 +22,17 @@ class Frame:
         image_name = f'{self.timestamp.isoformat()}.png'
         return os.path.join(today, self.frame_type, image_name)
 
-    def get_pil_image(self):
-        if self.pil_image is None:
+    def get_numpy_image(self):
+        if self.numpy_image is None:
             fits_file = BytesIO(self.fits_data)
             with fits.open(fits_file) as fits_file:
-                numpy_image = np.transpose(fits_file[0].data, (1, 2, 0))
-                self.pil_image = Image.fromarray(numpy_image, mode='RGB')
+                self.numpy_image = np.transpose(fits_file[0].data, (1, 2, 0))
+        return self.numpy_image
+
+    def get_pil_image(self):
+        if self.pil_image is None:
+            numpy_image = self.get_numpy_image()
+            self.pil_image = Image.fromarray(numpy_image, mode='RGB')
         return self.pil_image
 
     def get_image_data(self, format: str, downscale: int) -> BytesIO:

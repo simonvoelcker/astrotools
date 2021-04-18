@@ -1,11 +1,14 @@
 import argparse
+import numpy as np
 
-from lib.indi.pyindi_camera import IndiCamera
+from io import BytesIO
+from astropy.io import fits
+
+from hti.server.capture.pyindi_camera import IndiCamera
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--exposure', type=float, default=0.1, help='Exposure time')
+parser.add_argument('--exposure', type=float, default=0.001, help='Exposure time')
 parser.add_argument('--gain', type=float, default=1000.0, help='Analog gain')
-parser.add_argument('--out', type=str, default='./capture.png', help='Output file path')
 args = parser.parse_args()
 
 ####################
@@ -13,6 +16,10 @@ args = parser.parse_args()
 ####################
 
 camera = IndiCamera()
-camera.capture_single(args.exposure, args.gain, filepath=args.out)
+fits_data = camera.capture_single(args.exposure, args.gain)
+fits_file = BytesIO(fits_data)
 
-print(f'Wrote {args.out}')
+with fits.open(fits_file) as fits_file:
+    numpy_image = np.transpose(fits_file[0].data, (1, 2, 0))
+    avg_color = np.average(numpy_image, (0, 1))
+    print(avg_color)

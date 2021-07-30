@@ -26,20 +26,40 @@ class Frame:
         if self.numpy_image is None:
             fits_file = BytesIO(self.fits_data)
             with fits.open(fits_file) as fits_file:
-                self.numpy_image = np.transpose(fits_file[0].data, (1, 2, 0))
+                image_data = fits_file[0].data
+            if image_data.ndim == 3:
+                # color image
+                numpy_image = np.transpose(image_data, (1, 2, 0))
+            else:
+                # greyscale
+                numpy_image = image_data
+            # reduce to 8 bits
+            if numpy_image.dtype == np.uint16:
+                numpy_image = (numpy_image / 256).astype(np.uint8)
+            self.numpy_image = numpy_image
         return self.numpy_image
 
     def get_pil_image(self):
         if self.pil_image is None:
             numpy_image = self.get_numpy_image()
-            self.pil_image = Image.fromarray(numpy_image, mode='RGB')
+            if numpy_image.ndim == 3:
+                # color image
+                self.pil_image = Image.fromarray(numpy_image, mode='RGB')
+            else:
+                # greyscale
+                self.pil_image = Image.fromarray(numpy_image, mode='L')
         return self.pil_image
 
-    def get_image_data(self, format: str, downscale: int) -> BytesIO:
+    def get_image_data(self, format: str, for_display: bool) -> BytesIO:
         image: Image = self.get_pil_image()
-        if downscale > 1:
-            width = image.width // downscale
-            height = image.height // downscale
+
+        if for_display:
+            width, height = image.width, image.height
+            # aim for less than 2mpx for display purposes
+            while width * height > 2000000:
+                width //= 2
+                height //= 2
+
             image = image.resize(size=(width, height), resample=Image.NEAREST)
 
         image_data = BytesIO()

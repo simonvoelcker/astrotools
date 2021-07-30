@@ -46,7 +46,7 @@ class CaptureImageApi(Resource):
                 guiding_region = pick_guiding_region(frame, radius=100)
                 app_state.annotations = [guiding_region]
 
-            except Exception as e:
+            except TypeError as e:
                 log_event(f'Capture error: {e}')
                 app_state.capturing = False
 
@@ -120,7 +120,7 @@ class FrameApi(Resource):
         if frame is None:
             return '', 404
 
-        png_data = frame.get_image_data(format='png', downscale=2)
+        png_data = frame.get_image_data(format='png', for_display=True)
         return send_file(png_data, mimetype='image/png')
 
 

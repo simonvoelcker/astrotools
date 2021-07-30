@@ -13,7 +13,9 @@ def pick_guiding_region(frame, radius):
     ))
     image = image.filter(filter=ImageFilter.GaussianBlur(5))
     np_image = np.asarray(image)
-    np_image = np.mean(np_image, axis=2)
+    if np_image.ndim == 3:
+        # flatten to greyscale if not greyscale already
+        np_image = np.mean(np_image, axis=2)
     np_image = np.flip(np_image, axis=0)
 
     max_point = np.unravel_index(np.argmax(np_image), np_image.shape)

@@ -42,7 +42,6 @@ class Solver:
 			'--cpulimit', str(timeout),
 			'--overwrite',
 			'--no-plots',
-			'--parity', 'pos',
 			'--temp-axy',
 			'--solved', 'none',
 			'--corr', 'none',

@@ -4,7 +4,7 @@ TARGETS_CATALOG_FILEPATH = '/home/simon/Hobby/astro/astrotools/catalogs/NGC.csv'
 STARS_DB_FILEPATH = '/home/simon/Hobby/astro/Tycho-2/tycho2.db'
 
 # pixel scale limits for solve-field. unit is arc seconds per pixel
-SOLVE_PIXEL_SCALE_LOW = 0.8
+SOLVE_PIXEL_SCALE_LOW = 0.6
 SOLVE_PIXEL_SCALE_HIGH = 1.0
 
 # axis ratios (reduction factor from motor shaft to axis)

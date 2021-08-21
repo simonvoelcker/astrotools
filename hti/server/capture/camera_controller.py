@@ -11,24 +11,38 @@ from PIL import Image
 
 class CameraController:
     def __init__(self):
-        self.camera = None
+        # auto-discover cameras
+        device_names = IndiCamera.get_device_names()
+        print(f"Found camera(s): {device_names}")
+        self.cameras = {
+            device_name: IndiCamera(device_name)
+            for device_name in device_names
+        }
+        print("Connected to camera(s)")
 
-    def get_camera(self):
-        if self.camera is None:
-            self.camera = IndiCamera()
-        return self.camera
+    def get_devices(self):
+        return list(self.cameras.keys())  # camera names
 
-    def capture_image(self, frame_type, exposure, gain):
-        fits_data = self.get_camera().capture_single(exposure, gain, None)
+    def capture_image(self, device_name, frame_type, exposure, gain):
+        camera = self.cameras[device_name]
+        fits_data = camera.capture_single(exposure, gain, None)
         return Frame(fits_data, frame_type)
 
-    def capture_sequence(self, frame_type, exposure, gain, run_while=None):
-        for fits_data in self.get_camera().capture_sequence(exposure, gain, None, run_while):
+    def capture_sequence(self, device_name, frame_type, exposure, gain, run_while=None):
+        camera = self.cameras[device_name]
+        for fits_data in camera.capture_sequence(exposure, gain, None, run_while):
             yield Frame(fits_data, frame_type)
 
 
 class SimCameraController:
-    def capture_image(self, frame_type, exposure, gain):
+
+    def get_devices(self):
+        return [
+            "Simulated capturing camera",
+            "Simulated guiding camera",
+        ]
+
+    def capture_image(self, device_name, frame_type, exposure, gain):
         time.sleep(exposure)
 
         here = os.path.dirname(os.path.abspath(__file__))
@@ -42,8 +56,8 @@ class SimCameraController:
         frame.pil_image.load()
         return frame
 
-    def capture_sequence(self, frame_type, exposure, gain, run_while=None):
+    def capture_sequence(self, device_name, frame_type, exposure, gain, run_while=None):
         while True:
-            yield self.capture_image(frame_type, exposure, gain)
+            yield self.capture_image(device_name, frame_type, exposure, gain)
             if run_while is not None and not run_while():
                 break

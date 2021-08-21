@@ -36,6 +36,8 @@ class EventsApi(Resource):
         def gen():
             q = queue.Queue()
             subscribe_for_events(q)
+            # Send an event with the current app state
+            get_app_state().send_event()
             while True:
                 data = q.get()
                 # convert objects to dicts and make keys camel case

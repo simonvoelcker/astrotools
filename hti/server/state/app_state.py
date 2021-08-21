@@ -21,8 +21,9 @@ class CaptureState:
 
 @dataclass
 class AppState:
-    camera_connected: bool = False
-    camera_sim: bool = False
+    # Connected cameras
+    connected_cameras: list = None
+
     axes_connected: bool = False
     axes_sim: bool = False
 

@@ -10,6 +10,7 @@ export default class CameraView extends Component {
     super(props)
 
     this.state = {
+      camera: null,
       exposure: 1,
       gain: 20000,
       persist: false,
@@ -48,6 +49,20 @@ export default class CameraView extends Component {
       <AppConsumer>
         {({ store }) => (
           <div className={'panel capture-control-panel ' + panelStateClass}>
+
+            <div className='settings-row'>
+              <Label className='spaced-text'>Camera</Label>
+              <UncontrolledDropdown>
+                <DropdownToggle caret>{this.state.camera || 'None'}</DropdownToggle>
+                <DropdownMenu>
+                  <DropdownItem onClick={() => {this.setState({camera: null})}}>None</DropdownItem>
+                  {store.connectedCameras.map((cameraName) => (
+                    <DropdownItem onClick={() => {this.setState({camera: cameraName})}}>{cameraName}</DropdownItem>
+                  ))}
+                </DropdownMenu>
+              </UncontrolledDropdown>
+            </div>
+
             <div className='settings-row'>
               <Label className='spaced-text'>Exposure (s)</Label>
               <Input className='number-input'
@@ -66,26 +81,6 @@ export default class CameraView extends Component {
             </div>
 
             <div className='settings-row'>
-              <Label className='spaced-text'>Single capture</Label>
-              <StandardButton id="capture"
-                      disabled={!store.cameraConnected || store.capturing || store.runningSequence}
-                      onClick={this.capture.bind(this)}>Capture</StandardButton>
-            </div>
-
-            <div className='settings-row'>
-              <Label className='spaced-text'>Sequence</Label>
-              { store.runningSequence ?
-                <StandardButton id="stop-sequence"
-                        disabled={!store.cameraConnected}
-                        onClick={this.stopSequence.bind(this)}>Stop</StandardButton>
-              :
-                <StandardButton id="start-sequence"
-                        disabled={!store.cameraConnected || store.capturing}
-                        onClick={this.startSequence.bind(this)}>Start</StandardButton>
-              }
-            </div>
-
-            <div className='settings-row'>
               <Label className='spaced-text'>Frame type</Label>
               <UncontrolledDropdown>
                 <DropdownToggle caret>{this.state.frameType}</DropdownToggle>
@@ -97,6 +92,26 @@ export default class CameraView extends Component {
                   <DropdownItem onClick={() => {this.setState({frameType: 'other'})}}>Other</DropdownItem>
                 </DropdownMenu>
               </UncontrolledDropdown>
+            </div>
+
+            <div className='settings-row'>
+              <Label className='spaced-text'>Single capture</Label>
+              <StandardButton id="capture"
+                      disabled={this.state.camera === null || store.capturing || store.runningSequence}
+                      onClick={this.capture.bind(this)}>Capture</StandardButton>
+            </div>
+
+            <div className='settings-row'>
+              <Label className='spaced-text'>Sequence</Label>
+              { store.runningSequence ?
+                <StandardButton id="stop-sequence"
+                        disabled={this.state.camera === null}
+                        onClick={this.stopSequence.bind(this)}>Stop</StandardButton>
+              :
+                <StandardButton id="start-sequence"
+                        disabled={this.state.camera === null || store.capturing}
+                        onClick={this.startSequence.bind(this)}>Start</StandardButton>
+              }
             </div>
 
             <div className='settings-row'>

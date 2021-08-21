@@ -36,8 +36,7 @@ def get_camera_controller():
             _cam_controller = SimCameraController()
         else:
             _cam_controller = CameraController()
-        # TODO get this from the indi client underlying the camera
-        get_app_state().camera_connected = True
+        get_app_state().connected_cameras = _cam_controller.get_devices()
     return _cam_controller
 
 

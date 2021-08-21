@@ -63,19 +63,20 @@ def get_retry(get_function, delay=0.5):
 
 class IndiCamera:
 
-    def __init__(self, device_name=None):
+    @staticmethod
+    def get_device_names():
         # Device names known to man:
         # 'Toupcam GPCMOS02000KPA'
         # 'ZWO CCD ASI178MM'
+        indi_client = IndiClient('localhost', 7624)
+        devices = get_retry(lambda: indi_client.getDevices())
+        return [device.getDeviceName() for device in devices]
+
+    def __init__(self, device_name):
         self.indi_client = IndiClient('localhost', 7624)
         self.blob_event_queue = self.indi_client.subscribe()
 
-        if device_name:
-            self.device_ccd = get_retry(lambda: self.indi_client.getDevice(device_name))
-        else:
-            self.device_ccd = get_retry(lambda: self.indi_client.getDevices())[0]
-        device_name = self.device_ccd.getDeviceName()
-
+        self.device_ccd = get_retry(lambda: self.indi_client.getDevice(device_name))
         self.ccd_connect = get_retry(lambda: self.device_ccd.getSwitch("CONNECTION"))
 
         if not self.device_ccd.isConnected():

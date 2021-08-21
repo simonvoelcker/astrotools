@@ -8,8 +8,7 @@ export class AppProvider extends Component {
 
     this.state = {
       // via app_state event
-      cameraConnected: null,
-      cameraSim: null,
+      connectedCameras: [],
       axesConnected: null,
       axesSim: null,
       capturing: null,
@@ -54,6 +53,7 @@ export class AppProvider extends Component {
       event = JSON.parse(event.data)
       if (event['type'] === 'app_state') {
         this.setState(event['appState'])
+        debugger;
       } else if (event['type'] === 'image') {
         this.setState({
           framePath: event['imagePath']

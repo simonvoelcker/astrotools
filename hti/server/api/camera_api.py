@@ -28,6 +28,7 @@ class CaptureImageApi(Resource):
         gain = float(body['gain'])
         persist = bool(body['persist'])
         frame_type = body.get('frameType', 'singleCapture')
+        device_name = body['device']
 
         def exp():
             app_state = get_app_state()
@@ -36,7 +37,7 @@ class CaptureImageApi(Resource):
             try:
                 app_state.capturing = True
                 frame = cam_controller.capture_image(
-                    frame_type, exposure, gain
+                    device_name, frame_type, exposure, gain
                 )
                 frame_manager.add_frame(frame, persist)
                 app_state.capturing = False
@@ -68,6 +69,7 @@ class SequenceApi(Resource):
         gain = float(body['gain'])
         persist = bool(body['persist'])
         frame_type = body.get('frameType', 'other')
+        device_name = body['device']
 
         def exp():
             try:
@@ -79,7 +81,7 @@ class SequenceApi(Resource):
                     return app_state.running_sequence
 
                 for frame in cam_controller.capture_sequence(
-                    frame_type, exposure, gain, run_while,
+                    device_name, frame_type, exposure, gain, run_while,
                 ):
                     frame_manager.add_frame(frame, persist)
                     image_event(frame.path)

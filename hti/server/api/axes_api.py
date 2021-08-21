@@ -108,6 +108,7 @@ class FocusApi(Resource):
         cam_controller = get_camera_controller()
         samples = []
         for _ in range(num_samples):
+            # TODO this is dead - the interface changed
             frame = cam_controller.capture_image('focus', 1.0, 20000)
             numpy_image = frame.get_numpy_image()
             image_greyscale = np.average(numpy_image, axis=2)

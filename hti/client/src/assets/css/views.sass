@@ -1,13 +1,53 @@
 .operator
     display: flex
-    flex-direction: row
-    justify-content: space-between
+    flex-direction: column
 
-    .left-column
-        flex-grow: 1
+    .all-controls-tab
+        display: flex
+        flex-direction: row
+        justify-content: space-between
+
+        .left-column
+            flex-grow: 1
+            display: flex
+            flex-direction: column
+
+        .right-column
+            display: flex
+            flex-direction: column
+
+    .capturing-tab
+        display: flex
+        flex-direction: row
+        justify-content: space-between
+
+        .left-column
+            flex-grow: 1
+            display: flex
+            flex-direction: column
+
+        .right-column
+            display: flex
+            flex-direction: column
+
+    .guiding-tab
+        display: flex
+        flex-direction: row
+        justify-content: space-between
+
+        .left-column
+            flex-grow: 1
+            display: flex
+            flex-direction: column
+
+        .right-column
+            display: flex
+            flex-direction: column
+
+    .controls-tab
         display: flex
         flex-direction: column
 
-    .right-column
+    .log-tab
         display: flex
         flex-direction: column

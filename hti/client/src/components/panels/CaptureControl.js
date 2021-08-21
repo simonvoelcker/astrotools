@@ -48,28 +48,32 @@ export default class CameraView extends Component {
       <AppConsumer>
         {({ store }) => (
           <div className={'panel capture-control-panel ' + panelStateClass}>
-            <div className='settings-column'>
-              <div>
-                <Label className='spaced-text'>Exposure (s)</Label>
-                <Input className='number-input'
-                       type="number"
-                       placeholder={this.state.exposure}
-                       value={this.state.exposure}
-                       onChange={(event) => this.onChangeExposure(event)} />
-              </div>
-              <div>
-                <Label className='spaced-text'>Gain</Label>
-                <Input className='number-input'
-                       type="number"
-                       placeholder={this.state.gain}
-                       value={this.state.gain}
-                       onChange={(event) => this.onChangeGain(event)} />
-              </div>
+            <div className='settings-row'>
+              <Label className='spaced-text'>Exposure (s)</Label>
+              <Input className='number-input'
+                     type="number"
+                     placeholder={this.state.exposure}
+                     value={this.state.exposure}
+                     onChange={(event) => this.onChangeExposure(event)} />
             </div>
-            <div className='button-column'>
+            <div className='settings-row'>
+              <Label className='spaced-text'>Gain</Label>
+              <Input className='number-input'
+                     type="number"
+                     placeholder={this.state.gain}
+                     value={this.state.gain}
+                     onChange={(event) => this.onChangeGain(event)} />
+            </div>
+
+            <div className='settings-row'>
+              <Label className='spaced-text'>Single capture</Label>
               <StandardButton id="capture"
                       disabled={!store.cameraConnected || store.capturing || store.runningSequence}
                       onClick={this.capture.bind(this)}>Capture</StandardButton>
+            </div>
+
+            <div className='settings-row'>
+              <Label className='spaced-text'>Sequence</Label>
               { store.runningSequence ?
                 <StandardButton id="stop-sequence"
                         disabled={!store.cameraConnected}
@@ -77,10 +81,12 @@ export default class CameraView extends Component {
               :
                 <StandardButton id="start-sequence"
                         disabled={!store.cameraConnected || store.capturing}
-                        onClick={this.startSequence.bind(this)}>Sequence</StandardButton>
+                        onClick={this.startSequence.bind(this)}>Start</StandardButton>
               }
             </div>
-            <div className='button-column'>
+
+            <div className='settings-row'>
+              <Label className='spaced-text'>Frame type</Label>
               <UncontrolledDropdown>
                 <DropdownToggle caret>{this.state.frameType}</DropdownToggle>
                 <DropdownMenu>
@@ -91,13 +97,14 @@ export default class CameraView extends Component {
                   <DropdownItem onClick={() => {this.setState({frameType: 'other'})}}>Other</DropdownItem>
                 </DropdownMenu>
               </UncontrolledDropdown>
-              <div>
-                <Label className='spaced-text'>Persist</Label>
-                <Input className='number-input'
-                       type="checkbox"
-                       value={this.state.persist}
-                       onChange={(event) => this.onChangePersist(event)}/>{' '}
-              </div>
+            </div>
+
+            <div className='settings-row'>
+              <Label className='spaced-text'>Persist</Label>
+              <Input className='checkbox-input'
+                     type="checkbox"
+                     value={this.state.persist}
+                     onChange={(event) => this.onChangePersist(event)}/>{' '}
             </div>
           </div>
         )}

@@ -52,6 +52,11 @@
             margin: 5px
             margin-right: 30px
 
+        button
+            width: 150px
+            height: 40px
+            margin: 5px
+
 .log-panel
     background-color: $panelBackgroundColor
 
@@ -130,22 +135,18 @@
 .capture-control-panel
     width: $controlsWidth
     display: flex
-    flex-direction: row
+    flex-direction: column
 
-    .settings-column
+    .settings-row
       display: flex
-      flex-direction: column
+      flex-direction: row
 
       Label
-        width: 130px
+        width: 200px
       Input
-        width: 130px
-
-    .button-column
-      display: flex
-      flex-direction: column
-      flex-grow: 1
-      margin-left: 10px
+        width: 200px
+      button
+        width: 200px
 
 .axis-control-panel
     width: $controlsWidth

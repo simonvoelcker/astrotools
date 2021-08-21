@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../context/AppContext'
+import StandardButton from '../panels/StandardButton'
 import { Input } from 'reactstrap'
 
 export default class CameraView extends Component {
@@ -23,6 +24,14 @@ export default class CameraView extends Component {
 
   onChangeSaturation (event) {
     this.setState({saturation: event.target.value})
+  }
+
+  resetSettings () {
+    this.setState({
+      brightness: 1.0,
+      contrast: 1.0,
+      saturation: 1.0,
+    })
   }
 
   render () {
@@ -64,6 +73,7 @@ export default class CameraView extends Component {
               <Input type="range" min="0" max="2" step="0.1" className="slider"
                 value={this.state.saturation}
                 onChange={this.onChangeSaturation.bind(this)} />
+              <StandardButton onClick={() => {this.resetSettings()}}>Reset</StandardButton>
             </div>
           </div>
         )}

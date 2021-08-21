@@ -6,13 +6,6 @@ import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from
 
 
 export default class FocusControl extends Component {
-  constructor (props) {
-    super(props)
-
-    this.state = {
-      increment: 1000
-    }
-  }
 
   render () {
     const store = this.context.store
@@ -27,21 +20,16 @@ export default class FocusControl extends Component {
               <div className='button-row'>
                 <StandardButton
                   disabled={!store.axesSim && !store.axesConnected}
-                  onClick={() => {$backend.autoFocus()}}>Auto</StandardButton>
+                  onClick={() => {$backend.moveFocus(+1000)}}>+10</StandardButton>
                 <StandardButton
                   disabled={!store.axesSim && !store.axesConnected}
-                  onClick={() => {$backend.moveFocus(+this.state.increment)}}>+</StandardButton>
+                  onClick={() => {$backend.moveFocus(+100)}}>+1</StandardButton>
                 <StandardButton
                   disabled={!store.axesSim && !store.axesConnected}
-                  onClick={() => {$backend.moveFocus(-this.state.increment)}}>-</StandardButton>
-                <UncontrolledDropdown>
-                  <DropdownToggle caret>{this.state.increment}</DropdownToggle>
-                  <DropdownMenu>
-                    <DropdownItem onClick={() => {this.setState({increment: 1000})}}>1000</DropdownItem>
-                    <DropdownItem onClick={() => {this.setState({increment: 100})}}>100</DropdownItem>
-                    <DropdownItem onClick={() => {this.setState({increment: 10})}}>10</DropdownItem>
-                  </DropdownMenu>
-                </UncontrolledDropdown>
+                  onClick={() => {$backend.moveFocus(-100)}}>-1</StandardButton>
+                <StandardButton
+                  disabled={!store.axesSim && !store.axesConnected}
+                  onClick={() => {$backend.moveFocus(-1000)}}>-10</StandardButton>
               </div>
             </div>
           </div>

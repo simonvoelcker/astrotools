@@ -47,7 +47,7 @@ export class AppProvider extends Component {
 
   initialize () {
 
-    const maxLogLength = 5
+    const maxLogLength = 30
 
     let eventListener = new EventSource('http://localhost:5000/api/info/events')
     eventListener.onmessage = (event) => {

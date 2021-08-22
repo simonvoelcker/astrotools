@@ -11,40 +11,54 @@ export default class CameraView extends Component {
 
     this.state = {
       camera: null,
-      exposure: 1,
-      gain: 20000,
-      persist: false,
-      frameType: 'lights'
     }
   }
 
+  updateCameraSettings () {
+    $backend.updateCameraSettings(
+      this.state.camera,
+      this.context.store.cameras[this.state.camera].exposure,
+      this.context.store.cameras[this.state.camera].gain,
+      this.context.store.cameras[this.state.camera].persist,
+      this.context.store.cameras[this.state.camera].frameType,
+    )
+  }
+
   onChangeExposure (event) {
-    this.setState({exposure: event.target.value})
+    this.context.store.cameras[this.state.camera].exposure = event.target.value
+    this.updateCameraSettings()
   }
 
   onChangeGain (event) {
-    this.setState({gain: event.target.value})
+    this.context.store.cameras[this.state.camera].gain = event.target.value
+    this.updateCameraSettings()
   }
 
   onChangePersist (event) {
-    this.setState({persist: event.target.checked})
+    this.context.store.cameras[this.state.camera].persist = event.target.checked
+    this.updateCameraSettings()
+  }
+
+  onFrameTypeChange (frameType) {
+    this.context.store.cameras[this.state.camera].frameType = frameType
+    this.updateCameraSettings()
   }
 
   capture () {
-    $backend.capture(this.state.exposure, this.state.gain, this.state.persist)
+    $backend.capture(this.state.camera)
   }
 
   startSequence () {
-    $backend.startSequence(this.state.frameType, this.state.exposure, this.state.gain, this.state.persist)
+    $backend.startSequence(this.state.camera)
   }
 
   stopSequence () {
-    $backend.stopSequence()
+    $backend.stopSequence(this.state.camera)
   }
 
   render () {
     const store = this.context.store
-    const panelStateClass = store.cameraSim ? 'panel-yellow' : (store.cameraConnected ? 'panel-green' : 'panel-red')
+    const panelStateClass = (this.state.camera !== null ? 'panel-green' : 'panel-red')
     return (
       <AppConsumer>
         {({ store }) => (
@@ -56,7 +70,7 @@ export default class CameraView extends Component {
                 <DropdownToggle caret>{this.state.camera || 'None'}</DropdownToggle>
                 <DropdownMenu>
                   <DropdownItem onClick={() => {this.setState({camera: null})}}>None</DropdownItem>
-                  {store.connectedCameras.map((cameraName) => (
+                  {Object.keys(store.cameras).map((cameraName) => (
                     <DropdownItem onClick={() => {this.setState({camera: cameraName})}}>{cameraName}</DropdownItem>
                   ))}
                 </DropdownMenu>
@@ -67,29 +81,29 @@ export default class CameraView extends Component {
               <Label className='spaced-text'>Exposure (s)</Label>
               <Input className='number-input'
                      type="number"
-                     placeholder={this.state.exposure}
-                     value={this.state.exposure}
+                     placeholder="1"
+                     value={this.state.camera !== null ? store.cameras[this.state.camera].exposure : 1}
                      onChange={(event) => this.onChangeExposure(event)} />
             </div>
             <div className='settings-row'>
               <Label className='spaced-text'>Gain</Label>
               <Input className='number-input'
                      type="number"
-                     placeholder={this.state.gain}
-                     value={this.state.gain}
+                     placeholder="1"
+                     value={this.state.camera !== null ? store.cameras[this.state.camera].gain : 1}
                      onChange={(event) => this.onChangeGain(event)} />
             </div>
 
             <div className='settings-row'>
               <Label className='spaced-text'>Frame type</Label>
               <UncontrolledDropdown>
-                <DropdownToggle caret>{this.state.frameType}</DropdownToggle>
+                <DropdownToggle caret>{this.state.camera !== null ? store.cameras[this.state.camera].frameType : 'lights'}</DropdownToggle>
                 <DropdownMenu>
-                  <DropdownItem onClick={() => {this.setState({frameType: 'preview'})}}>Preview</DropdownItem>
-                  <DropdownItem onClick={() => {this.setState({frameType: 'lights'})}}>Lights</DropdownItem>
-                  <DropdownItem onClick={() => {this.setState({frameType: 'darks'})}}>Darks</DropdownItem>
-                  <DropdownItem onClick={() => {this.setState({frameType: 'flats'})}}>Flats</DropdownItem>
-                  <DropdownItem onClick={() => {this.setState({frameType: 'other'})}}>Other</DropdownItem>
+                  <DropdownItem onClick={() => {this.onFrameTypeChange('preview')}}>Preview</DropdownItem>
+                  <DropdownItem onClick={() => {this.onFrameTypeChange('lights')}}>Lights</DropdownItem>
+                  <DropdownItem onClick={() => {this.onFrameTypeChange('darks')}}>Darks</DropdownItem>
+                  <DropdownItem onClick={() => {this.onFrameTypeChange('flats')}}>Flats</DropdownItem>
+                  <DropdownItem onClick={() => {this.onFrameTypeChange('other')}}>Other</DropdownItem>
                 </DropdownMenu>
               </UncontrolledDropdown>
             </div>
@@ -97,7 +111,11 @@ export default class CameraView extends Component {
             <div className='settings-row'>
               <Label className='spaced-text'>Single capture</Label>
               <StandardButton id="capture"
-                      disabled={this.state.camera === null || store.capturing || store.runningSequence}
+                      disabled={
+                        this.state.camera === null ||
+                        store.cameras[this.state.camera].capturing ||
+                        store.cameras[this.state.camera].runningSequence
+                      }
                       onClick={this.capture.bind(this)}>Capture</StandardButton>
             </div>
 
@@ -109,7 +127,7 @@ export default class CameraView extends Component {
                         onClick={this.stopSequence.bind(this)}>Stop</StandardButton>
               :
                 <StandardButton id="start-sequence"
-                        disabled={this.state.camera === null || store.capturing}
+                        disabled={this.state.camera === null || store.cameras[this.state.camera].capturing}
                         onClick={this.startSequence.bind(this)}>Start</StandardButton>
               }
             </div>
@@ -118,7 +136,7 @@ export default class CameraView extends Component {
               <Label className='spaced-text'>Persist</Label>
               <Input className='checkbox-input'
                      type="checkbox"
-                     value={this.state.persist}
+                     value={this.state.camera !== null ? store.cameras[this.state.camera].persist : false}
                      onChange={(event) => this.onChangePersist(event)}/>{' '}
             </div>
           </div>

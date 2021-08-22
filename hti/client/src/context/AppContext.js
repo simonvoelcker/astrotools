@@ -8,11 +8,10 @@ export class AppProvider extends Component {
 
     this.state = {
       // via app_state event
-      connectedCameras: [],
+      cameras: {},
+
       axesConnected: null,
       axesSim: null,
-      capturing: null,
-      runningSequence: null,
       steering: null,
       guiding: null,
       calibrating: null,

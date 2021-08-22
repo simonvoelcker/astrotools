@@ -1,6 +1,6 @@
 import os
 
-from .app_state import AppState
+from .app_state import AppState, CameraState
 
 from hti.server.capture.frame_manager import FrameManager
 from hti.server.capture.camera_controller import CameraController, SimCameraController
@@ -36,7 +36,12 @@ def get_camera_controller():
             _cam_controller = SimCameraController()
         else:
             _cam_controller = CameraController()
-        get_app_state().connected_cameras = _cam_controller.get_devices()
+
+        get_app_state().cameras = {
+            device_name: CameraState(device_name)
+            for device_name in _cam_controller.get_devices()
+        }
+
     return _cam_controller
 
 

@@ -15,20 +15,23 @@ class PECState:
 
 
 @dataclass
-class CaptureState:
+class CameraState:
     exposure: float = 1.0
+    gain: float = 1.0
+    capturing: bool = False
+    running_sequence: bool = False
+    persist: bool = False
+    frame_type: str = None
 
 
 @dataclass
 class AppState:
-    # Connected cameras
-    connected_cameras: list = None
+    # Connected cameras by device name
+    cameras: dict = None
 
+    annotations: list = None
     axes_connected: bool = False
     axes_sim: bool = False
-
-    capturing: bool = False
-    running_sequence: bool = False
     steering: bool = False
     guiding: bool = False
     calibrating: bool = False
@@ -36,10 +39,7 @@ class AppState:
     axis_speeds: AxisSpeeds = None
     last_known_position: dict = None
 
-    annotations: list = None
-
     pec_state: PECState = PECState()
-    capture_state: CaptureState = CaptureState()
 
     def __setattr__(self, key, value):
         super().__setattr__(key, value)

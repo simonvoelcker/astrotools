@@ -13,27 +13,27 @@ $axios.interceptors.request.use((config) => {
 })
 
 export default {
-  capture (device, exposure, gain, persist) {
-    return $axios.post('/camera/capture', {
+
+  updateCameraSettings(device, exposure, gain, persist, frameType) {
+    return $axios.post('/camera/settings', {
         device: device,
         exposure: exposure,
         gain: gain,
         persist: persist,
+        frameType: frameType,
     })
   },
 
-  startSequence (device, frameType, exposure, gain, persist) {
-    return $axios.post('/camera/sequence', {
-        device: device,
-        frameType: frameType,
-        exposure: exposure,
-        gain: gain,
-        persist: persist,
-    })
+  capture (device) {
+    return $axios.post('/camera/capture', {device: device})
+  },
+
+  startSequence (device) {
+    return $axios.post('/camera/sequence', {device: device})
   },
 
   stopSequence () {
-    return $axios.delete('/camera/sequence')
+    return $axios.delete('/camera/sequence', {device: device})
   },
 
   queryTarget (query) {

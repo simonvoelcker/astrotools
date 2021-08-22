@@ -15,7 +15,7 @@ $axios.interceptors.request.use((config) => {
 export default {
 
   updateCameraSettings(device, exposure, gain, persist, frameType) {
-    return $axios.post('/camera/settings', {
+    return $axios.put('/camera/settings', {
         device: device,
         exposure: exposure,
         gain: gain,
@@ -32,8 +32,8 @@ export default {
     return $axios.post('/camera/sequence', {device: device})
   },
 
-  stopSequence () {
-    return $axios.delete('/camera/sequence', {device: device})
+  stopSequence (device) {
+    return $axios.delete('/camera/sequence?device=' + device)
   },
 
   queryTarget (query) {

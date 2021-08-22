@@ -82,6 +82,7 @@ export default class CameraView extends Component {
               <Input className='number-input'
                      type="number"
                      placeholder="1"
+                     disabled={this.state.camera === null}
                      value={this.state.camera !== null ? store.cameras[this.state.camera].exposure : 1}
                      onChange={(event) => this.onChangeExposure(event)} />
             </div>
@@ -90,13 +91,14 @@ export default class CameraView extends Component {
               <Input className='number-input'
                      type="number"
                      placeholder="1"
+                     disabled={this.state.camera === null}
                      value={this.state.camera !== null ? store.cameras[this.state.camera].gain : 1}
                      onChange={(event) => this.onChangeGain(event)} />
             </div>
 
             <div className='settings-row'>
               <Label className='spaced-text'>Frame type</Label>
-              <UncontrolledDropdown>
+              <UncontrolledDropdown disabled={this.state.camera === null}>
                 <DropdownToggle caret>{this.state.camera !== null ? store.cameras[this.state.camera].frameType : 'lights'}</DropdownToggle>
                 <DropdownMenu>
                   <DropdownItem onClick={() => {this.onFrameTypeChange('preview')}}>Preview</DropdownItem>
@@ -121,7 +123,7 @@ export default class CameraView extends Component {
 
             <div className='settings-row'>
               <Label className='spaced-text'>Sequence</Label>
-              { store.runningSequence ?
+              { this.state.camera !== null && store.cameras[this.state.camera].runningSequence ?
                 <StandardButton id="stop-sequence"
                         disabled={this.state.camera === null}
                         onClick={this.stopSequence.bind(this)}>Stop</StandardButton>

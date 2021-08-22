@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .events import app_state_event
+from hti.server.state.events import app_state_event
 from hti.server.axes.axis_control import AxisSpeeds
 from lib.coordinates import Coordinates
 
@@ -12,16 +12,6 @@ class PECState:
     ready: bool = False
     replaying: bool = False
     factor: float = 1.0
-
-
-@dataclass
-class CameraState:
-    exposure: float = 1.0
-    gain: float = 1.0
-    capturing: bool = False
-    running_sequence: bool = False
-    persist: bool = False
-    frame_type: str = None
 
 
 @dataclass
@@ -47,3 +37,13 @@ class AppState:
 
     def send_event(self):
         app_state_event(self.__dict__)
+
+
+@dataclass
+class CameraState:
+    exposure: float = 1.0
+    gain: float = 1.0
+    capturing: bool = False
+    running_sequence: bool = False
+    persist: bool = False
+    frame_type: str = None

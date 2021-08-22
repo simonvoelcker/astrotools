@@ -46,4 +46,4 @@ class CameraState:
     capturing: bool = False
     running_sequence: bool = False
     persist: bool = False
-    frame_type: str = None
+    frame_type: str = 'lights'

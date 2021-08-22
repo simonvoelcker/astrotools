@@ -99,13 +99,11 @@ export default class CameraView extends Component {
             <div className='settings-row'>
               <Label className='spaced-text'>Frame type</Label>
               <UncontrolledDropdown disabled={this.state.camera === null}>
-                <DropdownToggle caret>{this.state.camera !== null ? store.cameras[this.state.camera].frameType : 'lights'}</DropdownToggle>
+                <DropdownToggle caret>{this.state.camera !== null ? store.cameras[this.state.camera].frameType : '-'}</DropdownToggle>
                 <DropdownMenu>
-                  <DropdownItem onClick={() => {this.onFrameTypeChange('preview')}}>Preview</DropdownItem>
                   <DropdownItem onClick={() => {this.onFrameTypeChange('lights')}}>Lights</DropdownItem>
                   <DropdownItem onClick={() => {this.onFrameTypeChange('darks')}}>Darks</DropdownItem>
                   <DropdownItem onClick={() => {this.onFrameTypeChange('flats')}}>Flats</DropdownItem>
-                  <DropdownItem onClick={() => {this.onFrameTypeChange('other')}}>Other</DropdownItem>
                 </DropdownMenu>
               </UncontrolledDropdown>
             </div>

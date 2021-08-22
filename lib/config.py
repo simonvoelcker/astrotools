@@ -14,21 +14,11 @@ DEC_AXIS_RATIO = 88.0 * 2.4  # 88: worm gear. 2.4: spur gears
 # maximum axis (not motor shaft) speed in degrees per second
 MAX_AXIS_SPEED_DPS = 0.3
 
-# TODO get this info automatically from the INDI server -> just use props in FE instead?
-
-# GET /api/cameras
-# GET /api/cameras/1/props
-# PUT /api/cameras/1/props ...
-
-# we NEED to store some of this stuff in BE as well, though
-# so why not have a translation layer, at least
+INDI_SERVER_COMMAND = ['indiserver', 'indi_asi_ccd', 'indi_toupcam_ccd']
 
 CAMERAS = [
     {
         "name": "ZWO CCD ASI178MM",
-        "frame_width": 3096,
-        "frame_height": 2080,
-        "color": False,
         "min_gain": 1,  # TODO test
         "max_gain": 400,  # TODO test
         "min_exposure": 32 / 1000000,
@@ -36,9 +26,6 @@ CAMERAS = [
     },
     {
         "name": "Toupcam GPCMOS02000KPA",
-        "frame_width": 1920,
-        "frame_height": 1080,
-        "color": True,
         "min_gain": 20000,  # TODO test
         "max_gain": 20000,  # TODO test
         "min_exposure": 105 / 1000000,

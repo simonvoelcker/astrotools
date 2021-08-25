@@ -25,7 +25,7 @@ export class AppProvider extends Component {
       annotations: null,
 
       // via image event
-      framePath: null,
+      framePathByDeviceName: {},
 
       // via log event
       logEntries: [
@@ -38,6 +38,9 @@ export class AppProvider extends Component {
         correcting: null,
         factor: null,
       },
+
+      capturingCamera: null,
+      guidingCamera: null,
     }
 
     this.initialize()
@@ -52,10 +55,23 @@ export class AppProvider extends Component {
       event = JSON.parse(event.data)
       if (event['type'] === 'app_state') {
         this.setState(event['appState'])
+
+        // todo should only do this once and pick the
+        // capturing camera by resolution
+        let cameras = event['appState']['cameras']
+        if (cameras !== null) {
+          let cameraNames = Object.keys(cameras)
+          if (cameraNames.length > 0) {
+            this.setState({capturingCamera: cameraNames[0]})
+          }
+          if (cameraNames.length > 1) {
+            this.setState({guidingCamera: cameraNames[1]})
+          }
+        }
+
       } else if (event['type'] === 'image') {
-        this.setState({
-          framePath: event['imagePath']
-        })
+        // TODO use setState... it is messing with me rn
+        this.state.framePathByDeviceName[event['deviceName']] = event['imagePath']
       } else if (event['type'] === 'log') {
         this.setState({
           logEntries: this.state.logEntries.concat({

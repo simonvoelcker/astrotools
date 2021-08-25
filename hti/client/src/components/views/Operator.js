@@ -75,12 +75,12 @@ export default class Operator extends Component {
               <TabPane tabId="1">
                 <div className='all-controls-tab'>
                   <div className='left-column'>
-                    <CameraView />
+                    <CameraView camera={store.capturingCamera} />
                     <LogView />
                   </div>
                   <div className='right-column'>
                     <TrackingControl />
-                    <CaptureControl />
+                    <CaptureControl camera={store.capturingCamera} />
                     <FocusControl />
                     <AxisControl />
                   </div>
@@ -90,10 +90,10 @@ export default class Operator extends Component {
               <TabPane tabId="2">
                 <div className='capturing-tab'>
                   <div className='left-column'>
-                    <CameraView />
+                    <CameraView camera={store.capturingCamera} />
                   </div>
                   <div className='right-column'>
-                    <CaptureControl />
+                    <CaptureControl camera={store.capturingCamera} />
                     <FocusControl />
                   </div>
                 </div>
@@ -102,10 +102,10 @@ export default class Operator extends Component {
               <TabPane tabId="3">
                 <div className='guiding-tab'>
                   <div className='left-column'>
-                    <CameraView />
+                    <CameraView camera={store.guidingCamera} />
                   </div>
                   <div className='right-column'>
-                    <CaptureControl />
+                    <CaptureControl camera={store.guidingCamera} />
                   </div>
                 </div>
               </TabPane>

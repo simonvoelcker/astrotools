@@ -62,7 +62,7 @@ class CaptureImageApi(Resource):
                 cam_state.capturing = False
                 app_state.send_event()
 
-                image_event(frame.path)
+                image_event(device_name, frame.path)
                 log_event(f'New frame: {frame.path}')
 
             except TypeError as e:
@@ -102,7 +102,7 @@ class SequenceApi(Resource):
                     run_while=run_while,
                 ):
                     frame_manager.add_frame(frame, persist=cam_state.persist)
-                    image_event(frame.path)
+                    image_event(device_name, frame.path)
                     log_event(f'New frame: {frame.path}')
 
             except Exception as e:

@@ -24,11 +24,12 @@ def app_state_event(app_state):
     })
 
 
-def image_event(image_path):
+def image_event(device_name, image_path):
     # path is relative to /static/
     put_event({
         'type': 'image',
         'unix_timestamp': time.time(),
+        'device_name': device_name,
         'image_path': image_path,
     })
 

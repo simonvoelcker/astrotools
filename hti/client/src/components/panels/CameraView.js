@@ -39,8 +39,8 @@ export default class CameraView extends Component {
 
     // fallback if not frame is loaded yet
     let imageSource = "https://via.placeholder.com/960x540.png"
-    if (store.framePath !== null) {
-        imageSource = "http://localhost:5000/api/camera/frames?framePath=" + encodeURIComponent(store.framePath)
+    if (this.props.camera !== null && store.framePathByDeviceName[this.props.camera] !== null) {
+        imageSource = "http://localhost:5000/api/camera/frames?framePath=" + encodeURIComponent(store.framePathByDeviceName[this.props.camera])
     }
 
     const filter = "brightness(" + this.state.brightness + ") "

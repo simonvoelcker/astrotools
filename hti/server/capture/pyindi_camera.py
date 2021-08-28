@@ -113,6 +113,12 @@ class IndiCamera:
 
         self.ccd_ccd1 = get_retry(lambda: self.device_ccd.getBLOB("CCD1"))
 
+    def get_capabilities(self):
+        return {
+            "frame_width": self.ccd_info[0].value,
+            "frame_height": self.ccd_info[1].value,
+        }
+
     def set_region(self, region):
         if region is None:
             # restore full size

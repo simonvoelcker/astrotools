@@ -5,7 +5,7 @@ import { Input, Label } from 'reactstrap'
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import $backend from '../../backend'
 
-export default class CameraView extends Component {
+export default class CaptureControl extends Component {
 
   updateCameraSettings () {
     $backend.updateCameraSettings(
@@ -132,4 +132,4 @@ export default class CameraView extends Component {
   }
 }
 
-CameraView.contextType = AppContext
+CaptureControl.contextType = AppContext

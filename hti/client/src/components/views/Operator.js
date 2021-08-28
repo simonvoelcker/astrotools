@@ -7,6 +7,7 @@ import AxisControl from '../panels/AxisControl'
 import TrackingControl from '../panels/TrackingControl'
 import PECControl from '../panels/PECControl'
 import FocusControl from '../panels/FocusControl'
+import GuidingControl from '../panels/GuidingControl'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 import { TabContent, TabPane, Nav, NavItem, NavLink, Card, Button, CardTitle, CardText, Row, Col } from 'reactstrap';
 
@@ -15,7 +16,7 @@ export default class Operator extends Component {
   constructor (props) {
     super(props)
     this.state = {
-      activeTab: '1',
+      activeTab: '2',
     }
   }
 
@@ -29,14 +30,6 @@ export default class Operator extends Component {
         {({ store }) => (
           <div className='operator'>
             <Nav tabs>
-              <NavItem>
-                <NavLink
-                  className={this.state.activeTab === '1' ? 'active' : ''}
-                  onClick={() => { this.setActiveTab('1'); }}
-                >
-                  Overview
-                </NavLink>
-              </NavItem>
               <NavItem>
                 <NavLink
                   className={this.state.activeTab === '2' ? 'active' : ''}
@@ -72,21 +65,6 @@ export default class Operator extends Component {
             </Nav>
             <TabContent activeTab={this.state.activeTab}>
 
-              <TabPane tabId="1">
-                <div className='all-controls-tab'>
-                  <div className='left-column'>
-                    <CameraView camera={store.capturingCamera} />
-                    <LogView />
-                  </div>
-                  <div className='right-column'>
-                    <TrackingControl />
-                    <CaptureControl camera={store.capturingCamera} />
-                    <FocusControl />
-                    <AxisControl />
-                  </div>
-                </div>
-              </TabPane>
-
               <TabPane tabId="2">
                 <div className='capturing-tab'>
                   <div className='left-column'>
@@ -106,6 +84,7 @@ export default class Operator extends Component {
                   </div>
                   <div className='right-column'>
                     <CaptureControl camera={store.guidingCamera} />
+                    <GuidingControl camera={store.guidingCamera} />
                   </div>
                 </div>
               </TabPane>

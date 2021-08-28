@@ -93,13 +93,6 @@ export default class TrackingControl extends Component {
                   }
                 </Row>
 
-                <Row className='row button-row'>
-                  { store.guiding ?
-                    <StandardButton onClick={$backend.stopGuiding}>STOP GUIDING</StandardButton>
-                  :
-                    <StandardButton onClick={$backend.startGuiding}>START GUIDING</StandardButton>
-                  }
-                </Row>
               </Col>
             </div>
           </div>

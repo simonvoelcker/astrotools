@@ -62,12 +62,12 @@ export default {
     return $axios.post('/info/images/calibrate/stop')
   },
 
-  startGuiding () {
-    return $axios.post('/guiding/guide')
+  startGuiding (device) {
+    return $axios.post('/guiding/guide', {device: device})
   },
 
-  stopGuiding () {
-    return $axios.delete('/guiding/guide')
+  stopGuiding (device) {
+    return $axios.delete('/guiding/guide?device=' + device)
   },
 
   startPECRecording () {

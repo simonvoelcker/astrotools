@@ -12,15 +12,18 @@ export class AppProvider extends Component {
 
       axesConnected: null,
       axesSim: null,
+      axisSpeeds: null,
+
+      // goto
       steering: null,
-      guiding: null,
       calibrating: null,
       target: null,
-      axisSpeeds: null,
       lastKnownPosition: {
         timestamp: null,
         position: null,
       },
+
+      guiding: null,
 
       annotations: null,
 
@@ -39,6 +42,7 @@ export class AppProvider extends Component {
         factor: null,
       },
 
+      // add camera config event with cam info
       capturingCamera: null,
       guidingCamera: null,
     }
@@ -56,16 +60,21 @@ export class AppProvider extends Component {
       if (event['type'] === 'app_state') {
         this.setState(event['appState'])
 
-        // todo should only do this once and pick the
-        // capturing camera by resolution
         let cameras = event['appState']['cameras']
         if (cameras !== null) {
           let cameraNames = Object.keys(cameras)
-          if (cameraNames.length > 0) {
-            this.setState({capturingCamera: cameraNames[0]})
+          if (cameraNames.length == 1) {
+            this.setState({
+              guidingCamera: null,
+              capturingCamera: cameraNames[0],
+            })
           }
-          if (cameraNames.length > 1) {
-            this.setState({guidingCamera: cameraNames[1]})
+          if (cameraNames.length == 2) {
+            cameras.sort(camera => camera["frameWidth"] * camera["frameHeight"])
+            this.setState({
+              guidingCamera: cameraNames[0],
+              capturingCamera: cameraNames[1],
+            })
           }
         }
 

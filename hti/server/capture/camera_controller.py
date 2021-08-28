@@ -20,8 +20,11 @@ class CameraController:
         }
         print("Connected to camera(s)")
 
-    def get_devices(self):
-        return list(self.cameras.keys())  # camera names
+    def get_device_names(self) -> list:
+        return list(self.cameras.keys())
+
+    def get_device_capabilities(self, device_name: str) -> dict:
+        return self.cameras[device_name].get_capabilities()
 
     def capture_image(self, device_name, frame_type, exposure, gain):
         camera = self.cameras[device_name]
@@ -36,11 +39,23 @@ class CameraController:
 
 class SimCameraController:
 
-    def get_devices(self):
+    def get_device_names(self):
         return [
             "Simulated capturing camera",
             "Simulated guiding camera",
         ]
+
+    def get_device_capabilities(self, device_name: str) -> dict:
+        return {
+            "Simulated capturing camera": {
+                "frame_width": 3000,
+                "frame_height": 2000,
+            },
+            "Simulated guiding camera": {
+                "frame_width": 2000,
+                "frame_height": 1000,
+            },
+        }[device_name]
 
     def capture_image(self, device_name, frame_type, exposure, gain):
         time.sleep(exposure)

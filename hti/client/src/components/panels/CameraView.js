@@ -37,10 +37,17 @@ export default class CameraView extends Component {
   render () {
     const store = this.context.store
 
-    // fallback if not frame is loaded yet
-    let imageSource = "https://via.placeholder.com/960x540.png"
+    let imageSource = ""
     if (this.props.camera !== null && store.framePathByDeviceName[this.props.camera] !== null) {
-        imageSource = "http://localhost:5000/api/camera/frames?framePath=" + encodeURIComponent(store.framePathByDeviceName[this.props.camera])
+        let path = encodeURIComponent(store.framePathByDeviceName[this.props.camera])
+        imageSource = "http://localhost:5000/api/camera/frames?framePath=" + path
+    }
+
+    let width = 0
+    let height = 0
+    if (this.props.camera !== null) {
+        width = store.cameras[this.props.camera]["frameWidth"]
+        height = store.cameras[this.props.camera]["frameHeight"]
     }
 
     const filter = "brightness(" + this.state.brightness + ") "

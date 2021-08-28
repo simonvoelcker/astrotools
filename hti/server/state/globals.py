@@ -38,8 +38,10 @@ def get_camera_controller():
             _cam_controller = CameraController()
 
         get_app_state().cameras = {
-            device_name: CameraState()
-            for device_name in _cam_controller.get_devices()
+            device_name: CameraState(
+                **_cam_controller.get_device_capabilities(device_name),
+            )
+            for device_name in _cam_controller.get_device_names()
         }
 
     return _cam_controller

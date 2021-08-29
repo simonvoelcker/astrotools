@@ -15,6 +15,9 @@ class ImageTracker(Tracker):
         self.sigma_threshold = config['sigma_threshold']
 
     def on_new_frame(self, frame):
+        # only process frames from one device
+        if frame.device != self.device:
+            return
 
         pil_image = frame.get_pil_image()
         image = np.transpose(np.asarray(pil_image), (1, 0, 2))

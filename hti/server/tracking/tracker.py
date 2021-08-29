@@ -1,5 +1,6 @@
 import queue
 
+from typing import Callable
 from datetime import datetime
 from influxdb import InfluxDBClient
 from simple_pid import PID
@@ -9,11 +10,24 @@ from hti.server.state.events import (
     log_event,
     unsubscribe_from_events,
 )
+from hti.server.capture.frame_manager import Frame, FrameManager
+from hti.server.axes.axis_control import AxisControl
+from hti.server.tracking.periodic_error import PeriodicErrorManager
 
 
 class Tracker:
-    def __init__(self, config, axis_control, pec_manager, sample_time, ra_resting_speed_dps, dec_resting_speed_dps):
+    def __init__(
+        self,
+        config: dict,
+        device: str,
+        axis_control: AxisControl,
+        pec_manager: PeriodicErrorManager,
+        sample_time: float,
+        ra_resting_speed_dps: float,
+        dec_resting_speed_dps: float,
+    ):
         self.config = config
+        self.device = device
         self.axis_control = axis_control
         self.pec_manager = pec_manager
         # the speeds at the time the tracking started - they include drift
@@ -38,7 +52,7 @@ class Tracker:
             self.dec_pid = self._create_pid(self.config['dec'], sample_time)
 
     @staticmethod
-    def _create_pid(pid_config, sample_time):
+    def _create_pid(pid_config: dict, sample_time: float) -> PID:
         return PID(
             Kp=pid_config['pid_p'],
             Ki=pid_config['pid_i'],
@@ -48,7 +62,7 @@ class Tracker:
             output_limits=(-pid_config['range'], pid_config['range']),
         )
 
-    def on_new_frame(self, frame):
+    def on_new_frame(self, frame: Frame):
         raise NotImplementedError
 
     def write_frame_stats(self, **kwargs):
@@ -65,7 +79,7 @@ class Tracker:
         ]
         self.influx_client.write_points(body)
 
-    def run_tracking_loop(self, frame_manager, run_while):
+    def run_tracking_loop(self, frame_manager: FrameManager, run_while: Callable):
         # process most recent events first and discard old ones
         q = queue.LifoQueue()
         subscribe_for_events(q)

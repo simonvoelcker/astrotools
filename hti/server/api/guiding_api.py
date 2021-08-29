@@ -1,5 +1,6 @@
 import threading
 
+from flask import request
 from flask_restplus import Namespace, Resource
 
 from hti.server.state.globals import (
@@ -21,10 +22,25 @@ class GuidingApi(Resource):
         }
     )
     def post(self):
+        body = request.json
+        device_name = body['device']
+
+        # 3 options:
+        # 1) use full frame for guiding
+        # 2) select ROI manually in FE
+        # 3) detect ROI automatically
+
+        # 2 options for detecting offsets:
+        # 1) register_translation
+        # 2) image2xy in a subprocess
+
+        # 2 major todos: select ROI UI, image2xy integration
+
         app_state = get_app_state()
         tracker = create_tracker(
             'image',
-            app_state.capture_state.exposure,
+            device_name,
+            app_state.cameras[device_name].exposure,
             get_axis_control(),
             get_pec_manager(),
         )

@@ -29,12 +29,12 @@ class CameraController:
     def capture_image(self, device_name, frame_type, exposure, gain):
         camera = self.cameras[device_name]
         fits_data = camera.capture_single(exposure, gain, None)
-        return Frame(fits_data, frame_type)
+        return Frame(fits_data, device_name, frame_type)
 
     def capture_sequence(self, device_name, frame_type, exposure, gain, run_while=None):
         camera = self.cameras[device_name]
         for fits_data in camera.capture_sequence(exposure, gain, None, run_while):
-            yield Frame(fits_data, frame_type)
+            yield Frame(fits_data, device_name, frame_type)
 
 
 class SimCameraController:
@@ -66,7 +66,7 @@ class SimCameraController:
         images = glob.glob(images_glob)
         random_image_path = random.choice(images)
 
-        frame = Frame(fits_data=None, frame_type=frame_type)
+        frame = Frame(fits_data=None, device=device_name, frame_type=frame_type)
         frame.pil_image = Image.open(random_image_path)
         frame.pil_image.load()
         return frame

@@ -8,8 +8,9 @@ from PIL import Image
 
 
 class Frame:
-    def __init__(self, fits_data: bytearray, frame_type: str):
+    def __init__(self, fits_data: bytearray, device: str, frame_type: str):
         self.fits_data = fits_data
+        self.device = device,
         self.frame_type = frame_type
         self.timestamp = datetime.datetime.now()
         self.persisted = False

@@ -12,6 +12,7 @@ from hti.server.axes.axis_control import AxisControl
 
 def create_tracker(
     mode: str,
+    device: str,
     frame_cadence: float,
     axis_control: AxisControl,
     pec_manager: PeriodicErrorManager,
@@ -34,6 +35,7 @@ def create_tracker(
 
     return tracker_class(
         config,
+        device,
         axis_control,
         pec_manager,
         frame_cadence,

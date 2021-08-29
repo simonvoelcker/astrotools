@@ -14,6 +14,10 @@ class TargetTracker(Tracker):
         self.target = target
 
     def on_new_frame(self, frame):
+        # only process frames from one device
+        if frame.device != self.device:
+            return
+
         here = os.path.dirname(os.path.abspath(__file__))
         filepath = os.path.normpath(os.path.join(here, '..', '..', 'static', frame.path))
 

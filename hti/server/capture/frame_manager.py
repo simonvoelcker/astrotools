@@ -8,10 +8,9 @@ from PIL import Image
 
 
 class Frame:
-    def __init__(self, fits_data: bytearray, device: str, frame_type: str):
+    def __init__(self, fits_data: bytearray, device: str):
         self.fits_data = fits_data
-        self.device = device,
-        self.frame_type = frame_type
+        self.device = device
         self.timestamp = datetime.datetime.now()
         self.persisted = False
         self.pil_image = None
@@ -21,7 +20,7 @@ class Frame:
     def path(self) -> str:
         today = datetime.date.today().isoformat()
         image_name = f'{self.timestamp.isoformat()}.png'
-        return os.path.join(today, self.frame_type, image_name)
+        return os.path.join(today, self.device, image_name)
 
     def get_numpy_image(self):
         if self.numpy_image is None:

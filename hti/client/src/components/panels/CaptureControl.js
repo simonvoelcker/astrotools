@@ -13,7 +13,6 @@ export default class CaptureControl extends Component {
       this.context.store.cameras[this.props.camera].exposure,
       this.context.store.cameras[this.props.camera].gain,
       this.context.store.cameras[this.props.camera].persist,
-      this.context.store.cameras[this.props.camera].frameType,
     )
   }
 
@@ -29,11 +28,6 @@ export default class CaptureControl extends Component {
 
   onChangePersist (event) {
     this.context.store.cameras[this.props.camera].persist = event.target.checked
-    this.updateCameraSettings()
-  }
-
-  onFrameTypeChange (frameType) {
-    this.context.store.cameras[this.props.camera].frameType = frameType
     this.updateCameraSettings()
   }
 
@@ -80,18 +74,6 @@ export default class CaptureControl extends Component {
                      disabled={this.props.camera === null}
                      value={this.props.camera !== null ? store.cameras[this.props.camera].gain : 1}
                      onChange={(event) => this.onChangeGain(event)} />
-            </div>
-
-            <div className='settings-row'>
-              <Label className='spaced-text'>Frame type</Label>
-              <UncontrolledDropdown disabled={this.props.camera === null}>
-                <DropdownToggle caret>{this.props.camera !== null ? store.cameras[this.props.camera].frameType : '-'}</DropdownToggle>
-                <DropdownMenu>
-                  <DropdownItem onClick={() => {this.onFrameTypeChange('lights')}}>Lights</DropdownItem>
-                  <DropdownItem onClick={() => {this.onFrameTypeChange('darks')}}>Darks</DropdownItem>
-                  <DropdownItem onClick={() => {this.onFrameTypeChange('flats')}}>Flats</DropdownItem>
-                </DropdownMenu>
-              </UncontrolledDropdown>
             </div>
 
             <div className='settings-row'>

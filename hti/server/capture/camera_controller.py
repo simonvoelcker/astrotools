@@ -2,6 +2,7 @@ import os
 import glob
 import random
 import time
+from typing import Callable
 
 from .pyindi_camera import IndiCamera
 from .frame_manager import Frame
@@ -26,15 +27,15 @@ class CameraController:
     def get_device_capabilities(self, device_name: str) -> dict:
         return self.cameras[device_name].get_capabilities()
 
-    def capture_image(self, device_name, frame_type, exposure, gain):
+    def capture_image(self, device_name: str, exposure: float, gain: float):
         camera = self.cameras[device_name]
         fits_data = camera.capture_single(exposure, gain, None)
-        return Frame(fits_data, device_name, frame_type)
+        return Frame(fits_data, device_name)
 
-    def capture_sequence(self, device_name, frame_type, exposure, gain, run_while=None):
+    def capture_sequence(self, device_name: str, exposure: float, gain: float, run_while: Callable=None):
         camera = self.cameras[device_name]
         for fits_data in camera.capture_sequence(exposure, gain, None, run_while):
-            yield Frame(fits_data, device_name, frame_type)
+            yield Frame(fits_data, device_name)
 
 
 class SimCameraController:
@@ -57,7 +58,7 @@ class SimCameraController:
             },
         }[device_name]
 
-    def capture_image(self, device_name, frame_type, exposure, gain):
+    def capture_image(self, device_name: str, exposure: float, gain: float):
         time.sleep(exposure)
 
         here = os.path.dirname(os.path.abspath(__file__))
@@ -66,13 +67,15 @@ class SimCameraController:
         images = glob.glob(images_glob)
         random_image_path = random.choice(images)
 
-        frame = Frame(fits_data=None, device=device_name, frame_type=frame_type)
+        frame = Frame(None, device_name)
         frame.pil_image = Image.open(random_image_path)
         frame.pil_image.load()
         return frame
 
-    def capture_sequence(self, device_name, frame_type, exposure, gain, run_while=None):
+    def capture_sequence(
+        self, device_name: str, exposure: float, gain: float, run_while: Callable=None
+    ):
         while True:
-            yield self.capture_image(device_name, frame_type, exposure, gain)
+            yield self.capture_image(device_name, exposure, gain)
             if run_while is not None and not run_while():
                 break

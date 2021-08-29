@@ -28,7 +28,6 @@ class CameraSettingsApi(Resource):
         cam_state.exposure = float(body['exposure'])
         cam_state.gain = float(body['gain'])
         cam_state.persist = bool(body['persist'])
-        cam_state.frame_type = body['frameType']
         app_state.send_event()
 
 
@@ -51,7 +50,6 @@ class CaptureImageApi(Resource):
                 app_state.send_event()
                 frame = cam_controller.capture_image(
                     device_name,
-                    frame_type=cam_state.frame_type,
                     exposure=cam_state.exposure,
                     gain=cam_state.gain,
                 )
@@ -96,7 +94,6 @@ class SequenceApi(Resource):
 
                 for frame in cam_controller.capture_sequence(
                     device_name,
-                    frame_type=cam_state.frame_type,
                     exposure=cam_state.exposure,
                     gain=cam_state.gain,
                     run_while=run_while,

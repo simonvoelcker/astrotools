@@ -14,13 +14,12 @@ $axios.interceptors.request.use((config) => {
 
 export default {
 
-  updateCameraSettings(device, exposure, gain, persist, frameType) {
+  updateCameraSettings(device, exposure, gain, persist) {
     return $axios.put('/camera/settings', {
         device: device,
         exposure: exposure,
         gain: gain,
         persist: persist,
-        frameType: frameType,
     })
   },
 

@@ -4,7 +4,7 @@ import CameraView from '../panels/CameraView'
 import LogView from '../panels/LogView'
 import CaptureControl from '../panels/CaptureControl'
 import AxisControl from '../panels/AxisControl'
-import TrackingControl from '../panels/TrackingControl'
+import GoToControl from '../panels/GoToControl'
 import PECControl from '../panels/PECControl'
 import FocusControl from '../panels/FocusControl'
 import GuidingControl from '../panels/GuidingControl'
@@ -91,7 +91,7 @@ export default class Operator extends Component {
 
               <TabPane tabId="4">
                 <div className='controls-tab'>
-                  <TrackingControl />
+                  <GoToControl />
                   <AxisControl />
                 </div>
               </TabPane>

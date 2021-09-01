@@ -25,6 +25,10 @@ export default class AxisControl extends Component {
     document.onkeydown = this.onKeyDown.bind(this)
   }
 
+  componentWillUnmount () {
+    document.onkeydown = null
+  }
+
   onKeyDown (event) {
     switch (event.key) {
         case 'ArrowUp':

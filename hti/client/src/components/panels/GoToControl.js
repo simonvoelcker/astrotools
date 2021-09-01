@@ -5,7 +5,7 @@ import { Row, Col, Input } from 'reactstrap'
 import $backend from '../../backend'
 
 
-export default class TrackingControl extends Component {
+export default class GoToControl extends Component {
   constructor (props) {
     super(props)
     this.interval = null
@@ -102,4 +102,4 @@ export default class TrackingControl extends Component {
   }
 }
 
-TrackingControl.contextType = AppContext
+GoToControl.contextType = AppContext

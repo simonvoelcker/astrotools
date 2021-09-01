@@ -22,7 +22,15 @@ export default class CaptureControl extends Component {
   }
 
   onChangeGain (event) {
-    this.context.store.cameras[this.props.camera].gain = event.target.value
+    // for better control over small values, the slider acting on this value controls the sqrt
+    let value = event.target.value * event.target.value
+
+    // round such that only the leading two digits are nonzero
+    let numDigits = Math.ceil(Math.log(value) / Math.log(10))
+    let divisor = Math.pow(10, numDigits - 2)
+    value = divisor * Math.round(value / divisor)
+
+    this.context.store.cameras[this.props.camera].gain = Math.round(value)
     this.updateCameraSettings()
   }
 
@@ -56,24 +64,23 @@ export default class CaptureControl extends Component {
               <Label className='spaced-text'>Camera</Label>
               <Label className='spaced-text'>{this.props.camera || 'None'}</Label>
             </div>
-            
+
             <div className='settings-row'>
-              <Label className='spaced-text'>Exposure (s)</Label>
-              <Input className='number-input'
-                     type="number"
-                     placeholder="1"
-                     disabled={this.props.camera === null}
-                     value={this.props.camera !== null ? store.cameras[this.props.camera].exposure : 1}
-                     onChange={(event) => this.onChangeExposure(event)} />
+              <Label className='spaced-text'>Exposure</Label>
+              <input type="range" min="0.1" max="30" step="0.1" className="slider" id="exposure-input"
+                  disabled={this.props.camera === null}
+                  value={this.props.camera !== null ? store.cameras[this.props.camera].exposure : 1}
+                  onChange={(event) => this.onChangeExposure(event)} />
+              <span>{this.props.camera !== null ? store.cameras[this.props.camera].exposure : 1} seconds</span>
             </div>
+
             <div className='settings-row'>
               <Label className='spaced-text'>Gain</Label>
-              <Input className='number-input'
-                     type="number"
-                     placeholder="1"
-                     disabled={this.props.camera === null}
-                     value={this.props.camera !== null ? store.cameras[this.props.camera].gain : 1}
-                     onChange={(event) => this.onChangeGain(event)} />
+              <input type="range" min="1" max="141" step="0.1" className="slider" id="gain-input"
+                  disabled={this.props.camera === null}
+                  value={this.props.camera !== null ? Math.sqrt(store.cameras[this.props.camera].gain) : 1}
+                  onChange={(event) => this.onChangeGain(event)} />
+              <span>{this.props.camera !== null ? store.cameras[this.props.camera].gain : 1}</span>
             </div>
 
             <div className='settings-row'>

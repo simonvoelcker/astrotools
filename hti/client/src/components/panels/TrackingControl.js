@@ -88,8 +88,8 @@ export default class TrackingControl extends Component {
                   { store.calibrating ?
                     <StandardButton onClick={$backend.stopCalibration}>ABORT</StandardButton>
                   :
-                    <StandardButton disabled={store.framePath === null || store.guiding}
-                      onClick={() => $backend.calibrateFrame(store.framePath, 30)}>UPDATE</StandardButton>
+                    <StandardButton disabled={store.capturingCamera === null || store.framePathByDeviceName[store.capturingCamera] === null}
+                      onClick={() => $backend.calibrateFrame(store.framePathByDeviceName[store.capturingCamera], 30)}>UPDATE</StandardButton>
                   }
                 </Row>
 

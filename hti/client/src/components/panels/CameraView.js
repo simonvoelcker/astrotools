@@ -11,6 +11,10 @@ export default class CameraView extends Component {
       brightness: 1.0,
       contrast: 1.0,
       saturation: 1.0,
+
+      showRect: false,
+      mouseDownXY: {x: 0, y: 0},
+      mouseUpXY: {x: 0, y: 0},
     }
   }
 
@@ -32,6 +36,30 @@ export default class CameraView extends Component {
       contrast: 1.0,
       saturation: 1.0,
     })
+  }
+
+  onImgMouseDown (event) {
+    let imageElement = event.target
+    let normalizedX = (event.pageX - imageElement.x) / imageElement.width
+    let normalizedY = (event.pageY - imageElement.y) / imageElement.height
+    this.setState({
+      mouseDownXY: {x: normalizedX, y: normalizedY},
+      showRect: false,
+    })
+
+    console.log("down " + normalizedX + " " + normalizedY)
+  }
+
+  onImgMouseUp (event) {
+    let imageElement = event.target
+    let normalizedX = (event.pageX - imageElement.x) / imageElement.width
+    let normalizedY = (event.pageY - imageElement.y) / imageElement.height
+    this.setState({
+      mouseUpXY: {x: normalizedX, y: normalizedY},
+      showRect: true,
+    })
+
+    console.log("up " + normalizedX + " " + normalizedY)
   }
 
   render () {
@@ -58,15 +86,24 @@ export default class CameraView extends Component {
       <AppConsumer>
         {({ store }) => (
           <div className='panel camera-view-panel'>
-            <img id="camera-image" alt='' style={{"filter": filter}} src={imageSource} />
-            {store.annotations !== null &&
+            <img id="camera-image"
+              alt=''
+              style={{"filter": filter}}
+              src={imageSource}
+              onMouseDown={this.onImgMouseDown.bind(this)}
+              onMouseUp={this.onImgMouseUp.bind(this)} />
+
+            {this.state.showRect &&
               <svg viewBox="0 0 1920 1080">
-                {store.annotations.map(a => (
-                  <rect key={a.x} x={a.x} y={a.y} width={a.width} height={a.height}
-                   style={{ "fillOpacity": "0", "strokeWidth": "2", "stroke": "rgb(0,255,0)" }} />
-                ))}
+                <rect key="hello"
+                  x={this.state.mouseDownXY.x * 1920}
+                  y={this.state.mouseDownXY.y * 1080}
+                  width={100}
+                  height={100}
+                  style={{ "fillOpacity": "0", "strokeWidth": "2", "stroke": "rgb(0,255,0)" }} />
               </svg>
             }
+
             <div className="image-view-options">
               <span className="spaced-text">Brightness:</span>
               <Input type="range" min="0.5" max="3" step="0.1" className="slider"

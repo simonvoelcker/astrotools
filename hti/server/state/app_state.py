@@ -41,8 +41,8 @@ class AppState:
 
 @dataclass
 class CameraState:
-    exposure: float = 1.0
-    gain: float = 1.0
+    exposure: float = 5.0
+    gain: float = 300.0
     capturing: bool = False
     running_sequence: bool = False
     persist: bool = False

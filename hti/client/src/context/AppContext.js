@@ -70,7 +70,10 @@ export class AppProvider extends Component {
             })
           }
           if (cameraNames.length == 2) {
-            cameras.sort(camera => camera["frameWidth"] * camera["frameHeight"])
+            // sort ascending by resolution
+            console.log("camera names BEFORE sorting by resolution ascendingly: " + cameraNames)
+            cameraNames = cameraNames.sort(name => cameras[name]["frameWidth"] * cameras[name]["frameHeight"])
+            console.log("camera names AFTER sorting by resolution ascendingly: " + cameraNames)
             this.setState({
               guidingCamera: cameraNames[0],
               capturingCamera: cameraNames[1],

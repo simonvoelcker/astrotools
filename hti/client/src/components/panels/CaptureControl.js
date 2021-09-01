@@ -101,6 +101,19 @@ export default class CaptureControl extends Component {
             </div>
 
             <div className='settings-row'>
+              <Label className='spaced-text'>Region</Label>
+              { this.props.camera !== null && store.cameras[this.props.camera].region !== null ?
+                <StandardButton id="clear-region"
+                        disabled={this.props.camera === null}
+                        onClick={() => {}}>Clear</StandardButton>
+              :
+                <StandardButton id="select-region"
+                        disabled={this.props.camera === null || store.cameras[this.props.camera].capturing}
+                        onClick={() => {}}>Select</StandardButton>
+              }
+            </div>
+
+            <div className='settings-row'>
               <Label className='spaced-text'>Persist</Label>
               <Input className='checkbox-input'
                      type="checkbox"

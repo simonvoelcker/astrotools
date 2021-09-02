@@ -12,6 +12,7 @@ export default class CaptureControl extends Component {
       this.props.camera,
       this.context.store.cameras[this.props.camera].exposure,
       this.context.store.cameras[this.props.camera].gain,
+      this.context.store.cameras[this.props.camera].region,
       this.context.store.cameras[this.props.camera].persist,
     )
   }
@@ -36,6 +37,16 @@ export default class CaptureControl extends Component {
 
   onChangePersist (event) {
     this.context.store.cameras[this.props.camera].persist = event.target.checked
+    this.updateCameraSettings()
+  }
+
+  onSelectRegion () {
+    console.log("select mode")
+    this.context.store.regionSelectByDeviceName[this.props.camera] = true
+  }
+
+  onClearRegion () {
+    this.context.store.cameras[this.props.camera].region = null
     this.updateCameraSettings()
   }
 
@@ -112,12 +123,13 @@ export default class CaptureControl extends Component {
               { this.props.camera !== null && store.cameras[this.props.camera].region !== null ?
                 <StandardButton id="clear-region"
                         disabled={this.props.camera === null}
-                        onClick={() => {}}>Clear</StandardButton>
+                        onClick={this.onClearRegion.bind(this)}>Clear</StandardButton>
               :
                 <StandardButton id="select-region"
-                        disabled={this.props.camera === null || store.cameras[this.props.camera].capturing}
-                        onClick={() => {}}>Select</StandardButton>
+                        disabled={this.props.camera === null || store.regionSelectByDeviceName[this.props.camera]}
+                        onClick={this.onSelectRegion.bind(this)}>Select</StandardButton>
               }
+              <span>{this.props.camera !== null && store.cameras[this.props.camera].region ? "set" : ""}</span>
             </div>
 
             <div className='settings-row'>

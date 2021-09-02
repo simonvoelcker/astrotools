@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../context/AppContext'
 import StandardButton from '../panels/StandardButton'
 import { Input } from 'reactstrap'
+import $backend from '../../backend'
 
 export default class CameraView extends Component {
 
@@ -11,10 +12,6 @@ export default class CameraView extends Component {
       brightness: 1.0,
       contrast: 1.0,
       saturation: 1.0,
-
-      showRect: false,
-      mouseDownXY: {x: 0, y: 0},
-      mouseUpXY: {x: 0, y: 0},
     }
   }
 
@@ -39,27 +36,35 @@ export default class CameraView extends Component {
   }
 
   onImgMouseDown (event) {
-    let imageElement = event.target
-    let normalizedX = (event.pageX - imageElement.x) / imageElement.width
-    let normalizedY = (event.pageY - imageElement.y) / imageElement.height
-    this.setState({
-      mouseDownXY: {x: normalizedX, y: normalizedY},
-      showRect: false,
-    })
+    let store = this.context.store
 
-    console.log("down " + normalizedX + " " + normalizedY)
-  }
+    if (store.regionSelectByDeviceName[this.props.camera]) {
+      let imageElement = event.target
+      let normalizedX = (event.pageX - imageElement.x) / imageElement.width
+      let normalizedY = (event.pageY - imageElement.y) / imageElement.height
 
-  onImgMouseUp (event) {
-    let imageElement = event.target
-    let normalizedX = (event.pageX - imageElement.x) / imageElement.width
-    let normalizedY = (event.pageY - imageElement.y) / imageElement.height
-    this.setState({
-      mouseUpXY: {x: normalizedX, y: normalizedY},
-      showRect: true,
-    })
+      let frameX = Math.round(normalizedX * store.cameras[this.props.camera]["frameWidth"])
+      let frameY = Math.round(normalizedY * store.cameras[this.props.camera]["frameHeight"])
 
-    console.log("up " + normalizedX + " " + normalizedY)
+      const regionRadius = 100
+
+      store.cameras[this.props.camera].region = [
+          frameX - regionRadius,
+          frameY - regionRadius,
+          2 * regionRadius,
+          2 * regionRadius,
+      ]
+      // clear selection mode
+      store.regionSelectByDeviceName[this.props.camera] = false
+
+      $backend.updateCameraSettings(
+        this.props.camera,
+        store.cameras[this.props.camera].exposure,
+        store.cameras[this.props.camera].gain,
+        store.cameras[this.props.camera].region,
+        store.cameras[this.props.camera].persist,
+      )
+    }
   }
 
   render () {
@@ -90,19 +95,7 @@ export default class CameraView extends Component {
               alt=''
               style={{"filter": filter}}
               src={imageSource}
-              onMouseDown={this.onImgMouseDown.bind(this)}
-              onMouseUp={this.onImgMouseUp.bind(this)} />
-
-            {this.state.showRect &&
-              <svg viewBox="0 0 1920 1080">
-                <rect key="hello"
-                  x={this.state.mouseDownXY.x * 1920}
-                  y={this.state.mouseDownXY.y * 1080}
-                  width={100}
-                  height={100}
-                  style={{ "fillOpacity": "0", "strokeWidth": "2", "stroke": "rgb(0,255,0)" }} />
-              </svg>
-            }
+              onMouseDown={this.onImgMouseDown.bind(this)} />
 
             <div className="image-view-options">
               <span className="spaced-text">Brightness:</span>

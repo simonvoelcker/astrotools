@@ -43,6 +43,7 @@ class AppState:
 class CameraState:
     exposure: float = 5.0
     gain: float = 300.0
+    region: list = None  # x y width height
     capturing: bool = False
     running_sequence: bool = False
     persist: bool = False

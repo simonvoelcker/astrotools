@@ -27,6 +27,7 @@ class CameraSettingsApi(Resource):
         cam_state = app_state.cameras[device_name]
         cam_state.exposure = float(body['exposure'])
         cam_state.gain = float(body['gain'])
+        cam_state.region = body['region']
         cam_state.persist = bool(body['persist'])
         app_state.send_event()
 
@@ -52,6 +53,7 @@ class CaptureImageApi(Resource):
                     device_name,
                     exposure=cam_state.exposure,
                     gain=cam_state.gain,
+                    region=cam_state.region,
                 )
                 frame_manager.add_frame(
                     frame,
@@ -96,6 +98,7 @@ class SequenceApi(Resource):
                     device_name,
                     exposure=cam_state.exposure,
                     gain=cam_state.gain,
+                    region=cam_state.region,
                     run_while=run_while,
                 ):
                     frame_manager.add_frame(frame, persist=cam_state.persist)
@@ -134,36 +137,3 @@ class FrameApi(Resource):
 
         png_data = frame.get_image_data(format='png', for_display=True)
         return send_file(png_data, mimetype='image/png')
-
-
-@api.route('/autoguide')
-class StartGuidingApi(Resource):
-    def post(self):
-        """
-        Start auto-guiding
-        """
-        # TODO guiding must be full auto in the future
-        # exposure time must be low, gain determined via bisecting
-        body = request.json
-        exposure = float(body['exposure'])
-        gain = float(body['gain'])
-
-        app_state = get_app_state()
-        cam_controller = get_camera_controller()
-
-        app_state.capturing = True
-        frame = cam_controller.capture_image('guiding', exposure, gain)
-        app_state.capturing = False
-
-        region_radius = 100
-        guiding_region = pick_guiding_region(frame, radius=100)
-
-        # TODO this is incomplete
-
-        return '', 204
-
-    def delete(self):
-        """
-        Stop auto-guiding
-        """
-        return '', 200

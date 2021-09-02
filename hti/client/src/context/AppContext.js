@@ -45,6 +45,9 @@ export class AppProvider extends Component {
       // add camera config event with cam info
       capturingCamera: null,
       guidingCamera: null,
+
+      // bool by device name whether or not region selection mode is on
+      regionSelectByDeviceName: {},
     }
 
     this.initialize()

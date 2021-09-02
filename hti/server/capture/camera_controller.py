@@ -27,14 +27,27 @@ class CameraController:
     def get_device_capabilities(self, device_name: str) -> dict:
         return self.cameras[device_name].get_capabilities()
 
-    def capture_image(self, device_name: str, exposure: float, gain: float):
+    def capture_image(
+        self,
+        device_name: str,
+        exposure: float,
+        gain: float,
+        region: list = None,
+    ):
         camera = self.cameras[device_name]
-        fits_data = camera.capture_single(exposure, gain, None)
+        fits_data = camera.capture_single(exposure, gain, region)
         return Frame(fits_data, device_name)
 
-    def capture_sequence(self, device_name: str, exposure: float, gain: float, run_while: Callable=None):
+    def capture_sequence(
+        self,
+        device_name: str,
+        exposure: float,
+        gain: float,
+        region: list = None,
+        run_while: Callable = None,
+    ):
         camera = self.cameras[device_name]
-        for fits_data in camera.capture_sequence(exposure, gain, None, run_while):
+        for fits_data in camera.capture_sequence(exposure, gain, region, run_while):
             yield Frame(fits_data, device_name)
 
 
@@ -58,7 +71,13 @@ class SimCameraController:
             },
         }[device_name]
 
-    def capture_image(self, device_name: str, exposure: float, gain: float):
+    def capture_image(
+        self,
+        device_name: str,
+        exposure: float,
+        gain: float,
+        region: list = None,
+    ):
         time.sleep(exposure)
 
         here = os.path.dirname(os.path.abspath(__file__))
@@ -73,7 +92,12 @@ class SimCameraController:
         return frame
 
     def capture_sequence(
-        self, device_name: str, exposure: float, gain: float, run_while: Callable=None
+        self,
+        device_name: str,
+        exposure: float,
+        gain: float,
+        region: list = None,
+        run_while: Callable = None,
     ):
         while True:
             yield self.capture_image(device_name, exposure, gain)

@@ -9,7 +9,6 @@ from hti.server.state.globals import (
     get_camera_controller,
     get_frame_manager,
 )
-from hti.server.utils import pick_guiding_region
 
 api = Namespace('Camera', description='Camera and frame API endpoints')
 
@@ -49,16 +48,8 @@ class CaptureImageApi(Resource):
             try:
                 cam_state.capturing = True
                 app_state.send_event()
-                frame = cam_controller.capture_image(
-                    device_name,
-                    exposure=cam_state.exposure,
-                    gain=cam_state.gain,
-                    region=cam_state.region,
-                )
-                frame_manager.add_frame(
-                    frame,
-                    persist=cam_state.persist,
-                )
+                frame = cam_controller.capture_image(device_name, cam_state)
+                frame_manager.add_frame(frame, persist=cam_state.persist)
                 cam_state.capturing = False
                 app_state.send_event()
 
@@ -86,31 +77,26 @@ class SequenceApi(Resource):
         app_state = get_app_state()
         cam_state = app_state.cameras[device_name]
 
-        def exp():
+        def run_sequence():
             try:
                 cam_controller = get_camera_controller()
                 frame_manager = get_frame_manager()
 
-                def run_while():
-                    return cam_state.running_sequence
-
-                for frame in cam_controller.capture_sequence(
-                    device_name,
-                    exposure=cam_state.exposure,
-                    gain=cam_state.gain,
-                    region=cam_state.region,
-                    run_while=run_while,
-                ):
+                for frame in cam_controller.capture_sequence(device_name, cam_state):
                     frame_manager.add_frame(frame, persist=cam_state.persist)
                     image_event(device_name, frame.path)
                     log_event(f'New frame: {frame.path}')
 
             except Exception as e:
                 log_event(f'Capture error: {e}')
+            finally:
+                cam_state.sequence_stop_requested = False
+                cam_state.running_sequence = False
+                app_state.send_event()
 
         cam_state.running_sequence = True
         app_state.send_event()
-        Thread(target=exp).start()
+        Thread(target=run_sequence).start()
         return '', 204
 
     def delete(self):
@@ -119,7 +105,7 @@ class SequenceApi(Resource):
         """
         device_name = request.args.get('device')
         app_state = get_app_state()
-        app_state.cameras[device_name].running_sequence = False
+        app_state.cameras[device_name].sequence_stop_requested = True
         app_state.send_event()
         return '', 200
 

@@ -46,6 +46,7 @@ class CameraState:
     region: list = None  # x y width height
     capturing: bool = False
     running_sequence: bool = False
+    sequence_stop_requested: bool = False
     persist: bool = False
     frame_width: int = 0
     frame_height: int = 0

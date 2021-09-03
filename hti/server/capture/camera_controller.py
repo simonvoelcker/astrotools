@@ -2,10 +2,10 @@ import os
 import glob
 import random
 import time
-from typing import Callable
 
-from .pyindi_camera import IndiCamera
-from .frame_manager import Frame
+from hti.server.capture.pyindi_camera import IndiCamera
+from hti.server.capture.frame_manager import Frame
+from hti.server.state.app_state import CameraState
 
 from PIL import Image
 
@@ -27,27 +27,27 @@ class CameraController:
     def get_device_capabilities(self, device_name: str) -> dict:
         return self.cameras[device_name].get_capabilities()
 
-    def capture_image(
-        self,
-        device_name: str,
-        exposure: float,
-        gain: float,
-        region: list = None,
-    ):
+    def capture_image(self, device_name: str, camera_state: CameraState):
         camera = self.cameras[device_name]
-        fits_data = camera.capture_single(exposure, gain, region)
+        fits_data = camera.capture_single(
+            camera_state.exposure,
+            camera_state.gain,
+            camera_state.region,
+        )
         return Frame(fits_data, device_name)
 
-    def capture_sequence(
-        self,
-        device_name: str,
-        exposure: float,
-        gain: float,
-        region: list = None,
-        run_while: Callable = None,
-    ):
+    def capture_sequence(self, device_name: str, camera_state: CameraState):
         camera = self.cameras[device_name]
-        for fits_data in camera.capture_sequence(exposure, gain, region, run_while):
+
+        def run_while():
+            return not camera_state.sequence_stop_requested
+
+        for fits_data in camera.capture_sequence(
+            camera_state.exposure,
+            camera_state.gain,
+            camera_state.region,
+            run_while,
+        ):
             yield Frame(fits_data, device_name)
 
 
@@ -71,14 +71,8 @@ class SimCameraController:
             },
         }[device_name]
 
-    def capture_image(
-        self,
-        device_name: str,
-        exposure: float,
-        gain: float,
-        region: list = None,
-    ):
-        time.sleep(exposure)
+    def capture_image(self, device_name: str, camera_state: CameraState):
+        time.sleep(camera_state.exposure)
 
         here = os.path.dirname(os.path.abspath(__file__))
         astro_dir = os.path.join(here, '..', '..', '..', '..')
@@ -91,15 +85,6 @@ class SimCameraController:
         frame.pil_image.load()
         return frame
 
-    def capture_sequence(
-        self,
-        device_name: str,
-        exposure: float,
-        gain: float,
-        region: list = None,
-        run_while: Callable = None,
-    ):
-        while True:
-            yield self.capture_image(device_name, exposure, gain)
-            if run_while is not None and not run_while():
-                break
+    def capture_sequence(self, device_name: str, camera_state: CameraState):
+        while not camera_state.sequence_stop_requested:
+            yield self.capture_image(device_name, camera_state)

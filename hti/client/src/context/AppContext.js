@@ -63,6 +63,8 @@ export class AppProvider extends Component {
       if (event['type'] === 'app_state') {
         this.setState(event['appState'])
 
+        // TODO this whole thing should be a different event
+        // configChangeEvent or so
         let cameras = event['appState']['cameras']
         if (cameras !== null) {
           let cameraNames = Object.keys(cameras)

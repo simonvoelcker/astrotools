@@ -109,7 +109,7 @@ export default class CaptureControl extends Component {
               <Label className='spaced-text'>Sequence</Label>
               { this.props.camera !== null && store.cameras[this.props.camera].runningSequence ?
                 <StandardButton id="stop-sequence"
-                        disabled={this.props.camera === null}
+                        disabled={this.props.camera === null || store.cameras[this.props.camera].sequenceStopRequested}
                         onClick={this.stopSequence.bind(this)}>Stop</StandardButton>
               :
                 <StandardButton id="start-sequence"

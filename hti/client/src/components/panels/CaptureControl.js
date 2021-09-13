@@ -8,12 +8,9 @@ import $backend from '../../backend'
 export default class CaptureControl extends Component {
 
   updateCameraSettings () {
+    const cam = this.context.store.cameras[this.props.camera]
     $backend.updateCameraSettings(
-      this.props.camera,
-      this.context.store.cameras[this.props.camera].exposure,
-      this.context.store.cameras[this.props.camera].gain,
-      this.context.store.cameras[this.props.camera].region,
-      this.context.store.cameras[this.props.camera].persist,
+      this.props.camera, cam.exposure, cam.gain, cam.region, cam.persist,
     )
   }
 
@@ -64,7 +61,8 @@ export default class CaptureControl extends Component {
 
   render () {
     const store = this.context.store
-    const panelStateClass = (this.props.camera !== null ? 'panel-green' : 'panel-red')
+    const cam = this.props.camera !== null ? store.cameras[this.props.camera] : null
+    const panelStateClass = (cam !== null ? 'panel-green' : 'panel-red')
 
     return (
       <AppConsumer>
@@ -79,64 +77,60 @@ export default class CaptureControl extends Component {
             <div className='settings-row'>
               <Label className='spaced-text'>Exposure</Label>
               <input type="range" min="0.1" max="30" step="0.1" className="slider" id="exposure-input"
-                  disabled={this.props.camera === null}
-                  value={this.props.camera !== null ? store.cameras[this.props.camera].exposure : 1}
+                  disabled={cam === null}
+                  value={cam !== null ? cam.exposure : 1}
                   onChange={(event) => this.onChangeExposure(event)} />
-              <span>{this.props.camera !== null ? store.cameras[this.props.camera].exposure : 1} seconds</span>
+              <span>{cam !== null ? cam.exposure : 1} seconds</span>
             </div>
 
             <div className='settings-row'>
               <Label className='spaced-text'>Gain</Label>
               <input type="range" min="1" max="141" step="0.1" className="slider" id="gain-input"
-                  disabled={this.props.camera === null}
-                  value={this.props.camera !== null ? Math.sqrt(store.cameras[this.props.camera].gain) : 1}
+                  disabled={cam === null}
+                  value={cam !== null ? Math.sqrt(cam.gain) : 1}
                   onChange={(event) => this.onChangeGain(event)} />
-              <span>{this.props.camera !== null ? store.cameras[this.props.camera].gain : 1}</span>
+              <span>{cam !== null ? cam.gain : 1}</span>
             </div>
 
             <div className='settings-row'>
               <Label className='spaced-text'>Single capture</Label>
               <StandardButton id="capture"
-                      disabled={
-                        this.props.camera === null ||
-                        store.cameras[this.props.camera].capturing ||
-                        store.cameras[this.props.camera].runningSequence
-                      }
+                      disabled={cam === null || cam.capturing || cam.runningSequence}
                       onClick={this.capture.bind(this)}>Capture</StandardButton>
             </div>
 
             <div className='settings-row'>
               <Label className='spaced-text'>Sequence</Label>
-              { this.props.camera !== null && store.cameras[this.props.camera].runningSequence ?
+              { cam !== null && cam.runningSequence ?
                 <StandardButton id="stop-sequence"
-                        disabled={this.props.camera === null || store.cameras[this.props.camera].sequenceStopRequested}
+                        disabled={cam === null || cam.sequenceStopRequested}
                         onClick={this.stopSequence.bind(this)}>Stop</StandardButton>
               :
                 <StandardButton id="start-sequence"
-                        disabled={this.props.camera === null || store.cameras[this.props.camera].capturing}
+                        disabled={cam === null || cam.capturing}
                         onClick={this.startSequence.bind(this)}>Start</StandardButton>
               }
             </div>
 
             <div className='settings-row'>
               <Label className='spaced-text'>Region</Label>
-              { this.props.camera !== null && store.cameras[this.props.camera].region !== null ?
+              { cam !== null && cam.region !== null ?
                 <StandardButton id="clear-region"
-                        disabled={this.props.camera === null}
+                        disabled={cam === null}
                         onClick={this.onClearRegion.bind(this)}>Clear</StandardButton>
               :
                 <StandardButton id="select-region"
-                        disabled={this.props.camera === null || store.regionSelectByDeviceName[this.props.camera]}
+                        disabled={cam === null || store.regionSelectByDeviceName[this.props.camera]}
                         onClick={this.onSelectRegion.bind(this)}>Select</StandardButton>
               }
-              <span>{this.props.camera !== null && store.cameras[this.props.camera].region ? "set" : ""}</span>
+              <span>{cam !== null && cam.region ? "set" : ""}</span>
             </div>
 
             <div className='settings-row'>
               <Label className='spaced-text'>Persist</Label>
-              <Input className='checkbox-input'
-                     type="checkbox"
-                     value={this.props.camera !== null ? store.cameras[this.props.camera].persist : false}
+              <input type="checkbox"
+                     className="checkbox-input"
+                     value={cam !== null ? cam.persist : false}
                      onChange={(event) => this.onChangePersist(event)}/>{' '}
             </div>
           </div>

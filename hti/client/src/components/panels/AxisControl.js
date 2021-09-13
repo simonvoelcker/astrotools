@@ -10,7 +10,7 @@ export default class AxisControl extends Component {
     super(props)
 
     this.incrementOptions = [
-      {label: 'very slow',  dps: 0.01 / 3600.0},
+      {label: 'disabled',   dps: 0.0},
       {label: 'slow',       dps: 0.1 / 3600.0},
       {label: 'medium',     dps: 0.1 / 60.0},
       {label: 'fast',       dps: 0.1},
@@ -96,10 +96,10 @@ export default class AxisControl extends Component {
                 <span className='spaced-text'>{store.axisSpeeds ? store.axisSpeeds.mode.toUpperCase() : '-'}</span>
                 <StandardButton
                   disabled={store.guiding || (store.axisSpeeds && store.axisSpeeds.mode === 'resting')}
-                  onClick={$backend.setRest}>REST</StandardButton>
+                  onClick={$backend.setRest}>Default</StandardButton>
                 <StandardButton
                   disabled={store.guiding || !store.axisSpeeds || store.axisSpeeds.mode === 'stopped'}
-                  onClick={this.stop.bind(this)}>STOP</StandardButton>
+                  onClick={this.stop.bind(this)}>Stop</StandardButton>
               </div>
               <div className='steering-control'>
                 <StandardButton

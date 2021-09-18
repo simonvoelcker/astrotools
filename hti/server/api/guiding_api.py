@@ -6,9 +6,9 @@ from flask_restplus import Namespace, Resource
 from hti.server.state.globals import (
     get_axis_control,
     get_app_state,
-    get_frame_manager, get_pec_manager,
+    get_frame_manager,
 )
-from hti.server.tracking import create_tracker, Tracker
+from hti.server.tracking.image_tracker import ImageTracker
 
 api = Namespace('Guiding', description='Guiding API')
 
@@ -24,25 +24,38 @@ class GuidingApi(Resource):
     def post(self):
         body = request.json
         device_name = body['device']
-
-        # 3 options:
-        # 1) use full frame for guiding
-        # 2) select ROI manually in FE
-        # 3) detect ROI automatically
-
-        # 2 options for detecting offsets:
-        # 1) register_translation
-        # 2) image2xy in a subprocess
-
-        # 2 major todos: select ROI UI, image2xy integration
+        guide_settings = body['settings']
 
         app_state = get_app_state()
-        tracker = create_tracker(
-            'image',
-            device_name,
-            app_state.cameras[device_name].exposure,
-            get_axis_control(),
-            get_pec_manager(),
+        axis_control = get_axis_control()
+
+        config = {
+            "sigma_threshold": 5.0,
+            "ra": {
+                "enable": guide_settings["raEnable"],
+                "range": guide_settings["raRange"],
+                "invert": guide_settings["raInvert"],
+                "pid_p": guide_settings["raP"],
+                "pid_i": guide_settings["raI"],
+                "pid_d": guide_settings["raD"]
+            },
+            "dec": {
+                "enable": guide_settings["decEnable"],
+                "range": guide_settings["decRange"],
+                "invert": guide_settings["decInvert"],
+                "pid_p": guide_settings["decP"],
+                "pid_i": guide_settings["decI"],
+                "pid_d": guide_settings["decD"]
+            }
+        }
+
+        tracker = ImageTracker(
+            config=config,
+            device=device_name,
+            axis_control=axis_control,
+            sample_time=app_state.cameras[device_name].exposure,
+            ra_resting_speed_dps=axis_control.speeds.ra_dps,  # use current speeds as defaults
+            dec_resting_speed_dps=axis_control.speeds.dec_dps,
         )
 
         def run_while():
@@ -51,7 +64,7 @@ class GuidingApi(Resource):
         frame_manager = get_frame_manager()
         app_state.guiding = True
         threading.Thread(
-            target=Tracker.run_tracking_loop,
+            target=ImageTracker.run_tracking_loop,
             args=(tracker, frame_manager, run_while),
             daemon=True,
         ).start()

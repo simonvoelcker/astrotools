@@ -1,18 +1,71 @@
 import numpy as np
+import queue
 
+from typing import Callable
+from datetime import datetime
+from influxdb import InfluxDBClient
+from simple_pid import PID
 from skimage.feature import register_translation
 
 from lib.util import sigma_clip_dark_end
-from .tracker import Tracker
-from ..state.events import log_event
+
+from hti.server.state.events import (
+    subscribe_for_events,
+    log_event,
+    unsubscribe_from_events,
+)
+from hti.server.capture.frame_manager import FrameManager
+from hti.server.axes.axis_control import AxisControl
 
 
-class ImageTracker(Tracker):
+class ImageTracker:
 
-    def __init__(self, config, *args):
-        super().__init__(config, *args)
+    def __init__(
+        self,
+        config: dict,
+        device: str,
+        axis_control: AxisControl,
+        sample_time: float,
+        ra_resting_speed_dps: float,
+        dec_resting_speed_dps: float,
+    ):
+        self.config = config
+        self.device = device
+        self.axis_control = axis_control
         self.reference_image = None
         self.sigma_threshold = config['sigma_threshold']
+
+        # the speeds at the time the tracking started - they include drift
+        self.ra_resting_speed_dps = ra_resting_speed_dps
+        self.dec_resting_speed_dps = dec_resting_speed_dps
+
+        self.influx_client = InfluxDBClient(
+            host='localhost',
+            port=8086,
+            username='root',
+            password='root',
+            database='tracking',
+        )
+
+        self.ra_pid = None
+        self.dec_pid = None
+
+        if 'ra' in self.config:
+            self.ra_pid = self._create_pid(self.config['ra'], sample_time)
+
+        if 'dec' in self.config:
+            self.dec_pid = self._create_pid(self.config['dec'], sample_time)
+
+    @staticmethod
+    def _create_pid(pid_config: dict, sample_time: float) -> PID:
+        return PID(
+            Kp=pid_config['pid_p'],
+            Ki=pid_config['pid_i'],
+            Kd=pid_config['pid_d'],
+            setpoint=0,
+            sample_time=sample_time,
+            output_limits=(-pid_config['range'], pid_config['range']),
+        )
 
     def on_new_frame(self, frame):
         # only process frames from one device
@@ -20,6 +73,7 @@ class ImageTracker(Tracker):
             return
 
         pil_image = frame.get_pil_image()
+        # TODO this assumes a color image
         image = np.transpose(np.asarray(pil_image), (1, 0, 2))
         image_for_offset_detection = sigma_clip_dark_end(image, self.sigma_threshold)
 
@@ -35,8 +89,15 @@ class ImageTracker(Tracker):
         if self.config['dec']['invert']:
             dec_error = -dec_error
 
-        ra_speed = self.ra_resting_speed_dps + self.ra_pid(ra_error)
-        dec_speed = self.dec_resting_speed_dps + self.dec_pid(dec_error)
+        if self.config['ra'].get('enable', True):
+            ra_speed = self.ra_resting_speed_dps + self.ra_pid(ra_error)
+        else:
+            ra_speed = self.ra_resting_speed_dps
+
+        if self.config['dec'].get('enable', True):
+            dec_speed = self.dec_resting_speed_dps + self.dec_pid(dec_error)
+        else:
+            dec_speed = self.dec_resting_speed_dps
 
         self.axis_control.set_axis_speeds(ra_dps=ra_speed, dec_dps=dec_speed, mode='tracking')
         log_event(f'Tracking. File: {frame.path}. Errors: {(ra_error, dec_error)}')
@@ -56,3 +117,42 @@ class ImageTracker(Tracker):
                 dec_pid_d=float(self.dec_pid.components[2]),
                 brightness=np.average(image),
             )
+
+    def write_frame_stats(self, **kwargs):
+        now = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S%Z')
+        body = [
+            {
+                'measurement': 'axis_log',
+                'tags': {
+                    'source': 'track.py',
+                },
+                'time': now,
+                'fields': kwargs,
+            }
+        ]
+        self.influx_client.write_points(body)
+
+    def run_tracking_loop(self, frame_manager: FrameManager, run_while: Callable):
+        # process most recent events first and discard old ones
+        q = queue.LifoQueue()
+        subscribe_for_events(q)
+        latest_processed_event = None
+
+        while run_while():
+            try:
+                event = q.get(timeout=1)
+            except queue.Empty:
+                # re-evaluate run_while
+                continue
+            if event['type'] != 'image':
+                continue
+            if latest_processed_event and latest_processed_event['unix_timestamp'] >= event['unix_timestamp']:
+                # skip over old events
+                continue
+            latest_processed_event = event
+            frame_path = event['image_path']
+            frame = frame_manager.get_frame_by_path(frame_path)
+            self.on_new_frame(frame)
+
+        log_event(f'Tracking status: Stopped')
+        unsubscribe_from_events(q)

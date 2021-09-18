@@ -62,8 +62,8 @@ export default {
     return $axios.post('/info/images/calibrate/stop')
   },
 
-  startGuiding (device) {
-    return $axios.post('/guiding/guide', {device: device})
+  startGuiding (device, settings) {
+    return $axios.post('/guiding/guide', {device: device, settings: settings})
   },
 
   stopGuiding (device) {

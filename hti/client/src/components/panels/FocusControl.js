@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../appstate'
-import StandardButton from '../panels/StandardButton'
 import $backend from '../../backend'
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 
@@ -18,18 +17,18 @@ export default class FocusControl extends Component {
             <div className='button-column'>
               <span className='spaced-text'>Focus Control</span>
               <div className='button-row'>
-                <StandardButton
+                <button className='btn'
                   disabled={!store.axesSim && !store.axesConnected}
-                  onClick={() => {$backend.moveFocus(+1000)}}>+10</StandardButton>
-                <StandardButton
+                  onClick={() => {$backend.moveFocus(+1000)}}>+10</button>
+                <button className='btn'
                   disabled={!store.axesSim && !store.axesConnected}
-                  onClick={() => {$backend.moveFocus(+100)}}>+1</StandardButton>
-                <StandardButton
+                  onClick={() => {$backend.moveFocus(+100)}}>+1</button>
+                <button className='btn'
                   disabled={!store.axesSim && !store.axesConnected}
-                  onClick={() => {$backend.moveFocus(-100)}}>-1</StandardButton>
-                <StandardButton
+                  onClick={() => {$backend.moveFocus(-100)}}>-1</button>
+                <button className='btn'
                   disabled={!store.axesSim && !store.axesConnected}
-                  onClick={() => {$backend.moveFocus(-1000)}}>-10</StandardButton>
+                  onClick={() => {$backend.moveFocus(-1000)}}>-10</button>
               </div>
             </div>
           </div>

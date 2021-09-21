@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../appstate'
-import StandardButton from '../panels/StandardButton'
 import { Input } from 'reactstrap'
 import $backend from '../../backend'
 
@@ -110,7 +109,7 @@ export default class CameraView extends Component {
               <Input type="range" min="0" max="2" step="0.1" className="slider"
                 value={this.state.saturation}
                 onChange={this.onChangeSaturation.bind(this)} />
-              <StandardButton onClick={() => {this.resetSettings()}}>Reset</StandardButton>
+              <button className="btn" onClick={() => {this.resetSettings()}}>Reset</button>
             </div>
           </div>
         )}

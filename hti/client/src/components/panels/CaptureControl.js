@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../appstate'
-import StandardButton from '../panels/StandardButton'
 import { Input, Label } from 'reactstrap'
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import $backend from '../../backend'
@@ -94,34 +93,34 @@ export default class CaptureControl extends Component {
 
             <div className='settings-row'>
               <Label className='spaced-text'>Single capture</Label>
-              <StandardButton id="capture"
+              <button className="btn" id="capture"
                       disabled={cam === null || cam.capturing || cam.runningSequence}
-                      onClick={this.capture.bind(this)}>Capture</StandardButton>
+                      onClick={this.capture.bind(this)}>Capture</button>
             </div>
 
             <div className='settings-row'>
               <Label className='spaced-text'>Sequence</Label>
               { cam !== null && cam.runningSequence ?
-                <StandardButton id="stop-sequence"
+                <button className="btn" id="stop-sequence"
                         disabled={cam === null || cam.sequenceStopRequested}
-                        onClick={this.stopSequence.bind(this)}>Stop</StandardButton>
+                        onClick={this.stopSequence.bind(this)}>Stop</button>
               :
-                <StandardButton id="start-sequence"
+                <button className="btn" id="start-sequence"
                         disabled={cam === null || cam.capturing}
-                        onClick={this.startSequence.bind(this)}>Start</StandardButton>
+                        onClick={this.startSequence.bind(this)}>Start</button>
               }
             </div>
 
             <div className='settings-row'>
               <Label className='spaced-text'>Region</Label>
               { cam !== null && cam.region !== null ?
-                <StandardButton id="clear-region"
+                <button className="btn" id="clear-region"
                         disabled={cam === null}
-                        onClick={this.onClearRegion.bind(this)}>Clear</StandardButton>
+                        onClick={this.onClearRegion.bind(this)}>Clear</button>
               :
-                <StandardButton id="select-region"
+                <button className="btn" id="select-region"
                         disabled={cam === null || store.regionSelectByDeviceName[this.props.camera]}
-                        onClick={this.onSelectRegion.bind(this)}>Select</StandardButton>
+                        onClick={this.onSelectRegion.bind(this)}>Select</button>
               }
               <span>{cam !== null && cam.region ? "set" : ""}</span>
             </div>

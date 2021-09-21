@@ -1,7 +1,6 @@
 import React, { Component } from 'react'
 import { Label, Input } from 'reactstrap'
 import { AppConsumer, AppContext } from '../../appstate'
-import StandardButton from '../panels/StandardButton'
 import $backend from '../../backend'
 
 export default class GuidingControl extends Component {
@@ -39,9 +38,9 @@ export default class GuidingControl extends Component {
         {({ store }) => (
           <div className={'panel guiding-control-panel'}>
             { store.guiding ?
-              <StandardButton onClick={this.stopGuiding.bind(this)}>Stop guiding</StandardButton>
+              <button className='btn' onClick={this.stopGuiding.bind(this)}>Stop guiding</button>
             :
-              <StandardButton onClick={this.startGuiding.bind(this)}>Start guiding</StandardButton>
+              <button className='btn' onClick={this.startGuiding.bind(this)}>Start guiding</button>
             }
 
             <div className='settings-row'>

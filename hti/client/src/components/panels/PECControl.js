@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../appstate'
-import StandardButton from '../panels/StandardButton'
 import $backend from '../../backend'
 import { Input } from 'reactstrap'
 
@@ -20,19 +19,19 @@ export default class PECControl extends Component {
             <div className='button-row'>
 
               {store.pecState.recording ?
-                <StandardButton onClick={$backend.stopPECRecording}>STOP</StandardButton>
+                <button className='btn' onClick={$backend.stopPECRecording}>STOP</button>
               :
-                <StandardButton
+                <button className='btn'
                   disabled={store.pecState.ready}
-                  onClick={$backend.startPECRecording}>RECORD</StandardButton>
+                  onClick={$backend.startPECRecording}>RECORD</button>
               }
 
               {store.pecState.replaying ?
-                <StandardButton onClick={$backend.stopPECReplay}>STOP</StandardButton>
+                <button className='btn' onClick={$backend.stopPECReplay}>STOP</button>
               :
-                <StandardButton
+                <button className='btn'
                   disabled={!store.pecState.ready}
-                  onClick={$backend.startPECReplay}>REPLAY</StandardButton>
+                  onClick={$backend.startPECReplay}>REPLAY</button>
               }
 
               <Input type="range" min="-0.01" max="0.01" step="0.0001" className="slider"

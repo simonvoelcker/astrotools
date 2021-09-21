@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../appstate'
-import StandardButton from '../panels/StandardButton'
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import $backend from '../../backend'
 
@@ -94,34 +93,34 @@ export default class AxisControl extends Component {
             <div className={'panel axis-control-panel ' + panelStateClass}>
               <div className='button-column'>
                 <span className='spaced-text'>{store.axisSpeeds ? store.axisSpeeds.mode.toUpperCase() : '-'}</span>
-                <StandardButton
+                <button className='btn'
                   disabled={store.guiding || (store.axisSpeeds && store.axisSpeeds.mode === 'resting')}
-                  onClick={$backend.setRest}>Default</StandardButton>
-                <StandardButton
+                  onClick={$backend.setRest}>Default</button>
+                <button className='btn'
                   disabled={store.guiding || !store.axisSpeeds || store.axisSpeeds.mode === 'stopped'}
-                  onClick={this.stop.bind(this)}>Stop</StandardButton>
+                  onClick={this.stop.bind(this)}>Stop</button>
               </div>
               <div className='steering-control'>
-                <StandardButton
+                <button
                   className='btn steer-left'
                   disabled={store.guiding}
                   onClick={() => this.steer('left')}>&#129136;
-                </StandardButton>
-                <StandardButton
+                </button>
+                <button
                   className='btn steer-right'
                   disabled={store.guiding}
                   onClick={() => this.steer('right')}>&#129138;
-                </StandardButton>
-                <StandardButton
+                </button>
+                <button
                   className='btn steer-up'
                   disabled={store.guiding}
                   onClick={() => this.steer('up')}>&#129137;
-                </StandardButton>
-                <StandardButton
+                </button>
+                <button
                   className='btn steer-down'
                   disabled={store.guiding}
                   onClick={() => this.steer('down')}>&#129139;
-                </StandardButton>
+                </button>
                 <span className='spaced-text steer-left-label'>
                   {raSpeed.value < 0 ? -raSpeed.value.toFixed(2) + raSpeed.unit : ''}
                 </span>

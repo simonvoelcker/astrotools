@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../appstate'
-import StandardButton from '../panels/StandardButton'
 import { Row, Col, Input } from 'reactstrap'
 import $backend from '../../backend'
 
@@ -73,23 +72,23 @@ export default class GoToControl extends Component {
                     value={this.state.targetInput}
                     onChange={this.onChangeTargetInput.bind(this)} />
                   <span className="spaced-text">{this.state.targetInputStatus}</span>
-                  <StandardButton onClick={this.onSetTarget.bind(this)}>SET</StandardButton>
+                  <button className='btn' onClick={this.onSetTarget.bind(this)}>SET</button>
                 </Row>
 
                 <Row className='row current-target-row'>
                   <span className="spaced-text">Target coordinates: {this.formatTarget()}</span>
-                  <StandardButton
+                  <button className='btn'
                     disabled={this.state.target === null || store.tracking || store.steering || store.imagePosition === null}
-                    onClick={$backend.goToTarget}>GO TO</StandardButton>
+                    onClick={$backend.goToTarget}>GO TO</button>
                 </Row>
 
                 <Row className='row current-position-row'>
                   <span className="spaced-text">Current coordinates: {this.formatCurrentCoordinates()}</span>
                   { store.calibrating ?
-                    <StandardButton onClick={$backend.stopCalibration}>ABORT</StandardButton>
+                    <button className='btn' onClick={$backend.stopCalibration}>ABORT</button>
                   :
-                    <StandardButton disabled={store.capturingCamera === null || store.framePathByDeviceName[store.capturingCamera] === null}
-                      onClick={() => $backend.calibrateFrame(store.framePathByDeviceName[store.capturingCamera], 30)}>UPDATE</StandardButton>
+                    <button className='btn' disabled={store.capturingCamera === null || store.framePathByDeviceName[store.capturingCamera] === null}
+                      onClick={() => $backend.calibrateFrame(store.framePathByDeviceName[store.capturingCamera], 30)}>UPDATE</button>
                   }
                 </Row>
 

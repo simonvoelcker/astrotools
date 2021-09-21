@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Label, Input } from 'reactstrap'
-import { AppConsumer, AppContext } from '../../context/AppContext'
+import { AppConsumer, AppContext } from '../../appstate'
 import StandardButton from '../panels/StandardButton'
 import $backend from '../../backend'
 

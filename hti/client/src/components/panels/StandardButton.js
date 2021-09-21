@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { AppContext, AppConsumer } from '../../context/AppContext'
+import { AppConsumer, AppContext } from '../../appstate'
 
 export default class StandardButton extends Component {
   render () {

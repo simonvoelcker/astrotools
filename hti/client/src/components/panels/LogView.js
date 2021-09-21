@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { AppConsumer, AppContext } from '../../context/AppContext'
+import { AppConsumer, AppContext } from '../../appstate'
 
 export default class LogView extends Component {
 

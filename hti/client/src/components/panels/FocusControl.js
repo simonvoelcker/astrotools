@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { AppConsumer, AppContext } from '../../context/AppContext'
+import { AppConsumer, AppContext } from '../../appstate'
 import StandardButton from '../panels/StandardButton'
 import $backend from '../../backend'
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';

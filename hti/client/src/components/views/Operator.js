@@ -8,7 +8,7 @@ import GoToControl from '../panels/GoToControl'
 import PECControl from '../panels/PECControl'
 import FocusControl from '../panels/FocusControl'
 import GuidingControl from '../panels/GuidingControl'
-import { AppConsumer, AppContext } from '../../context/AppContext'
+import { AppConsumer, AppContext } from '../../appstate'
 import { TabContent, TabPane, Nav, NavItem, NavLink, Card, Button, CardTitle, CardText, Row, Col } from 'reactstrap';
 
 export default class Operator extends Component {

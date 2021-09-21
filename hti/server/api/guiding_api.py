@@ -8,7 +8,7 @@ from hti.server.state.globals import (
     get_app_state,
     get_frame_manager,
 )
-from hti.server.tracking.image_tracker import ImageTracker
+from hti.server.guiding.autoguider import AutoGuider
 
 api = Namespace('Guiding', description='Guiding API')
 
@@ -25,6 +25,13 @@ class GuidingApi(Resource):
         body = request.json
         device_name = body['device']
         guide_settings = body['settings']
+
+        # all numbers sent by the FE are in degrees/hour,
+        # from here on we use degrees per second (dps).
+        guide_settings = {
+            key: value / 3600 if isinstance(value, float) else value
+            for key, value in guide_settings.items()
+        }
 
         app_state = get_app_state()
         axis_control = get_axis_control()
@@ -49,11 +56,10 @@ class GuidingApi(Resource):
             }
         }
 
-        tracker = ImageTracker(
+        tracker = AutoGuider(
             config=config,
             device=device_name,
             axis_control=axis_control,
-            sample_time=app_state.cameras[device_name].exposure,
             ra_resting_speed_dps=axis_control.speeds.ra_dps,  # use current speeds as defaults
             dec_resting_speed_dps=axis_control.speeds.dec_dps,
         )
@@ -64,7 +70,7 @@ class GuidingApi(Resource):
         frame_manager = get_frame_manager()
         app_state.guiding = True
         threading.Thread(
-            target=ImageTracker.run_tracking_loop,
+            target=AutoGuider.run_loop,
             args=(tracker, frame_manager, run_while),
             daemon=True,
         ).start()

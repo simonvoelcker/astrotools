@@ -63,7 +63,7 @@ class RestApi(Resource):
 @api.route('/gototarget')
 class GoToApi(Resource):
     @api.doc(
-        description='Steer to target. Assumes last known position and target set',
+        description='Go to target. Assumes last known position and target set',
         response={
             200: 'Success'
         }
@@ -74,15 +74,24 @@ class GoToApi(Resource):
 
         def steer_fun():
             app_state.steering = True
-            axis_control.steer(
-                app_state.last_known_position['position'],
-                app_state.target,
-                max_speed_dps=1.0,
+            axis_control.go_to(
+                here=app_state.last_known_position['position'],
+                target=app_state.target,
                 run_callback=lambda: app_state.steering
             )
             app_state.steering = False
 
         Thread(target=steer_fun).start()
+        return '', 200
+
+    @api.doc(
+        description='Abort go-to',
+        response={
+            200: 'Success'
+        }
+    )
+    def delete(self):
+        get_app_state().steering = False
         return '', 200
 
 

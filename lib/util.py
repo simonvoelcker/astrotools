@@ -6,7 +6,6 @@ import subprocess
 import time
 
 from PIL import Image
-from influxdb import InfluxDBClient
 from skimage.filters import laplace, sobel
 
 # TODO utils should not import from lib
@@ -116,25 +115,6 @@ def sigma_clip_dark_end(image, sigma):
     average = np.average(image_greyscale)
     # clip away background noise, as indicated by stddev and average
     return np.clip(image_greyscale, average + sigma * stddev, 255)
-
-
-def query_offsets(path_prefix):
-    # WIP and maybe a bad idea.
-    # should keep tracking and alignment cleanly separated, in prep for a guiding camera.
-
-    # Usage: query_offsets('../beute/191013')
-    path_prefix = path_prefix.replace('/', '\\/')
-    influx_client = InfluxDBClient(host='localhost', port=8086,
-                                   username='root', password='root',
-                                   database='tracking')
-    offsets_query = f'SELECT ra_image_error, dec_image_error, file_path ' \
-                    f'FROM axis_log WHERE file_path =~ /{path_prefix}*/ ORDER BY time ASC'
-
-    offsets_result = influx_client.query(offsets_query)
-    # it will remain influxDBs secret why this is so complicated
-    rows = offsets_result.items()[0][1]
-    return {row['file_path']: (row['ra_image_error'], row['dec_image_error'])
-            for row in rows}
 
 
 def pairwise(iterable):

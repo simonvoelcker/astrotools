@@ -18,14 +18,16 @@ from hti.server.capture.frame_manager import FrameManager
 from hti.server.axes.axis_control import AxisControl
 
 
-class ImageTracker:
+class AutoGuider:
+    """
+    Simple image-based guider using PID control.
+    """
 
     def __init__(
         self,
         config: dict,
         device: str,
         axis_control: AxisControl,
-        sample_time: float,
         ra_resting_speed_dps: float,
         dec_resting_speed_dps: float,
     ):
@@ -35,7 +37,7 @@ class ImageTracker:
         self.reference_image = None
         self.sigma_threshold = config['sigma_threshold']
 
-        # the speeds at the time the tracking started - they include drift
+        # the speeds at the time the guiding started - they include drift
         self.ra_resting_speed_dps = ra_resting_speed_dps
         self.dec_resting_speed_dps = dec_resting_speed_dps
 
@@ -51,19 +53,18 @@ class ImageTracker:
         self.dec_pid = None
 
         if 'ra' in self.config:
-            self.ra_pid = self._create_pid(self.config['ra'], sample_time)
+            self.ra_pid = self._create_pid(self.config['ra'])
 
         if 'dec' in self.config:
-            self.dec_pid = self._create_pid(self.config['dec'], sample_time)
+            self.dec_pid = self._create_pid(self.config['dec'])
 
     @staticmethod
-    def _create_pid(pid_config: dict, sample_time: float) -> PID:
+    def _create_pid(pid_config: dict) -> PID:
         return PID(
             Kp=pid_config['pid_p'],
             Ki=pid_config['pid_i'],
             Kd=pid_config['pid_d'],
             setpoint=0,
-            sample_time=sample_time,
             output_limits=(-pid_config['range'], pid_config['range']),
         )
 
@@ -99,8 +100,8 @@ class ImageTracker:
         else:
             dec_speed = self.dec_resting_speed_dps
 
-        self.axis_control.set_axis_speeds(ra_dps=ra_speed, dec_dps=dec_speed, mode='tracking')
-        log_event(f'Tracking. File: {frame.path}. Errors: {(ra_error, dec_error)}')
+        self.axis_control.set_axis_speeds(ra_dps=ra_speed, dec_dps=dec_speed, mode='guiding')
+        log_event(f'Guiding. Frame: {frame.path}. Offsets: {(ra_error, dec_error)}')
 
         if self.influx_client is not None:
             self.write_frame_stats(
@@ -132,7 +133,7 @@ class ImageTracker:
         ]
         self.influx_client.write_points(body)
 
-    def run_tracking_loop(self, frame_manager: FrameManager, run_while: Callable):
+    def run_loop(self, frame_manager: FrameManager, run_while: Callable):
         # process most recent events first and discard old ones
         q = queue.LifoQueue()
         subscribe_for_events(q)

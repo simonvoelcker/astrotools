@@ -7,6 +7,7 @@ import datetime
 from dataclasses import dataclass
 
 from lib.config import RA_AXIS_RATIO, DEC_AXIS_RATIO, MAX_AXIS_SPEED_DPS
+from lib.coordinates import Coordinates
 
 
 class AxisSpeeds:
@@ -69,7 +70,11 @@ class AxisControl:
 		return self.serial is not None
 
 	def set_resting(self):
-		self.set_axis_speeds(ra_dps=AxisSpeeds.ra_resting_speed, dec_dps=AxisSpeeds.dec_resting_speed, mode='resting')
+		self.set_axis_speeds(
+			ra_dps=AxisSpeeds.ra_resting_speed,
+			dec_dps=AxisSpeeds.dec_resting_speed,
+			mode='resting',
+		)
 
 	def set_axis_speeds(self, ra_dps=None, dec_dps=None, mode=None):
 		ra_str = f'RA={ra_dps:.6f} dps' if ra_dps is not None else ''
@@ -97,12 +102,12 @@ class AxisControl:
 		if self.on_speeds_change is not None:
 			self.on_speeds_change(self.speeds)
 
-	def set_ra_axis_acceleration(self, acceleration):
+	def set_ra_axis_acceleration(self, acceleration: float):
 		if self.serial is not None:
 			msg = f'set acl axis=r value={acceleration:.6f}\n'
 			self.serial.write(msg.encode())
 
-	def move_focus_axis(self, steps):
+	def move_focus_axis(self, steps: int):
 		if self.serial is not None:
 			msg = f'set pos axis=f value={steps}\n'
 			self.serial.write(msg.encode())
@@ -125,15 +130,10 @@ class AxisControl:
 		return float(datetime.datetime.now().timestamp() / 15.0)
 
 	@staticmethod
-	def _calc_maneuver(axis, from_deg, to_deg, max_speed_dps=None):
+	def _calc_maneuver(axis: str, from_deg: float, to_deg: float, speed_dps: float) -> (float, float):
 		"""
 		Compute an axis maneuver consisting of speed and duration.
-		Does not add default resting speed.
 		"""
-		speed_dps = MAX_AXIS_SPEED_DPS
-		if max_speed_dps is not None:
-			speed_dps = min(speed_dps, max_speed_dps)
-
 		if axis == 'ra':
 			revolutions = AxisSpeeds.ra_dps_to_axis(to_deg-from_deg)
 			shaft_speed = AxisSpeeds.ra_dps_to_axis(speed_dps)
@@ -145,7 +145,12 @@ class AxisControl:
 		speed_dps = math.copysign(speed_dps, revolutions)
 		return speed_dps, duration
 
-	def get_steering_maneuvers(self, here, target, max_speed_dps=None):
+	def get_goto_maneuvers(self, here: Coordinates, target: Coordinates):
+		max_speed_dps = MAX_AXIS_SPEED_DPS
+
+		# TODO instead of an edge, set a fixed maneuver execution time in case of a short maneuver
+		# that is: max speed for a far maneuver, fixed time for a short one
+
 		# force slow maneuver if close to target already
 		max_distance_deg = max(abs(here.ra-target.ra), abs(here.dec-target.dec))
 		if max_distance_deg < 1.0:
@@ -168,7 +173,7 @@ class AxisControl:
 		ra_speed_dps += AxisSpeeds.ra_resting_speed
 		dec_speed_dps += AxisSpeeds.dec_resting_speed
 
-		mode = f'Steering ({int(common_time)}s)'
+		mode = f'Go to ({int(common_time)}s)'
 		yield Maneuver(ra_speed_dps, dec_speed_dps, mode, common_time)
 
 		# apply backlash compensation if we moved against resting direction
@@ -181,21 +186,19 @@ class AxisControl:
 			# move further against backlash on those axes which also did so before
 			ra_dps = math.copysign(dps, ra_speed_dps) if compensate_ra else AxisSpeeds.ra_resting_speed
 			dec_dps = math.copysign(dps, dec_speed_dps) if compensate_dec else AxisSpeeds.dec_resting_speed
-			yield Maneuver(ra_dps, dec_dps, 'BL-compensation', duration)
+			yield Maneuver(ra_dps, dec_dps, 'Backlash-comp.', duration)
 
 			# move back into backlash
 			ra_dps = math.copysign(dps, AxisSpeeds.ra_resting_speed) if compensate_ra else AxisSpeeds.ra_resting_speed
 			dec_dps = math.copysign(dps, AxisSpeeds.dec_resting_speed) if compensate_dec else AxisSpeeds.dec_resting_speed
-			yield Maneuver(ra_dps, dec_dps, 'BL-compensation', duration)
+			yield Maneuver(ra_dps, dec_dps, 'Backlash-comp.', duration)
 
-	def steer(self, here, target, max_speed_dps=None, run_callback=None):
+	def go_to(self, here: Coordinates, target: Coordinates, run_callback=None):
 		"""
-		Perform a steering maneuver from here to target,
-		respecting a max speed given in degrees per second.
-
+		Perform a go-to maneuver from here to target.
 		Abort when run_callback returns false.
 		"""
-		maneuvers = self.get_steering_maneuvers(here, target, max_speed_dps)
+		maneuvers = self.get_goto_maneuvers(here, target)
 		for maneuver in maneuvers:
 			self.set_axis_speeds(
 				ra_dps=maneuver.ra_dps,

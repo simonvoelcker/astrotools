@@ -4,7 +4,7 @@ from hti.server.state.app_state import AppState, CameraState
 
 from hti.server.capture.frame_manager import FrameManager
 from hti.server.capture.camera_controller import CameraController, SimCameraController
-from hti.server.tracking.periodic_error import PeriodicErrorManager
+from hti.server.guiding.periodic_error import PeriodicErrorManager
 from hti.server.catalog import Catalog
 from hti.server.axes.axis_control import AxisControl
 

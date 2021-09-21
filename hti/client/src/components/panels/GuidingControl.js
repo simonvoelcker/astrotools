@@ -11,15 +11,15 @@ export default class GuidingControl extends Component {
 
     this.state = {
       raEnable: true,
-      raRange: 0.0005,
+      raRange: 2.0,
       raInvert: true,
-      raP: 0.000005,
+      raP: 0.02,
       raI: 0.0,
       raD: 0.0,
       decEnable: true,
-      decRange: 0.005,
+      decRange: 20,
       decInvert: true,
-      decP: 0.00001,
+      decP: 0.04,
       decI: 0.0,
       decD: 0.0,
     }
@@ -65,12 +65,12 @@ export default class GuidingControl extends Component {
             </div>
 
             <div className='settings-row'>
-              <Label className='spaced-text'>Range</Label>
-              <Input id='ra-range' className='number-input' type="number" step="0.0001"
+              <Label className='spaced-text'>Range (°/h)</Label>
+              <Input id='ra-range' className='number-input' type="number" step="0.1"
                      disabled={store.guiding}
                      value={this.state.raRange}
                      onChange={(e) => this.setState({raRange: e.target.value})} />
-              <Input id='dec-range' className='number-input' type="number" step="0.0001"
+              <Input id='dec-range' className='number-input' type="number" step="0.1"
                      disabled={store.guiding}
                      value={this.state.decRange}
                      onChange={(e) => this.setState({decRange: e.target.value})} />
@@ -92,11 +92,11 @@ export default class GuidingControl extends Component {
 
             <div className='settings-row'>
               <Label className='spaced-text'>P-Term</Label>
-              <Input id='ra-p' className='number-input' type="number" step="0.000001"
+              <Input id='ra-p' className='number-input' type="number" step="0.01"
                      disabled={store.guiding}
                      value={this.state.raP}
                      onChange={(e) => this.setState({raP: e.target.value})} />
-              <Input id='dec-p' className='number-input' type="number" step="0.000001"
+              <Input id='dec-p' className='number-input' type="number" step="0.01"
                      disabled={store.guiding}
                      value={this.state.decP}
                      onChange={(e) => this.setState({decP: e.target.value})} />
@@ -104,11 +104,11 @@ export default class GuidingControl extends Component {
 
             <div className='settings-row'>
               <Label className='spaced-text'>I-Term</Label>
-              <Input id='ra-i' className='number-input' type="number" step="0.000001"
+              <Input id='ra-i' className='number-input' type="number" step="0.01"
                      disabled={store.guiding}
                      value={this.state.raI}
                      onChange={(e) => this.setState({raI: e.target.value})} />
-              <Input id='dec-i' className='number-input' type="number" step="0.000001"
+              <Input id='dec-i' className='number-input' type="number" step="0.01"
                      disabled={store.guiding}
                      value={this.state.decI}
                      onChange={(e) => this.setState({decI: e.target.value})} />
@@ -116,11 +116,11 @@ export default class GuidingControl extends Component {
 
             <div className='settings-row'>
               <Label className='spaced-text'>D-Term</Label>
-              <Input id='ra-d' className='number-input' type="number" step="0.000001"
+              <Input id='ra-d' className='number-input' type="number" step="0.01"
                      disabled={store.guiding}
                      value={this.state.raD}
                      onChange={(e) => this.setState({raD: e.target.value})} />
-              <Input id='dec-d' className='number-input' type="number" step="0.000001"
+              <Input id='dec-d' className='number-input' type="number" step="0.01"
                      disabled={store.guiding}
                      value={this.state.decD}
                      onChange={(e) => this.setState({decD: e.target.value})} />

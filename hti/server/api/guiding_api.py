@@ -29,7 +29,7 @@ class GuidingApi(Resource):
         # all numbers sent by the FE are in degrees/hour,
         # from here on we use degrees per second (dps).
         guide_settings = {
-            key: value / 3600 if isinstance(value, float) else value
+            key: float(value) / 3600 if not isinstance(value, bool) else value
             for key, value in guide_settings.items()
         }
 

@@ -19,6 +19,8 @@ Dockerization is planned and will happen on a cloudy day.
 
 ## HTI - Human Telescope Interface
 
+![HTI](hti.png?raw=true "HTI - Capturing tab")
+
 This is a web application with a rich set of features for controlling a telescope and capturing image data. It is build with Flask and React and is best run on a desktop machine.
 
 Notable features and integrations:

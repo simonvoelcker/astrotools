@@ -31,7 +31,7 @@ class Frame:
 
     @property
     def angle(self):
-        return self._angle or float(self.metadata['rotation']['angle'])
+        return self._angle or float(self.metadata['rotation_angle'])
 
     @property
     def parity(self):
@@ -40,8 +40,8 @@ class Frame:
     @property
     def pixel_scale(self):
         # unit is assumed to be arcseconds per pixel,
-        # but can be found in self.metadata['pixel_scale']['unit']
-        return float(self.metadata['pixel_scale']['scale'])
+        # but can be found in self.metadata['pixel_scale_unit']
+        return float(self.metadata['pixel_scale'])
 
     @property
     def pixel_offset(self):

@@ -210,8 +210,16 @@ class ImageStack:
 	@staticmethod
 	def _load_frame(filename, dtype, color_mode='rgb'):
 		pil_image = Image.open(filename)
-		yxc_image = np.asarray(pil_image, dtype=dtype)
-		xyc_image = np.transpose(yxc_image, (1, 0, 2))
+		np_image = np.asarray(pil_image, dtype=dtype)
+
+		if np_image.ndim == 3:
+			xyc_image = np.transpose(np_image, (1, 0, 2))
+		else:
+			grayscale_image = np.transpose(np_image, (1, 0))
+			grayscale_image = np.flipud(grayscale_image)
+			xyc_image = np.expand_dims(grayscale_image, axis=2)
+			# color mode does not make sense if image is grayscale from the start
+			return xyc_image
 
 		if color_mode == 'r':
 			xyc_image = np.expand_dims(xyc_image[:, :, 0], axis=2)

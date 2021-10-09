@@ -18,7 +18,10 @@ class Coordinates:
 		self.dec = dec
 
 	def __str__(self):
-		return f'(RA={self.ra:6.3f}, DEC={self.dec:6.3f})'	
+		return f'(RA={self.ra:6.3f}, DEC={self.dec:6.3f})'
+
+	def to_dict(self):
+		return self.__dict__
 
 	@classmethod
 	def parse_csvformat(cls, ra_str, dec_str):

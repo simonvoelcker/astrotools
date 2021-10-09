@@ -26,7 +26,7 @@ class AppState:
     guiding: bool = False
     calibrating: bool = False
     target: Coordinates = None
-    axis_speeds: AxisSpeeds = None
+    axis_speeds: AxisSpeeds = AxisSpeeds.stopped()
     last_known_position: dict = None
 
     pec_state: PECState = PECState()

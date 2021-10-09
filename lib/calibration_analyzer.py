@@ -32,8 +32,8 @@ class CalibrationAnalyzer(BaseAnalyzer):
     def write_results(self):
         filepath = self.calibration_data_filepath
         calibration_data_by_file = {
-            os.path.basename(frame.filepath): metadata
-            for frame, metadata in self.calibration_data.items()
+            os.path.basename(frame.filepath): calibration_date.to_dict()
+            for frame, calibration_date in self.calibration_data.items()
         }
         with open(filepath, 'w') as f:
             json.dump(calibration_data_by_file, f, indent=4, sort_keys=True)

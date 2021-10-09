@@ -20,6 +20,12 @@ class CalibrationData:
 	rotation_direction: str  # "E of N"/"W of N"
 	parity: str  # "pos"/"neg"
 
+	def to_dict(self):
+		return {
+			k: v.to_dict() if hasattr(v, 'to_dict') else v
+			for k, v in self.__dict__.items()
+		}
+
 
 class Solver:
 	"""
@@ -101,5 +107,5 @@ class Solver:
 			),
 			rotation_angle=float(parsed_data['rotation']['angle']),
 			rotation_direction=str(parsed_data['rotation']['direction']),
-			parity=str(parsed_data['parity']),
+			parity=str(parsed_data['parity']['parity']),
 		)

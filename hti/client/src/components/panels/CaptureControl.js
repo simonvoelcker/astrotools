@@ -6,6 +6,13 @@ import $backend from '../../backend'
 
 export default class CaptureControl extends Component {
 
+  constructor (props) {
+    super(props)
+    this.state = {
+      exposureChange: 0,
+    }
+  }
+
   updateCameraSettings () {
     const cam = this.context.store.cameras[this.props.camera]
     $backend.updateCameraSettings(
@@ -14,18 +21,37 @@ export default class CaptureControl extends Component {
   }
 
   onChangeExposure (event) {
-    this.context.store.cameras[this.props.camera].exposure = event.target.value
+    this.setState({exposureChange: event.target.value})
+  }
+
+  onEndChangeExposure (event) {
+    this.context.store.cameras[this.props.camera].exposure = this.computeExposure();
+    this.setState({exposureChange: 0})
     this.updateCameraSettings()
+  }
+
+  computeExposure () {
+    const cam = this.context.store.cameras[this.props.camera]
+    let exposure = cam.exposure * Math.pow(10.0, this.state.exposureChange)
+
+    exposure = Math.min(exposure, 30)
+    exposure = Math.max(exposure, 0.001)
+    return this.roundToTwoDigits(exposure)
+  }
+
+  roundToTwoDigits (value) {
+    // round such that only the leading two digits are nonzero
+    let numDigits = Math.ceil(Math.log(value) / Math.log(10))
+    let divisor = Math.pow(10, numDigits - 2)
+    let rounded = divisor * Math.round(value / divisor)
+    // JS-related fuckups lead to results like 1.000000000001, so:
+    return Math.round(rounded * 1000) / 1000
   }
 
   onChangeGain (event) {
     // for better control over small values, the slider acting on this value controls the sqrt
     let value = event.target.value * event.target.value
-
-    // round such that only the leading two digits are nonzero
-    let numDigits = Math.ceil(Math.log(value) / Math.log(10))
-    let divisor = Math.pow(10, numDigits - 2)
-    value = divisor * Math.round(value / divisor)
+    value = this.roundToTwoDigits(value)
 
     this.context.store.cameras[this.props.camera].gain = Math.round(value)
     this.updateCameraSettings()
@@ -75,11 +101,11 @@ export default class CaptureControl extends Component {
 
             <div className='settings-row'>
               <Label className='spaced-text'>Exposure</Label>
-              <input type="range" min="0.5" max="30.0" step="0.1" className="slider" id="exposure-input"
-                  disabled={cam === null}
-                  value={cam !== null ? cam.exposure : 1}
-                  onChange={(event) => this.onChangeExposure(event)} />
-              <span>{cam !== null ? cam.exposure : 1} seconds</span>
+              <input type="range" min="-1" max="1" step="0.01" className="slider" id="exposure-input"
+                  value={this.state.exposureChange}
+                  onChange={(event) => this.onChangeExposure(event)}
+                  onMouseUp={(event) => this.onEndChangeExposure(event)} />
+              <span>{cam !== null ? this.computeExposure() : 1} seconds</span>
             </div>
 
             <div className='settings-row'>

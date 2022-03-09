@@ -75,7 +75,7 @@ export default class CaptureControl extends Component {
 
             <div className='settings-row'>
               <Label className='spaced-text'>Exposure</Label>
-              <input type="range" min="0.001" max="0.1" step="0.001" className="slider" id="exposure-input"
+              <input type="range" min="0.5" max="30.0" step="0.1" className="slider" id="exposure-input"
                   disabled={cam === null}
                   value={cam !== null ? cam.exposure : 1}
                   onChange={(event) => this.onChangeExposure(event)} />

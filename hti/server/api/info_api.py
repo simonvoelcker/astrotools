@@ -124,7 +124,7 @@ class CalibrateImageApi(Resource):
             return 'Frame not found', 404
 
         here = os.path.dirname(os.path.abspath(__file__))
-        hti_static_dir = os.path.join(here, '..', '..', 'static')
+        hti_static_dir = os.path.join(here, '..', 'static')
 
         if not frame.persisted:
             frame.persist(hti_static_dir)

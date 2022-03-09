@@ -76,6 +76,7 @@ with open(metadata_file, 'r') as f:
 frames = [
 	Frame(filepath, frame_metadata[os.path.basename(filepath)])
 	for filepath in files
+	if os.path.basename(filepath) in frame_metadata
 ]
 
 frames = Filter(args.offset_filter or 1.0).apply(frames)

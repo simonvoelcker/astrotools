@@ -7,9 +7,9 @@ FRAMES_DB_FILEPATH = "./frames_db.sqlite"
 
 
 class FramesDB:
-    def __init__(self):
-
-        os.remove(FRAMES_DB_FILEPATH)
+    def __init__(self, reset_db=False):
+        if reset_db:
+            os.remove(FRAMES_DB_FILEPATH)
 
         self.connection = sqlite3.connect(FRAMES_DB_FILEPATH)
         self.create_db()

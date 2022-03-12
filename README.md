@@ -1,6 +1,6 @@
 # astrotools
 
-Python tools for astro-photography. Strongly tied to my personal setup.
+Python tools for astro-photography. Strongly tailored to my personal hardware setup.
 
 ![M3](m3.jpg?raw=true "M3 - Globular Cluster")
 
@@ -21,7 +21,7 @@ Dockerization is planned and will happen on a cloudy day.
 
 ![HTI](hti.png?raw=true "HTI - Capturing tab")
 
-This is a web application with a rich set of features for controlling a telescope and capturing image data. It is build with Flask and React and is best run on a desktop machine.
+This is a web application with a rich set of features for controlling a telescope and capturing image data. It is built with Flask and React and is best run on a desktop machine.
 
 Notable features and integrations:
 - Images are captured via INDI

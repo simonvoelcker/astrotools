@@ -25,6 +25,7 @@ class FramesDB:
                 created DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         """)
+        # potentially add: a field for manually annotated frame quality
         self.connection.execute("""
             CREATE TABLE IF NOT EXISTS Analysis (
                 id INTEGER PRIMARY KEY ASC,
@@ -46,6 +47,8 @@ class FramesDB:
                 frame_offset_x REAL,
                 frame_offset_y REAL,
                 reference_frame_id INTEGER,
+                -- user-provided quality score
+                user_frame_quality INTEGER,
                 created DATETIME DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY(reference_frame_id) REFERENCES Frame(id)
             );
@@ -103,6 +106,7 @@ class FramesDB:
         frame_offset_x: float = None,
         frame_offset_y: float = None,
         reference_frame_id: int = None,
+        user_frame_quality: int = None,
     ) -> int:
         data = dict(
             brightness=brightness,
@@ -111,6 +115,7 @@ class FramesDB:
             frame_offset_x=frame_offset_x,
             frame_offset_y=frame_offset_y,
             reference_frame_id=reference_frame_id,
+            user_frame_quality=user_frame_quality,
         )
         if calibration_data:
             data.update(
@@ -205,3 +210,10 @@ class FramesDB:
 if __name__ == '__main__':
     db = FramesDB()
     db.print_all_data()
+
+
+# Next steps:
+#   analyze.py must write the analyses to the frames DB
+#   API for all frames-DB content. must also find frames on disk.
+#   new tab in UI which lists sequences and their frames and shows one frame
+

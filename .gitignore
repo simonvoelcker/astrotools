@@ -8,6 +8,7 @@ __pycache__
 *.csv
 *.log
 *.fits
+*.sqlite
 viewer/images
 static/images
 hti/server/static

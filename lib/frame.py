@@ -107,5 +107,10 @@ class Frame:
     def interpolate_angles(frames):
         # pretty cheap but it works for now
         first, last = frames[0].angle, frames[-1].angle
+        # ...until it doesn't. map angles to [0;360].
+        if first < 0:
+            first += 360.0
+        if last < 0:
+            last += 360
         for frame_index, frame in enumerate(frames):
             frame.set_angle(first + (last - first) * frame_index / (len(frames) - 1))

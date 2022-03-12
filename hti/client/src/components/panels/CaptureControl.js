@@ -45,7 +45,7 @@ export default class CaptureControl extends Component {
     let divisor = Math.pow(10, numDigits - 2)
     let rounded = divisor * Math.round(value / divisor)
     // JS-related fuckups lead to results like 1.000000000001, so:
-    return Math.round(rounded * 1000) / 1000
+    return Math.round(rounded * 10000) / 10000
   }
 
   onChangeGain (event) {
@@ -110,7 +110,7 @@ export default class CaptureControl extends Component {
 
             <div className='settings-row'>
               <Label className='spaced-text'>Gain</Label>
-              <input type="range" min="1" max="141" step="0.1" className="slider" id="gain-input"
+              <input type="range" min="1" max="30" step="0.01" className="slider" id="gain-input"
                   disabled={cam === null}
                   value={cam !== null ? Math.sqrt(cam.gain) : 1}
                   onChange={(event) => this.onChangeGain(event)} />

@@ -1,6 +1,8 @@
 import os
 import sqlite3
 
+# from lib.solver import CalibrationData
+
 FRAMES_DB_FILEPATH = "./frames_db.sqlite"
 
 
@@ -63,10 +65,22 @@ class FramesDB:
         """)
         self.connection.commit()
 
-    def add_sequence(self, name: str) -> int:
-        result = self.connection.execute(
-            f'INSERT INTO Sequence(name) VALUES("{name}");'
-        )
+    def add_sequence(
+        self, name: str, camera_name: str, exposure: float, gain: float,
+    ) -> int:
+        result = self.connection.execute(f'''
+            INSERT INTO Sequence(
+                name,
+                camera_name,
+                exposure,
+                gain
+            ) VALUES(
+                "{name}",
+                "{camera_name}",
+                {exposure},
+                {gain}
+            );
+        ''')
         self.connection.commit()
         return result.lastrowid
 
@@ -79,6 +93,68 @@ class FramesDB:
         except sqlite3.IntegrityError as e:
             print(f"Failed to add frame: {e}")
             return 0
+        return result.lastrowid
+
+    def add_analysis(
+        self,
+        frame_id: int,
+        calibration_data = None,
+        brightness: float = None,
+        hfd: float = None,
+        alignment_error: float = None,
+        frame_offset_x: float = None,
+        frame_offset_y: float = None,
+        reference_frame_id: int = None,
+    ) -> int:
+        data = dict(
+            brightness=brightness,
+            hfd=hfd,
+            alignment_error=alignment_error,
+            frame_offset_x=frame_offset_x,
+            frame_offset_y=frame_offset_y,
+            reference_frame_id=reference_frame_id,
+        )
+        if calibration_data:
+            data.update(
+                pixel_scale=calibration_data.pixel_scale,
+                pixel_scale_unit=calibration_data.pixel_scale_unit,
+                center_ra=calibration_data.center_deg.ra,
+                center_dec=calibration_data.center_deg.dec,
+                rotation_angle=calibration_data.rotation_angle,
+                rotation_direction=calibration_data.rotation_direction,
+                parity=f'"{calibration_data.parity}"',
+            )
+
+        # Wrap strings in "", numbers in strings, filter Nones
+        data = {
+            key: f'"{value}"' if isinstance(value, str) else str(value)
+            for key, value in data.items()
+            if value is not None
+        }
+        if not data:
+            print("No analysis data was provided")
+            return 0
+
+        try:
+            result = self.connection.execute(f'''
+                INSERT INTO Analysis(
+                    {",".join(data.keys())}
+                ) VALUES(
+                    {",".join(data.values())}
+                );
+            ''')
+            analysis_id = result.lastrowid
+
+            self.connection.execute(f'''
+                UPDATE Frame
+                SET analysis_id = {analysis_id}
+                WHERE id = {frame_id};
+            ''')
+            self.connection.commit()
+        except sqlite3.IntegrityError as e:
+            print(f"Failed to add analysis data or update frame: {e}")
+            return 0
+
         return result.lastrowid
 
     # Util
@@ -105,6 +181,7 @@ class FramesDB:
 
 
 db = FramesDB()
-s_id = db.add_sequence("Darkest frames")
-f_id = db.add_frame(s_id, "frame uno")
+s_id = db.add_sequence("Darkest frames", "ZWO", 10.0, 420)
+f_id = db.add_frame(s_id, "frame uno23")
+a_id = db.add_analysis(f_id, brightness=1)
 print(db.get_frames(s_id))

@@ -9,6 +9,7 @@ from hti.server.state.globals import (
     get_camera_controller,
     get_frame_manager,
 )
+from hti.server.frames_db import FramesDB
 
 api = Namespace('Camera', description='Camera and frame API endpoints')
 
@@ -45,11 +46,20 @@ class CaptureImageApi(Resource):
             cam_state = app_state.cameras[device_name]
             cam_controller = get_camera_controller()
             frame_manager = get_frame_manager()
+            frames_db = FramesDB()
             try:
                 cam_state.capturing = True
                 app_state.send_event()
                 frame = cam_controller.capture_image(device_name, cam_state)
                 frame_manager.add_frame(frame, persist=cam_state.persist)
+                if cam_state.persist:
+                    sequence_id = frames_db.add_sequence(
+                        name="Single frame",
+                        camera_name=device_name,
+                        exposure=cam_state.exposure,
+                        gain=cam_state.gain,
+                    )
+                    frames_db.add_frame(sequence_id, frame.filename)
                 cam_state.capturing = False
                 app_state.send_event()
 
@@ -81,9 +91,22 @@ class SequenceApi(Resource):
             try:
                 cam_controller = get_camera_controller()
                 frame_manager = get_frame_manager()
+                frames_db = FramesDB()
+
+                if cam_state.persist:
+                    sequence_id = frames_db.add_sequence(
+                        name="Sequence",
+                        camera_name=device_name,
+                        exposure=cam_state.exposure,
+                        gain=cam_state.gain,
+                    )
+                else:
+                    sequence_id = None
 
                 for frame in cam_controller.capture_sequence(device_name, cam_state):
                     frame_manager.add_frame(frame, persist=cam_state.persist)
+                    if cam_state.persist and sequence_id:
+                        frames_db.add_frame(sequence_id, frame.filename)
                     image_event(device_name, frame.path)
                     log_event(f'New frame: {frame.path}')
 

@@ -1,8 +1,6 @@
 import os
 import sqlite3
 
-# from lib.solver import CalibrationData
-
 FRAMES_DB_FILEPATH = "./frames_db.sqlite"
 
 
@@ -98,7 +96,7 @@ class FramesDB:
     def add_analysis(
         self,
         frame_id: int,
-        calibration_data = None,
+        calibration_data=None,
         brightness: float = None,
         hfd: float = None,
         alignment_error: float = None,
@@ -179,9 +177,31 @@ class FramesDB:
             for row in result
         ]
 
+    def print_all_data(self):
+        print("Listing all recorded sequences and their frames")
 
-db = FramesDB()
-s_id = db.add_sequence("Darkest frames", "ZWO", 10.0, 420)
-f_id = db.add_frame(s_id, "frame uno23")
-a_id = db.add_analysis(f_id, brightness=1)
-print(db.get_frames(s_id))
+        sequences_result = self.connection.execute('''
+            SELECT id, name, camera_name, exposure, gain, created
+            FROM Sequence
+            ORDER BY id;
+        ''')
+
+        for sequence_row in sequences_result:
+            sequence_id, name, camera_name, exposure, gain, sequence_created = sequence_row
+            print(f'\nSequence {sequence_id}: {name}, camera {camera_name}, exposure {exposure}, gain {gain}, created {sequence_created}')
+
+            frames_result = self.connection.execute(f'''
+                SELECT id, filename, analysis_id, created
+                FROM Frame
+                WHERE sequence_id = {sequence_id}
+                ORDER BY id;
+            ''')
+
+            for frame_row in frames_result:
+                frame_id, filename, analysis_id, created = frame_row
+                print(f'\tFrame {frame_id}: {filename}, analysis {analysis_id}, created {created}')
+
+
+if __name__ == '__main__':
+    db = FramesDB()
+    db.print_all_data()

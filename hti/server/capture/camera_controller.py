@@ -76,7 +76,7 @@ class SimCameraController:
 
         here = os.path.dirname(os.path.abspath(__file__))
         astro_dir = os.path.join(here, '..', '..', '..', '..')
-        images_glob = os.path.join(astro_dir, 'NGC 891 - Galaxy', '2020-11-14', '**', '*.png')
+        images_glob = os.path.join(astro_dir, 'Hall Of Fame', '*.png')
         images = glob.glob(images_glob)
         random_image_path = random.choice(images)
 

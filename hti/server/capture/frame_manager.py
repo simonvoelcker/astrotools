@@ -17,10 +17,13 @@ class Frame:
         self.numpy_image = None
 
     @property
+    def filename(self) -> str:
+        return f'{self.timestamp.isoformat()}.png'
+
+    @property
     def path(self) -> str:
         today = datetime.date.today().isoformat()
-        image_name = f'{self.timestamp.isoformat()}.png'
-        return os.path.join(today, self.device[:3], image_name)
+        return os.path.join(today, self.device[:3], self.filename)
 
     def get_numpy_image(self):
         if self.numpy_image is None:

@@ -16,7 +16,7 @@ export default class SequenceView extends Component {
     if (sequence === null) {
       return '-'
     }
-    return '#' + sequence.id + ': ' + sequence.name
+    return '#' + sequence.id + ': ' + sequence.created
   }
 
   deleteSequence () {
@@ -26,15 +26,18 @@ export default class SequenceView extends Component {
     })
   }
 
+  analyzeSequence () {
+  }
+
   render () {
     const store = this.context.store
     return (
       <AppConsumer>
         {({ store }) => (
           <div className={'panel sequence-view-panel'}>
+
             <div className='settings-row'>
               <Label className='spaced-text'>Sequence</Label>
-
               <UncontrolledDropdown>
                 <DropdownToggle caret>{this.sequenceStr(this.state.sequence)}</DropdownToggle>
                 <DropdownMenu>
@@ -45,13 +48,46 @@ export default class SequenceView extends Component {
                   })}
                 </DropdownMenu>
               </UncontrolledDropdown>
+            </div>
 
+            <div className='settings-row'>
+              <Label className='spaced-text'>Name</Label>
+              <span className='spaced-text'>{this.state.sequence !== null ? this.state.sequence.name : '-'}</span>
+            </div>
+
+            <div className='settings-row'>
+              <Label className='spaced-text'>Camera</Label>
+              <span className='spaced-text'>{this.state.sequence !== null ? this.state.sequence.cameraName : '-'}</span>
+            </div>
+
+            <div className='settings-row'>
+              <Label className='spaced-text'>Exposure</Label>
+              <span className='spaced-text'>{this.state.sequence !== null ? this.state.sequence.exposure : '-'}</span>
+            </div>
+
+            <div className='settings-row'>
+              <Label className='spaced-text'>Gain</Label>
+              <span className='spaced-text'>{this.state.sequence !== null ? this.state.sequence.gain : '-'}</span>
+            </div>
+
+            <div className='settings-row'>
+              <Label className='spaced-text'>Created</Label>
+              <span className='spaced-text'>{this.state.sequence !== null ? this.state.sequence.created : '-'}</span>
+            </div>
+
+            <div className='settings-row'>
+              <button
+                className='btn'
+                disabled={true}
+                onClick={this.analyzeSequence.bind(this)}>Analyze
+              </button>
               <button
                 className='btn'
                 disabled={this.state.sequence === null}
                 onClick={this.deleteSequence.bind(this)}>Delete
               </button>
             </div>
+
           </div>
         )}
       </AppConsumer>

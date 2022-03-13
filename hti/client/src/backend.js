@@ -36,6 +36,10 @@ export default {
     return $axios.delete('/camera/sequence?device=' + device)
   },
 
+  listSequences () {
+    return $axios.get('/analyzer/sequences/')
+  },
+
   queryTarget (query) {
     return $axios.get('/info/target/' + query)
   },

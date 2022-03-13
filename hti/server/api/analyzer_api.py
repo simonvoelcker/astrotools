@@ -30,8 +30,6 @@ class FramesApi(Resource):
         return jsonify(frames)
 
 # Next up:
-# The endpoint which delivers the frame (image data)
-# An endpoint to trigger the analysis on one frame
+# Basic UI which lists sequences
 # An endpoint to trigger the analysis on all frames of a sequence
-# An endpoint to get the analysis result
-# Then we can build a UI
+# and write the analysis result to the DB. Fork analyze.py for this.

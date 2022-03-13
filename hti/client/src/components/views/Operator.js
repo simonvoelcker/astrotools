@@ -8,6 +8,7 @@ import GoToControl from '../panels/GoToControl'
 import PECControl from '../panels/PECControl'
 import FocusControl from '../panels/FocusControl'
 import GuidingControl from '../panels/GuidingControl'
+import SequenceView from '../panels/SequenceView'
 import { AppConsumer, AppContext } from '../../appstate'
 import { TabContent, TabPane, Nav, NavItem, NavLink, Card, Button, CardTitle, CardText, Row, Col } from 'reactstrap';
 
@@ -16,7 +17,7 @@ export default class Operator extends Component {
   constructor (props) {
     super(props)
     this.state = {
-      activeTab: '2',
+      activeTab: '6',
     }
   }
 
@@ -62,6 +63,14 @@ export default class Operator extends Component {
                   Log
                 </NavLink>
               </NavItem>
+              <NavItem>
+                <NavLink
+                  className={this.state.activeTab === '6' ? 'active' : ''}
+                  onClick={() => { this.setActiveTab('6'); }}
+                >
+                  Analyze
+                </NavLink>
+              </NavItem>
             </Nav>
             <TabContent activeTab={this.state.activeTab}>
 
@@ -99,6 +108,12 @@ export default class Operator extends Component {
               <TabPane tabId="5">
                 <div className='log-tab'>
                   <LogView />
+                </div>
+              </TabPane>
+
+              <TabPane tabId="6">
+                <div className='analyze-tab'>
+                  <SequenceView />
                 </div>
               </TabPane>
 

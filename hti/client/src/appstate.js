@@ -35,6 +35,9 @@ export class AppProvider extends Component {
         {timestamp: Date.now(), text: 'Frontend started'},
       ],
 
+      // via sequences event
+      sequences: [],
+
       pecState: {
         recording: null,
         ready: null,
@@ -96,6 +99,10 @@ export class AppProvider extends Component {
             timestamp: Date.now(),
             text: event['text'],
           }).slice(-maxLogLength)
+        })
+      } else if (event['type'] === 'sequences') {
+        this.setState({
+          sequences: event['sequences'],
         })
       }
     }

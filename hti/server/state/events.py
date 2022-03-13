@@ -40,3 +40,11 @@ def log_event(text):
         'unix_timestamp': time.time(),
         'text': text,
     })
+
+
+def sequences_event(sequences):
+    put_event({
+        'type': 'sequences',
+        'unix_timestamp': time.time(),
+        'sequences': sequences,
+    })

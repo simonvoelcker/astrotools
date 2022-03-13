@@ -52,7 +52,7 @@ class FramesDB:
                 -- user-provided quality score
                 user_frame_quality INTEGER,
                 created DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(reference_frame_id) REFERENCES Frame(id)
+                FOREIGN KEY(reference_frame_id) REFERENCES Frame(id) ON DELETE SET NULL
             );
         """)
         self.connection.execute("""
@@ -62,8 +62,8 @@ class FramesDB:
                 sequence_id INTEGER NOT NULL,
                 analysis_id INTEGER DEFAULT NULL,
                 created DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY(sequence_id) REFERENCES Sequence(id),
-                FOREIGN KEY(analysis_id) REFERENCES Analysis(id)
+                FOREIGN KEY(sequence_id) REFERENCES Sequence(id) ON DELETE CASCADE,
+                FOREIGN KEY(analysis_id) REFERENCES Analysis(id) ON DELETE SET NULL
             );
         """)
         self.connection.commit()
@@ -172,6 +172,12 @@ class FramesDB:
             for row in result.fetchall()
         ]
 
+    def delete_sequence(self, sequence_id):
+        self.connection.execute(
+            f'DELETE FROM Sequence WHERE id = {sequence_id};'
+        )
+        self.connection.commit()
+
     def list_frames(self, sequence_id: int) -> List[Dict]:
         columns = ["id", "filename", "analysis_id", "created"]
         result = self.connection.execute(f'''
@@ -215,11 +221,3 @@ class FramesDB:
 if __name__ == '__main__':
     db = FramesDB()
     db.print_all_data()
-
-
-# Next steps:
-#   analyze.py must write the analyses to the frames DB
-#       or rather, we need the API which accepts a sequence ID and gets going
-#   API for all frames-DB content. must also find frames on disk.
-#   new tab in UI which lists sequences and their frames and shows one frame
-

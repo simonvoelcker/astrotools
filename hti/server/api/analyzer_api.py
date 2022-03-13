@@ -2,12 +2,13 @@ from flask_restplus import Namespace, Resource
 from flask.json import jsonify
 
 from hti.server.frames_db import FramesDB
+from hti.server.state.events import sequences_event
 
 api = Namespace('Analyzer', description='Analyzer API endpoints')
 
 
 @api.route('/sequences/')
-class SequencesApi(Resource):
+class SequenceListApi(Resource):
     @api.doc(
         description='List all sequences',
         response={200: 'Success'},
@@ -16,6 +17,19 @@ class SequencesApi(Resource):
         frames_db = FramesDB()
         sequences = frames_db.list_sequences()
         return jsonify(sequences)
+
+
+@api.route('/sequences/<sequence_id>')
+class SequenceDetailApi(Resource):
+    @api.doc(
+        description='Delete sequence',
+        response={200: 'Success'},
+    )
+    def delete(self, sequence_id):
+        frames_db = FramesDB()
+        frames_db.delete_sequence(sequence_id)
+        sequences_event(frames_db.list_sequences())
+        return ''
 
 
 @api.route('/sequences/<sequence_id>/frames/')

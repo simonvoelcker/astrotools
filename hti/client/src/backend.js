@@ -40,6 +40,10 @@ export default {
     return $axios.get('/analyzer/sequences/')
   },
 
+  deleteSequence (sequenceId) {
+    return $axios.delete('/analyzer/sequences/' + sequenceId)
+  },
+
   queryTarget (query) {
     return $axios.get('/info/target/' + query)
   },

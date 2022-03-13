@@ -19,15 +19,22 @@ export default class SequenceView extends Component {
     return '#' + sequence.id + ': ' + sequence.name
   }
 
+  deleteSequence () {
+    $backend.deleteSequence(this.state.sequence.id).then(() => {
+      let sequences = this.context.store.sequences
+      this.setState({sequence: sequences.length > 0 ? sequences[0] : null})
+    })
+  }
+
   render () {
     const store = this.context.store
     return (
       <AppConsumer>
         {({ store }) => (
           <div className={'panel sequence-view-panel'}>
-
             <div className='settings-row'>
               <Label className='spaced-text'>Sequence</Label>
+
               <UncontrolledDropdown>
                 <DropdownToggle caret>{this.sequenceStr(this.state.sequence)}</DropdownToggle>
                 <DropdownMenu>
@@ -38,6 +45,12 @@ export default class SequenceView extends Component {
                   })}
                 </DropdownMenu>
               </UncontrolledDropdown>
+
+              <button
+                className='btn'
+                disabled={this.state.sequence === null}
+                onClick={this.deleteSequence.bind(this)}>Delete
+              </button>
             </div>
           </div>
         )}

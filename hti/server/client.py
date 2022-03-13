@@ -7,6 +7,7 @@ from hti.server.api.info_api import api as info_api
 from hti.server.api.indi_api import api as indi_api
 from hti.server.api.guiding_api import api as guiding_api
 from hti.server.api.pec_api import api as pec_api
+from hti.server.api.analyzer_api import api as analyzer_api
 
 client_blueprint = Blueprint(
     'client_app',
@@ -36,3 +37,4 @@ api.add_namespace(info_api, path='/info')
 api.add_namespace(indi_api, path='/indi')
 api.add_namespace(guiding_api, path='/guiding')
 api.add_namespace(pec_api, path='/pec')
+api.add_namespace(analyzer_api, path='/analyzer')

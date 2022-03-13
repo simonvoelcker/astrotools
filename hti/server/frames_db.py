@@ -1,3 +1,5 @@
+from typing import List, Dict
+
 import os
 import sqlite3
 
@@ -25,11 +27,11 @@ class FramesDB:
                 created DATETIME DEFAULT CURRENT_TIMESTAMP
             );
         """)
-        # potentially add: a field for manually annotated frame quality
         self.connection.execute("""
             CREATE TABLE IF NOT EXISTS Analysis (
                 id INTEGER PRIMARY KEY ASC,
                 -- astrometry calibration data
+                calibration_result TEXT,
                 pixel_scale REAL,
                 pixel_scale_unit TEXT,
                 center_ra REAL,
@@ -160,27 +162,30 @@ class FramesDB:
 
         return result.lastrowid
 
-    # Util
-
-    def count_sequences(self):
+    def list_sequences(self) -> List[Dict]:
+        columns = ["id", "name", "camera_name", "exposure", "gain", "created"]
         result = self.connection.execute(
-            'SELECT COUNT(*) FROM Sequence;'
+            f'SELECT {",".join(columns)} FROM Sequence ORDER BY id DESC;'
         )
-        return [row[0] for row in result][0]
-
-    def get_frames(self, sequence_id: int):
-        result = self.connection.execute(f"""
-            SELECT id, filename
-            FROM Frame
-            WHERE sequence_id = {sequence_id};
-        """)
         return [
-            {
-                'id': row[0],
-                'filename': row[1],
-            }
-            for row in result
+            {column: value for column, value in zip(columns, row)}
+            for row in result.fetchall()
         ]
+
+    def list_frames(self, sequence_id: int) -> List[Dict]:
+        columns = ["id", "filename", "analysis_id", "created"]
+        result = self.connection.execute(f'''
+            SELECT {",".join(columns)}
+            FROM Frame
+            WHERE sequence_id = {sequence_id}
+            ORDER BY id DESC;
+        ''')
+        return [
+            {column: value for column, value in zip(columns, row)}
+            for row in result.fetchall()
+        ]
+
+    # Util
 
     def print_all_data(self):
         print("Listing all recorded sequences and their frames")
@@ -214,6 +219,7 @@ if __name__ == '__main__':
 
 # Next steps:
 #   analyze.py must write the analyses to the frames DB
+#       or rather, we need the API which accepts a sequence ID and gets going
 #   API for all frames-DB content. must also find frames on disk.
 #   new tab in UI which lists sequences and their frames and shows one frame
 

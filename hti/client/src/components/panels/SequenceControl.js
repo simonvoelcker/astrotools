@@ -4,25 +4,23 @@ import { Input, Label } from 'reactstrap'
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import $backend from '../../backend'
 
-export default class SequenceView extends Component {
-  constructor(props) {
-    super(props)
-    this.state = {
-      sequence: null
-    }
+let formatSequence = (sequence) => {
+  if (sequence === null) {
+    return '-'
   }
+  return '#' + sequence.id + ': ' + sequence.created
+}
 
-  sequenceStr (sequence) {
-    if (sequence === null) {
-      return '-'
-    }
-    return '#' + sequence.id + ': ' + sequence.created
-  }
+export default class SequenceControl extends Component {
 
   deleteSequence () {
-    $backend.deleteSequence(this.state.sequence.id).then(() => {
+    $backend.deleteSequence(this.props.tabState.selectedSequence.id).then(() => {
       let sequences = this.context.store.sequences
-      this.setState({sequence: sequences.length > 0 ? sequences[0] : null})
+      if (sequences.length > 0 ) {
+        this.props.setTabState({selectedSequence: sequences[0]})
+      } else {
+        this.props.setTabState({selectedSequence: null})
+      }
     })
   }
 
@@ -31,19 +29,23 @@ export default class SequenceView extends Component {
 
   render () {
     const store = this.context.store
+    const selectedSequence = this.props.tabState.selectedSequence
+
     return (
       <AppConsumer>
         {({ store }) => (
-          <div className={'panel sequence-view-panel'}>
+          <div className={'panel sequence-control-panel'}>
 
             <div className='settings-row'>
               <Label className='spaced-text'>Sequence</Label>
               <UncontrolledDropdown>
-                <DropdownToggle caret>{this.sequenceStr(this.state.sequence)}</DropdownToggle>
+                <DropdownToggle caret>{formatSequence(selectedSequence)}</DropdownToggle>
                 <DropdownMenu>
                   {store.sequences.map(sequence => {
-                    return <DropdownItem key={sequence.id} onClick={() => {this.setState({sequence: sequence})}}>
-                      {this.sequenceStr(sequence)}
+                    return <DropdownItem
+                        key={sequence.id}
+                        onClick={() => {this.props.setTabState({selectedSequence: sequence})}}>
+                      {formatSequence(sequence)}
                     </DropdownItem>
                   })}
                 </DropdownMenu>
@@ -52,27 +54,27 @@ export default class SequenceView extends Component {
 
             <div className='settings-row'>
               <Label className='spaced-text'>Name</Label>
-              <span className='spaced-text'>{this.state.sequence !== null ? this.state.sequence.name : '-'}</span>
+              <span className='spaced-text'>{selectedSequence !== null ? selectedSequence.name : '-'}</span>
             </div>
 
             <div className='settings-row'>
               <Label className='spaced-text'>Camera</Label>
-              <span className='spaced-text'>{this.state.sequence !== null ? this.state.sequence.cameraName : '-'}</span>
+              <span className='spaced-text'>{selectedSequence !== null ? selectedSequence.cameraName : '-'}</span>
             </div>
 
             <div className='settings-row'>
               <Label className='spaced-text'>Exposure</Label>
-              <span className='spaced-text'>{this.state.sequence !== null ? this.state.sequence.exposure : '-'}</span>
+              <span className='spaced-text'>{selectedSequence !== null ? selectedSequence.exposure : '-'}</span>
             </div>
 
             <div className='settings-row'>
               <Label className='spaced-text'>Gain</Label>
-              <span className='spaced-text'>{this.state.sequence !== null ? this.state.sequence.gain : '-'}</span>
+              <span className='spaced-text'>{selectedSequence !== null ? selectedSequence.gain : '-'}</span>
             </div>
 
             <div className='settings-row'>
               <Label className='spaced-text'>Created</Label>
-              <span className='spaced-text'>{this.state.sequence !== null ? this.state.sequence.created : '-'}</span>
+              <span className='spaced-text'>{selectedSequence !== null ? selectedSequence.created : '-'}</span>
             </div>
 
             <div className='settings-row'>
@@ -83,7 +85,7 @@ export default class SequenceView extends Component {
               </button>
               <button
                 className='btn'
-                disabled={this.state.sequence === null}
+                disabled={store.selectedSequence === null}
                 onClick={this.deleteSequence.bind(this)}>Delete
               </button>
             </div>
@@ -95,4 +97,4 @@ export default class SequenceView extends Component {
   }
 }
 
-SequenceView.contextType = AppContext
+SequenceControl.contextType = AppContext

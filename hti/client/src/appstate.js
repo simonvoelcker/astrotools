@@ -35,9 +35,6 @@ export class AppProvider extends Component {
         {timestamp: Date.now(), text: 'Frontend started'},
       ],
 
-      // via sequences event
-      sequences: [],
-
       pecState: {
         recording: null,
         ready: null,
@@ -51,6 +48,9 @@ export class AppProvider extends Component {
 
       // bool by device name whether or not region selection mode is on
       regionSelectByDeviceName: {},
+
+      // via sequences event
+      sequences: [],
     }
 
     this.initialize()

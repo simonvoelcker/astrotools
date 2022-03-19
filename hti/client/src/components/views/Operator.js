@@ -8,7 +8,9 @@ import GoToControl from '../panels/GoToControl'
 import PECControl from '../panels/PECControl'
 import FocusControl from '../panels/FocusControl'
 import GuidingControl from '../panels/GuidingControl'
-import SequenceView from '../panels/SequenceView'
+
+import AnalyzeTab from '../tabs/AnalyzeTab'
+
 import { AppConsumer, AppContext } from '../../appstate'
 import { TabContent, TabPane, Nav, NavItem, NavLink, Card, Button, CardTitle, CardText, Row, Col } from 'reactstrap';
 
@@ -112,9 +114,7 @@ export default class Operator extends Component {
               </TabPane>
 
               <TabPane tabId="6">
-                <div className='analyze-tab'>
-                  <SequenceView />
-                </div>
+                <AnalyzeTab />
               </TabPane>
 
             </TabContent>

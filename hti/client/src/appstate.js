@@ -47,10 +47,7 @@ export class AppProvider extends Component {
       guidingCamera: null,
 
       // bool by device name whether or not region selection mode is on
-      regionSelectByDeviceName: {},
-
-      // via sequences event
-      sequences: [],
+      regionSelectByDeviceName: {}
     }
 
     this.initialize()
@@ -99,10 +96,6 @@ export class AppProvider extends Component {
             timestamp: Date.now(),
             text: event['text'],
           }).slice(-maxLogLength)
-        })
-      } else if (event['type'] === 'sequences') {
-        this.setState({
-          sequences: event['sequences'],
         })
       }
     }

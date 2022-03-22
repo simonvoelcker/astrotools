@@ -10,9 +10,30 @@ export default class AnalyzeTab extends Component {
   constructor (props) {
     super(props)
     this.state = {
+      sequences: [],
       selectedSequence: null,
+      frames: [],
       selectedFrame: null,
     }
+  }
+
+  componentDidMount () {
+    $backend.listSequences().then((response) => {
+      this.setState({sequences: response.data})
+      this.selectSequence(response.data[0])
+    })
+  }
+
+  selectSequence (sequence) {
+    this.setState({selectedSequence: sequence})
+    $backend.listFrames(sequence.id).then((response) => {
+      this.setState({frames: response.data})
+      this.selectFrame(response.data[0])
+    })
+  }
+
+  selectFrame (frame) {
+    this.setState({selectedFrame: frame})
   }
 
   render () {
@@ -21,8 +42,16 @@ export default class AnalyzeTab extends Component {
       <AppConsumer>
         {({ store }) => (
           <div className='analyze-tab'>
-            <SequenceControl tabState={this.state} setTabState={this.setState.bind(this)} />
-            <FrameControl tabState={this.state} setTabState={this.setState.bind(this)} />
+            <SequenceControl
+              sequences={this.state.sequences}
+              selectedSequence={this.state.selectedSequence}
+              selectSequence={this.selectSequence.bind(this)}
+            />
+            <FrameControl
+              frames={this.state.frames}
+              selectedFrame={this.state.selectedFrame}
+              selectFrame={this.selectFrame.bind(this)}
+            />
           </div>
         )}
       </AppConsumer>

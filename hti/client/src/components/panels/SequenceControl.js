@@ -14,13 +14,9 @@ let formatSequence = (sequence) => {
 export default class SequenceControl extends Component {
 
   deleteSequence () {
-    $backend.deleteSequence(this.props.tabState.selectedSequence.id).then(() => {
-      let sequences = this.context.store.sequences
-      if (sequences.length > 0 ) {
-        this.props.setTabState({selectedSequence: sequences[0]})
-      } else {
-        this.props.setTabState({selectedSequence: null})
-      }
+    $backend.deleteSequence(this.props.selectedSequence.id).then(() => {
+      let sequences = this.props.sequences
+      this.props.selectSequence(sequences.length > 0 ? sequences[0] : null)
     })
   }
 
@@ -28,8 +24,9 @@ export default class SequenceControl extends Component {
   }
 
   render () {
-    const store = this.context.store
-    const selectedSequence = this.props.tabState.selectedSequence
+    const sequences = this.props.sequences
+    const selectedSequence = this.props.selectedSequence
+    const selectSequence = this.props.selectSequence
 
     return (
       <AppConsumer>
@@ -41,10 +38,10 @@ export default class SequenceControl extends Component {
               <UncontrolledDropdown>
                 <DropdownToggle caret>{formatSequence(selectedSequence)}</DropdownToggle>
                 <DropdownMenu>
-                  {store.sequences.map(sequence => {
+                  {sequences.map(sequence => {
                     return <DropdownItem
                         key={sequence.id}
-                        onClick={() => {this.props.setTabState({selectedSequence: sequence})}}>
+                        onClick={() => {selectSequence(sequence)}}>
                       {formatSequence(sequence)}
                     </DropdownItem>
                   })}
@@ -85,7 +82,7 @@ export default class SequenceControl extends Component {
               </button>
               <button
                 className='btn'
-                disabled={store.selectedSequence === null}
+                disabled={this.props.selectedSequence === null}
                 onClick={this.deleteSequence.bind(this)}>Delete
               </button>
             </div>

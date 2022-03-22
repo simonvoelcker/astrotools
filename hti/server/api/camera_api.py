@@ -3,7 +3,7 @@ from threading import Thread
 from flask import request, send_file
 from flask_restplus import Namespace, Resource
 
-from hti.server.state.events import image_event, log_event, sequences_event
+from hti.server.state.events import image_event, log_event
 from hti.server.state.globals import (
     get_app_state,
     get_camera_controller,
@@ -60,7 +60,6 @@ class CaptureImageApi(Resource):
                         gain=cam_state.gain,
                     )
                     frames_db.add_frame(sequence_id, frame.filename)
-                    sequences_event(frames_db.list_sequences())
                 cam_state.capturing = False
                 app_state.send_event()
 
@@ -101,7 +100,6 @@ class SequenceApi(Resource):
                         exposure=cam_state.exposure,
                         gain=cam_state.gain,
                     )
-                    sequences_event(frames_db.list_sequences())
                 else:
                     sequence_id = None
 

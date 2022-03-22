@@ -44,6 +44,10 @@ export default {
     return $axios.delete('/analyzer/sequences/' + sequenceId)
   },
 
+  listFrames (sequenceId) {
+    return $axios.get('/analyzer/sequences/' + sequenceId + '/frames/')
+  },
+
   queryTarget (query) {
     return $axios.get('/info/target/' + query)
   },

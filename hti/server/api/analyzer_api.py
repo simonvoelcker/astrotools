@@ -2,7 +2,6 @@ from flask_restplus import Namespace, Resource
 from flask.json import jsonify
 
 from hti.server.frames_db import FramesDB
-from hti.server.state.events import sequences_event
 
 api = Namespace('Analyzer', description='Analyzer API endpoints')
 
@@ -28,7 +27,6 @@ class SequenceDetailApi(Resource):
     def delete(self, sequence_id):
         frames_db = FramesDB()
         frames_db.delete_sequence(sequence_id)
-        sequences_event(frames_db.list_sequences())
         return ''
 
 
@@ -42,8 +40,3 @@ class FramesApi(Resource):
         frames_db = FramesDB()
         frames = frames_db.list_frames(sequence_id)
         return jsonify(frames)
-
-# Next up:
-# Basic UI which lists sequences
-# An endpoint to trigger the analysis on all frames of a sequence
-# and write the analysis result to the DB. Fork analyze.py for this.

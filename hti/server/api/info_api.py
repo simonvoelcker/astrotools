@@ -12,14 +12,12 @@ from flask.json import jsonify
 from hti.server.state.events import (
     subscribe_for_events,
     log_event,
-    sequences_event,
 )
 from hti.server.state.globals import (
     get_catalog,
     get_app_state,
     get_frame_manager,
 )
-from hti.server.frames_db import FramesDB
 
 from .util import camel_case_keys_recursively, to_dict_recursively
 
@@ -43,9 +41,6 @@ class EventsApi(Resource):
             subscribe_for_events(q)
             # Send an event with the current app state
             get_app_state().send_event()
-            # Same for the sequences
-            frames_db = FramesDB()
-            sequences_event(frames_db.list_sequences())
             while True:
                 data = q.get()
                 # convert objects to dicts and make keys camel case

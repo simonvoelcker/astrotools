@@ -84,6 +84,7 @@ export default class Operator extends Component {
                   <div className='right-column'>
                     <CaptureControl camera={store.capturingCamera} />
                     <FocusControl />
+                    <AxisControl />
                   </div>
                 </div>
               </TabPane>

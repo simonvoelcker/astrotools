@@ -92,13 +92,23 @@ export default class AxisControl extends Component {
           <div>
             <div className={'panel axis-control-panel ' + panelStateClass}>
               <div className='button-column'>
-                <span className='spaced-text'>{store.axisSpeeds ? store.axisSpeeds.mode.toUpperCase() : '-'}</span>
+                <span className='spaced-text'>{store.axisSpeeds ? store.axisSpeeds.mode.toUpperCase() : 'NO MODE'}</span>
                 <button className='btn'
                   disabled={store.guiding || (store.axisSpeeds && store.axisSpeeds.mode === 'resting')}
-                  onClick={$backend.setRest}>Default</button>
+                  onClick={$backend.setRest}>15°/h</button>
                 <button className='btn'
                   disabled={store.guiding || !store.axisSpeeds || store.axisSpeeds.mode === 'stopped'}
                   onClick={this.stop.bind(this)}>Stop</button>
+                <UncontrolledDropdown>
+                  <DropdownToggle caret>{this.state.increment.label}</DropdownToggle>
+                  <DropdownMenu>
+                    {this.incrementOptions.map(option => {
+                      return <DropdownItem key={option.label} onClick={() => {this.setState({increment: option})}}>
+                        {option.label}
+                      </DropdownItem>
+                    })}
+                  </DropdownMenu>
+                </UncontrolledDropdown>
               </div>
               <div className='steering-control'>
                 <button
@@ -133,18 +143,6 @@ export default class AxisControl extends Component {
                 <span className='spaced-text steer-down-label'>
                   {decSpeed.value < 0 ? -decSpeed.value.toFixed(2) + decSpeed.unit : ''}
                 </span>
-              </div>
-              <div className='button-column'>
-                <UncontrolledDropdown>
-                  <DropdownToggle caret>{this.state.increment.label}</DropdownToggle>
-                  <DropdownMenu>
-                    {this.incrementOptions.map(option => {
-                      return <DropdownItem key={option.label} onClick={() => {this.setState({increment: option})}}>
-                        {option.label}
-                      </DropdownItem>
-                    })}
-                  </DropdownMenu>
-                </UncontrolledDropdown>
               </div>
             </div>
           </div>

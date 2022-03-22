@@ -4,6 +4,7 @@ import $backend from '../../backend'
 
 import SequenceControl from '../panels/SequenceControl'
 import FrameControl from '../panels/FrameControl'
+import FrameView from '../panels/FrameView'
 
 export default class AnalyzeTab extends Component {
 
@@ -42,16 +43,19 @@ export default class AnalyzeTab extends Component {
       <AppConsumer>
         {({ store }) => (
           <div className='analyze-tab'>
-            <SequenceControl
-              sequences={this.state.sequences}
-              selectedSequence={this.state.selectedSequence}
-              selectSequence={this.selectSequence.bind(this)}
-            />
-            <FrameControl
-              frames={this.state.frames}
-              selectedFrame={this.state.selectedFrame}
-              selectFrame={this.selectFrame.bind(this)}
-            />
+            <div className='left-column'>
+              <FrameView frame={this.state.selectedFrame} />
+            </div>
+            <div className='right-column'>
+              <SequenceControl
+                sequences={this.state.sequences}
+                selectedSequence={this.state.selectedSequence}
+                selectSequence={this.selectSequence.bind(this)} />
+              <FrameControl
+                frames={this.state.frames}
+                selectedFrame={this.state.selectedFrame}
+                selectFrame={this.selectFrame.bind(this)} />
+            </div>
           </div>
         )}
       </AppConsumer>

@@ -191,6 +191,12 @@ class FramesDB:
             for row in result.fetchall()
         ]
 
+    def get_frame_filename(self, frame_id: int) -> str:
+        result = self.connection.execute(f'''
+            SELECT filename FROM Frame WHERE id = {frame_id};
+        ''')
+        return [row[0] for row in result.fetchall()][0]
+
     # Util
 
     def print_all_data(self):

@@ -48,6 +48,10 @@ export default {
     return $axios.get('/analyzer/sequences/' + sequenceId + '/frames/')
   },
 
+  getFramePath (frameId) {
+    return $axios.get('/analyzer/frames/' + frameId + '/path')
+  },
+
   queryTarget (query) {
     return $axios.get('/info/target/' + query)
   },

@@ -1,3 +1,4 @@
+import os
 from threading import Thread
 
 from flask import request, send_file
@@ -140,9 +141,17 @@ class FrameApi(Resource):
         Get a frame by its path
         """
         frame_path = request.args.get('framePath')
+        if frame_path == 'undefined':
+            return 400, 'Bad frame path'
+
+        # Try to find the image in memory
         frame = get_frame_manager().get_frame_by_path(frame_path)
         if frame is None:
-            return '', 404
+            # Send from disk instead
+            here = os.path.dirname(os.path.abspath(__file__))
+            hti_static_dir = os.path.join(here, '..', 'static')
+            path = os.path.normpath(os.path.join(hti_static_dir, frame_path))
+            return send_file(path, mimetype='image/png')
 
         png_data = frame.get_image_data(format='png', for_display=True)
         return send_file(png_data, mimetype='image/png')

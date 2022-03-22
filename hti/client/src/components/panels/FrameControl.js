@@ -4,14 +4,17 @@ import { Input, Label } from 'reactstrap'
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import $backend from '../../backend'
 
-let formatFrame = (frame) => {
-  if (frame === null) {
-    return '-'
-  }
-  return '#' + frame.id
-}
-
 export default class FrameControl extends Component {
+
+  formatFrame (frame) {
+    if (this.props.selectedFrame === null) {
+      return '-'
+    }
+
+    const index = this.props.frames.indexOf(this.props.selectedFrame)
+    const count = this.props.frames.length
+    return '' + (index+1) + '/' + count
+  }
 
   previousFrame () {
     const index = this.props.frames.indexOf(this.props.selectedFrame)
@@ -38,7 +41,7 @@ export default class FrameControl extends Component {
 
             <div className='settings-row'>
               <Label className='spaced-text'>Frame</Label>
-              <span className='spaced-text'>{formatFrame(this.props.selectedFrame)}</span>
+              <span className='spaced-text'>{this.formatFrame()}</span>
             </div>
 
             <div className='settings-row'>

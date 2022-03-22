@@ -184,7 +184,7 @@ class FramesDB:
             SELECT {",".join(columns)}
             FROM Frame
             WHERE sequence_id = {sequence_id}
-            ORDER BY id DESC;
+            ORDER BY id ASC;
         ''')
         return [
             {column: value for column, value in zip(columns, row)}

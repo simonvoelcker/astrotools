@@ -19,9 +19,6 @@ export default class SequenceControl extends Component {
     })
   }
 
-  analyzeSequence () {
-  }
-
   render () {
     const sequences = this.props.sequences
     const selectedSequence = this.props.selectedSequence
@@ -74,11 +71,6 @@ export default class SequenceControl extends Component {
             </div>
 
             <div className='settings-row'>
-              <button
-                className='btn'
-                disabled={true}
-                onClick={this.analyzeSequence.bind(this)}>Analyze
-              </button>
               <button
                 className='btn'
                 disabled={this.props.selectedSequence === null}

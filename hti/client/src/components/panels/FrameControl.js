@@ -6,6 +6,31 @@ import $backend from '../../backend'
 
 export default class FrameControl extends Component {
 
+  componentDidMount () {
+    document.onkeydown = this.onKeyDown.bind(this)
+  }
+
+  componentWillUnmount () {
+    document.onkeydown = null
+  }
+
+  onKeyDown (event) {
+    switch (event.key) {
+        case 'ArrowLeft':
+            this.previousFrame()
+            break;
+        case 'ArrowRight':
+            this.nextFrame()
+            break;
+        case 'Delete':
+            this.deleteFrame()
+            break;
+        default:
+            break;
+    }
+  }
+
+
   formatFrame (frame) {
     if (this.props.selectedFrame === null) {
       return '-'
@@ -17,16 +42,21 @@ export default class FrameControl extends Component {
   }
 
   previousFrame () {
-    const index = this.props.frames.indexOf(this.props.selectedFrame)
-    this.props.selectFrame(this.props.frames[index-1])
+    if (this.props.frames.length > 0) {
+      const index = this.props.frames.indexOf(this.props.selectedFrame)
+      // wrap around from first to last
+      const newIndex = (index+this.props.frames.length-1) % this.props.frames.length
+      this.props.selectFrame(this.props.frames[newIndex])
+    }
   }
 
   nextFrame () {
-    const index = this.props.frames.indexOf(this.props.selectedFrame)
-    this.props.selectFrame(this.props.frames[index+1])
-  }
-
-  analyzeFrame () {
+    if (this.props.frames.length > 0) {
+      const index = this.props.frames.indexOf(this.props.selectedFrame)
+      // wrap around from last to first
+      const newIndex = (index+1) % this.props.frames.length
+      this.props.selectFrame(this.props.frames[newIndex])
+    }
   }
 
   deleteFrame () {
@@ -50,22 +80,17 @@ export default class FrameControl extends Component {
             <div className='settings-row'>
               <button
                 className='btn'
-                disabled={this.props.selectedFrame === this.props.frames[0]}
+                disabled={this.props.frames.length === 0}
                 onClick={this.previousFrame.bind(this)}>Previous
               </button>
               <button
                 className='btn'
-                disabled={this.props.selectedFrame === this.props.frames[this.props.frames.length-1]}
+                disabled={this.props.frames.length === 0}
                 onClick={this.nextFrame.bind(this)}>Next
               </button>
             </div>
 
             <div className='settings-row'>
-              <button
-                className='btn'
-                disabled={true}
-                onClick={this.analyzeFrame.bind(this)}>Analyze
-              </button>
               <button
                 className='btn'
                 disabled={this.props.frames.length === 0}

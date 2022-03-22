@@ -3,9 +3,17 @@ import os
 from flask_restplus import Namespace, Resource
 from flask.json import jsonify
 
+from hti.server.api.util import find_file
 from hti.server.frames_db import FramesDB
 
 api = Namespace('Analyzer', description='Analyzer API endpoints')
+
+
+def find_frame_path(filename: str) -> str:
+    # Find the file in static dir or a subdirectory
+    here = os.path.dirname(os.path.abspath(__file__))
+    hti_static_dir = os.path.join(here, '..', 'static')
+    return find_file(filename, hti_static_dir)
 
 
 @api.route('/sequences/')
@@ -28,12 +36,18 @@ class SequenceDetailApi(Resource):
     )
     def delete(self, sequence_id):
         frames_db = FramesDB()
+        # Delete frames on disk first
+        frames = frames_db.list_frames(sequence_id)
+        for frame in frames:
+            frame_path = find_frame_path(frame["filename"])
+            os.remove(frame_path)
+        # Delete DB entries for sequence and files
         frames_db.delete_sequence(sequence_id)
         return ''
 
 
 @api.route('/sequences/<sequence_id>/frames/')
-class FramesApi(Resource):
+class SequenceFramesApi(Resource):
     @api.doc(
         description='List all frames in a sequence',
         response={200: 'Success'},
@@ -44,16 +58,25 @@ class FramesApi(Resource):
         return jsonify(frames)
 
 
+@api.route('/frames/<frame_id>')
+class FramesApi(Resource):
+    @api.doc(
+        description='Delete frame',
+        response={200: 'Success'},
+    )
+    def delete(self, frame_id):
+        frames_db = FramesDB()
+        filename = frames_db.get_frame_filename(frame_id)
+        frame_path = find_frame_path(filename)
+        # Remove file in DB
+        frames_db.delete_frame(frame_id)
+        # Remove file on disk
+        os.remove(frame_path)
+        return ''
+
+
 @api.route('/frames/<frame_id>/path')
 class FramePathApi(Resource):
-
-    @staticmethod
-    def find_file(name, path):
-        for root, dirs, files in os.walk(path):
-            if name in files:
-                return os.path.join(root, name)
-        return None
-
     @api.doc(
         description='Get frame filepath',
         response={200: 'Success'},
@@ -61,9 +84,9 @@ class FramePathApi(Resource):
     def get(self, frame_id):
         frames_db = FramesDB()
         filename = frames_db.get_frame_filename(frame_id)
-        # Find the file in static dir
+        frame_path = find_frame_path(filename)
+        # Make path relative to static dir
         here = os.path.dirname(os.path.abspath(__file__))
         hti_static_dir = os.path.join(here, '..', 'static')
-        path = self.find_file(filename, hti_static_dir)
-        relpath = os.path.relpath(path, hti_static_dir)
+        relpath = os.path.relpath(frame_path, hti_static_dir)
         return relpath

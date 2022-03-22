@@ -1,3 +1,6 @@
+import os
+
+
 def to_dict_recursively(object):
     # objects with a __dict__ next
     if hasattr(object, '__dict__'):
@@ -25,3 +28,10 @@ def to_camel_case(snake_case_identifier):
     parts = snake_case_identifier.split('_')
     parts = [part.capitalize() if index else part for index, part in enumerate(parts)]
     return ''.join(parts)
+
+
+def find_file(name, path):
+    for root, dirs, files in os.walk(path):
+        if name in files:
+            return os.path.join(root, name)
+    return None

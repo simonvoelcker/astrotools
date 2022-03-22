@@ -19,9 +19,28 @@ export default class AnalyzeTab extends Component {
   }
 
   componentDidMount () {
+    this.refreshSequences()
+  }
+
+  refreshSequences () {
     $backend.listSequences().then((response) => {
       this.setState({sequences: response.data})
       this.selectSequence(response.data[0])
+    })
+  }
+
+  refreshFrames () {
+    // Get selection index before refreshing frames list
+    const lastFrameIndex = this.state.frames.indexOf(this.state.selectedFrame)
+    $backend.listFrames(this.state.selectedSequence.id).then((response) => {
+      this.setState({frames: response.data})
+      if (response.data.length > 0) {
+        // If the old index is still valid, keep it. Else clamp to last.
+        const index = Math.min(lastFrameIndex, response.data.length-1)
+        this.selectFrame(response.data[index])
+      } else {
+        this.selectFrame(null)
+      }
     })
   }
 
@@ -50,11 +69,13 @@ export default class AnalyzeTab extends Component {
               <SequenceControl
                 sequences={this.state.sequences}
                 selectedSequence={this.state.selectedSequence}
-                selectSequence={this.selectSequence.bind(this)} />
+                selectSequence={this.selectSequence.bind(this)}
+                refresh={this.refreshSequences.bind(this)} />
               <FrameControl
                 frames={this.state.frames}
                 selectedFrame={this.state.selectedFrame}
-                selectFrame={this.selectFrame.bind(this)} />
+                selectFrame={this.selectFrame.bind(this)}
+                refresh={this.refreshFrames.bind(this)} />
             </div>
           </div>
         )}

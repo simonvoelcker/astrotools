@@ -52,6 +52,10 @@ export default {
     return $axios.get('/analyzer/frames/' + frameId + '/path')
   },
 
+  deleteFrame (frameId) {
+    return $axios.delete('/analyzer/frames/' + frameId)
+  },
+
   queryTarget (query) {
     return $axios.get('/info/target/' + query)
   },

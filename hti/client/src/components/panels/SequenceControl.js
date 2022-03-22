@@ -15,8 +15,7 @@ export default class SequenceControl extends Component {
 
   deleteSequence () {
     $backend.deleteSequence(this.props.selectedSequence.id).then(() => {
-      let sequences = this.props.sequences
-      this.props.selectSequence(sequences.length > 0 ? sequences[0] : null)
+      this.props.refresh()
     })
   }
 

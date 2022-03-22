@@ -197,6 +197,12 @@ class FramesDB:
         ''')
         return [row[0] for row in result.fetchall()][0]
 
+    def delete_frame(self, frame_id: int):
+        self.connection.execute(
+            f'DELETE FROM Frame WHERE id = {frame_id};'
+        )
+        self.connection.commit()
+
     # Util
 
     def print_all_data(self):

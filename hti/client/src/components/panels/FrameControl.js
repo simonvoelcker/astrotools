@@ -30,6 +30,9 @@ export default class FrameControl extends Component {
   }
 
   deleteFrame () {
+    $backend.deleteFrame(this.props.selectedFrame.id).then(() => {
+      this.props.refresh()
+    })
   }
 
   render () {
@@ -65,7 +68,7 @@ export default class FrameControl extends Component {
               </button>
               <button
                 className='btn'
-                disabled={true}
+                disabled={this.props.frames.length === 0}
                 onClick={this.deleteFrame.bind(this)}>Delete
               </button>
             </div>

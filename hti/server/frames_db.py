@@ -127,7 +127,7 @@ class FramesDB:
                 center_dec=calibration_data.center_deg.dec,
                 rotation_angle=calibration_data.rotation_angle,
                 rotation_direction=calibration_data.rotation_direction,
-                parity=f'"{calibration_data.parity}"',
+                parity=calibration_data.parity,
             )
 
         # Wrap strings in "", numbers in strings, filter Nones

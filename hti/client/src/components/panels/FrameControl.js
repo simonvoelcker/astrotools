@@ -41,6 +41,13 @@ export default class FrameControl extends Component {
     return '' + (index+1) + '/' + count
   }
 
+  formatFrameAnalyzed (frame) {
+    if (this.props.selectedFrame === null) {
+      return '-'
+    }
+    return this.props.selectedFrame.analysis_id !== null ? 'Yes' : 'No'
+  }
+
   previousFrame () {
     if (this.props.frames.length > 0) {
       const index = this.props.frames.indexOf(this.props.selectedFrame)
@@ -57,6 +64,12 @@ export default class FrameControl extends Component {
       const newIndex = (index+1) % this.props.frames.length
       this.props.selectFrame(this.props.frames[newIndex])
     }
+  }
+
+  analyzeFrame () {
+    $backend.analyzeFrame(this.props.selectedFrame.id).then(() => {
+      this.props.refresh()
+    })
   }
 
   deleteFrame () {
@@ -78,6 +91,11 @@ export default class FrameControl extends Component {
             </div>
 
             <div className='settings-row'>
+              <Label className='spaced-text'>Analyzed</Label>
+              <span className='spaced-text'>{this.formatFrameAnalyzed()}</span>
+            </div>
+
+            <div className='settings-row'>
               <button
                 className='btn'
                 disabled={this.props.frames.length === 0}
@@ -91,6 +109,11 @@ export default class FrameControl extends Component {
             </div>
 
             <div className='settings-row'>
+              <button
+                className='btn'
+                disabled={this.props.frames.length === 0}
+                onClick={this.analyzeFrame.bind(this)}>Analyze
+              </button>
               <button
                 className='btn'
                 disabled={this.props.frames.length === 0}

@@ -6,6 +6,11 @@ from flask.json import jsonify
 from hti.server.api.util import find_file
 from hti.server.frames_db import FramesDB
 
+from lib.calibration_analyzer import CalibrationAnalyzer
+from lib.frame_quality_analyzer import FrameQualityAnalyzer
+from lib.frame import Frame
+
+
 api = Namespace('Analyzer', description='Analyzer API endpoints')
 
 
@@ -90,3 +95,32 @@ class FramePathApi(Resource):
         hti_static_dir = os.path.join(here, '..', 'static')
         relpath = os.path.relpath(frame_path, hti_static_dir)
         return relpath
+
+
+@api.route('/frames/<frame_id>/analyze')
+class AnalyzeFrameApi(Resource):
+    @api.doc(
+        description='Analyze the frame',
+        response={200: 'Success'},
+    )
+    def post(self, frame_id):
+        frames_db = FramesDB()
+        filename = frames_db.get_frame_filename(frame_id)
+        frame_path = find_frame_path(filename)
+        frame = Frame(frame_path)
+
+        frame_quality_analyzer = FrameQualityAnalyzer()
+        frame_quality_analyzer.analyze_frame(frame)
+        frame_quality = frame_quality_analyzer.get_results_dict(frame)
+
+        calibration_analyzer = CalibrationAnalyzer()
+        calibration_analyzer.analyze_frame(frame)
+        calibration_data = calibration_analyzer.calibration_data[frame]
+
+        frames_db.add_analysis(
+            frame_id=frame_id,
+            calibration_data=calibration_data,
+            brightness=frame_quality["brightness"],
+            hfd=frame_quality["hfd"],
+        )
+        return ''

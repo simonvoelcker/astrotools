@@ -52,6 +52,10 @@ export default {
     return $axios.get('/analyzer/frames/' + frameId + '/path')
   },
 
+  analyzeFrame (frameId) {
+    return $axios.post('/analyzer/frames/' + frameId + '/analyze')
+  },
+
   deleteFrame (frameId) {
     return $axios.delete('/analyzer/frames/' + frameId)
   },

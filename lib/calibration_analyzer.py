@@ -7,7 +7,7 @@ from lib.frame import Frame
 
 
 class CalibrationAnalyzer(BaseAnalyzer):
-    def __init__(self, calibration_data_filepath):
+    def __init__(self, calibration_data_filepath=None):
         self.calibration_data = {}
         self.calibration_data_filepath = calibration_data_filepath
 

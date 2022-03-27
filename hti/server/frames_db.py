@@ -191,6 +191,38 @@ class FramesDB:
             for row in result.fetchall()
         ]
 
+    def list_analyzed_frames(self, sequence_id: int) -> List[Dict]:
+        result = self.connection.execute(f'''
+            SELECT
+                Frame.filename, 
+                Analysis.pixel_scale,
+                Analysis.pixel_scale_unit,
+                Analysis.center_ra,
+                Analysis.center_dec,
+                Analysis.rotation_angle,
+                Analysis.rotation_direction,
+                Analysis.parity
+            FROM Frame
+            JOIN Analysis
+                ON Frame.analysis_id = Analysis.id
+            WHERE Frame.sequence_id = {sequence_id}
+                AND Analysis.parity IS NOT NULL
+            ORDER BY Frame.id ASC;
+        ''')
+        return [
+            {
+                "filename": row[0],
+                "pixel_scale": row[1],
+                "pixel_scale_unit": row[2],
+                "center_ra": row[3],
+                "center_dec": row[4],
+                "rotation_angle": row[5],
+                "rotation_direction": row[6],
+                "parity": row[7],
+            }
+            for row in result.fetchall()
+        ]
+
     def get_frame_filename(self, frame_id: int) -> str:
         result = self.connection.execute(f'''
             SELECT filename FROM Frame WHERE id = {frame_id};

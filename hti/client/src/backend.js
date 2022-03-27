@@ -64,6 +64,12 @@ export default {
     return $axios.delete('/analyzer/frames/' + frameId)
   },
 
+  stackSequence (sequenceId) {
+    return $axios.post('/stacking/stack', {
+      lightsSequenceId: sequenceId,
+    })
+  },
+
   queryTarget (query) {
     return $axios.get('/info/target/' + query)
   },

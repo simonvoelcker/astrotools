@@ -3,7 +3,7 @@ import os
 from flask_restplus import Namespace, Resource
 from flask.json import jsonify
 
-from hti.server.api.util import find_file
+from hti.server.api.util import find_frame_path
 from hti.server.frames_db import FramesDB
 from hti.server.state.globals import get_app_state
 from hti.server.state.events import log_event
@@ -14,13 +14,6 @@ from lib.frame import Frame
 
 
 api = Namespace('Analyzer', description='Analyzer API endpoints')
-
-
-def find_frame_path(filename: str) -> str:
-    # Find the file in static dir or a subdirectory
-    here = os.path.dirname(os.path.abspath(__file__))
-    hti_static_dir = os.path.join(here, '..', 'static')
-    return find_file(filename, hti_static_dir)
 
 
 @api.route('/sequences/')

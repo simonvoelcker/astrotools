@@ -35,3 +35,10 @@ def find_file(name, path):
         if name in files:
             return os.path.join(root, name)
     return None
+
+
+def find_frame_path(filename: str) -> str:
+    # Find the file in static dir or a subdirectory
+    here = os.path.dirname(os.path.abspath(__file__))
+    hti_static_dir = os.path.join(here, '..', 'static')
+    return find_file(filename, hti_static_dir)

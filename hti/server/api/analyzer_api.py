@@ -5,6 +5,8 @@ from flask.json import jsonify
 
 from hti.server.api.util import find_file
 from hti.server.frames_db import FramesDB
+from hti.server.state.globals import get_app_state
+from hti.server.state.events import log_event
 
 from lib.calibration_analyzer import CalibrationAnalyzer
 from lib.frame_quality_analyzer import FrameQualityAnalyzer
@@ -63,6 +65,44 @@ class SequenceFramesApi(Resource):
         return jsonify(frames)
 
 
+@api.route('/sequences/<sequence_id>/analyze')
+class AnalyzeSequenceApi(Resource):
+    @api.doc(
+        description='Analyze all frames of the sequence',
+        response={200: 'Success'},
+    )
+    def post(self, sequence_id):
+        frames_db = FramesDB()
+        frames = frames_db.list_frames(sequence_id)
+
+        app_state = get_app_state()
+        app_state.analyzing = True
+
+        for index, frame_info in enumerate(frames):
+            log_event(f'Analyzing frame {index+1}/{len(frames)}')
+
+            frame_path = find_frame_path(frame_info["filename"])
+            frame = Frame(frame_path)
+
+            frame_quality_analyzer = FrameQualityAnalyzer()
+            frame_quality_analyzer.analyze_frame(frame)
+            frame_quality = frame_quality_analyzer.get_results_dict(frame)
+
+            calibration_analyzer = CalibrationAnalyzer()
+            calibration_analyzer.analyze_frame(frame)
+            calibration_data = calibration_analyzer.calibration_data[frame]
+
+            frames_db.add_analysis(
+                frame_id=frame_info["id"],
+                calibration_data=calibration_data,
+                brightness=frame_quality["brightness"],
+                hfd=frame_quality["hfd"],
+            )
+
+        app_state.analyzing = False
+        return ''
+
+
 @api.route('/frames/<frame_id>')
 class FramesApi(Resource):
     @api.doc(
@@ -109,6 +149,9 @@ class AnalyzeFrameApi(Resource):
         frame_path = find_frame_path(filename)
         frame = Frame(frame_path)
 
+        app_state = get_app_state()
+        app_state.analyzing = True
+
         frame_quality_analyzer = FrameQualityAnalyzer()
         frame_quality_analyzer.analyze_frame(frame)
         frame_quality = frame_quality_analyzer.get_results_dict(frame)
@@ -123,4 +166,6 @@ class AnalyzeFrameApi(Resource):
             brightness=frame_quality["brightness"],
             hfd=frame_quality["hfd"],
         )
+
+        app_state.analyzing = False
         return ''

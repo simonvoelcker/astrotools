@@ -40,6 +40,10 @@ export default {
     return $axios.get('/analyzer/sequences/')
   },
 
+  analyzeSequence (sequenceId) {
+    return $axios.post('/analyzer/sequences/' + sequenceId + '/analyze')
+  },
+
   deleteSequence (sequenceId) {
     return $axios.delete('/analyzer/sequences/' + sequenceId)
   },

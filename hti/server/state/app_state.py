@@ -31,6 +31,9 @@ class AppState:
 
     pec_state: PECState = PECState()
 
+    # analyze tab
+    analyzing: bool = False
+
     def __setattr__(self, key, value):
         super().__setattr__(key, value)
         app_state_event(self.__dict__)

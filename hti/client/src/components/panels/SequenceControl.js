@@ -13,6 +13,12 @@ let formatSequence = (sequence) => {
 
 export default class SequenceControl extends Component {
 
+  analyzeSequence () {
+    $backend.analyzeSequence(this.props.selectedSequence.id).then(() => {
+      this.props.refresh()
+    })
+  }
+
   deleteSequence () {
     $backend.deleteSequence(this.props.selectedSequence.id).then(() => {
       this.props.refresh()
@@ -73,7 +79,12 @@ export default class SequenceControl extends Component {
             <div className='settings-row'>
               <button
                 className='btn'
-                disabled={this.props.selectedSequence === null}
+                disabled={this.props.selectedSequence === null || store.analyzing}
+                onClick={this.analyzeSequence.bind(this)}>Analyze
+              </button>
+              <button
+                className='btn'
+                disabled={this.props.selectedSequence === null || store.analyzing}
                 onClick={this.deleteSequence.bind(this)}>Delete
               </button>
             </div>

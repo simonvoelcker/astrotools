@@ -47,7 +47,10 @@ export class AppProvider extends Component {
       guidingCamera: null,
 
       // bool by device name whether or not region selection mode is on
-      regionSelectByDeviceName: {}
+      regionSelectByDeviceName: {},
+
+      // analyze tab
+      analyzing: false
     }
 
     this.initialize()

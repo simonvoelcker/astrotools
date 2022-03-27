@@ -111,12 +111,12 @@ export default class FrameControl extends Component {
             <div className='settings-row'>
               <button
                 className='btn'
-                disabled={this.props.frames.length === 0}
+                disabled={this.props.frames.length === 0 || store.analyzing}
                 onClick={this.analyzeFrame.bind(this)}>Analyze
               </button>
               <button
                 className='btn'
-                disabled={this.props.frames.length === 0}
+                disabled={this.props.frames.length === 0 || store.analyzing}
                 onClick={this.deleteFrame.bind(this)}>Delete
               </button>
             </div>

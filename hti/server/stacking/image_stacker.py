@@ -27,14 +27,17 @@ class ImageStacker:
 	def get_stacked_image_hash(self) -> str:
 		"""
 		Get a hash of all the parameters that went into stacked_image
-		so we can be smart about re-stacking only if settings change.
+		so we can be smart about re-stacking and fetching the updated
+		result only if any settings changed.
 		"""
 		# TODO crazy stupid hashing
 		return str(len(self.light_frames))
 
 	@staticmethod
 	def normalize_image(image):
-
+		"""
+		Fit dynamic range found in the given image into [0;1].
+		"""
 		normalized_image = np.zeros(image.shape, dtype=image.dtype)
 
 		for channel in range(image.shape[2]):

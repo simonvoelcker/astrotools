@@ -51,7 +51,7 @@ class StackingApi(Resource):
         Frame.interpolate_angles(frames)
 
         image_stacker = get_image_stacker()
-        image_stacker.light_frames = frames[:10]
+        image_stacker.light_frames = frames[:10]  # TODO use all frames, provide a range option
         image_stacker.stack_image()
 
         # Update hash in app state so FE can react by reloading the preview
@@ -69,7 +69,10 @@ class StackedImagePreviewApi(Resource):
     def get(self, stacked_image_hash):
         image_stacker = get_image_stacker()
         if image_stacker.get_stacked_image_hash() == stacked_image_hash:
-            image_data_png = image_stacker.get_stacked_image(format='png')
+            image_data_png = image_stacker.get_stacked_image(
+                format='png',
+                scale_factor=2
+            )
             return send_file(image_data_png, mimetype='image/png')
 
         # TODO hash is outdated - maybe update it with whatever is new?

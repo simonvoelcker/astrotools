@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { AppConsumer, AppContext } from '../../appstate'
 import $backend from '../../backend'
 import StackControl from '../panels/StackControl'
+import StackedImageView from '../panels/StackedImageView'
 
 export default class StackTab extends Component {
 
@@ -18,9 +19,7 @@ export default class StackTab extends Component {
         {({ store }) => (
           <div className='stack-tab'>
             <div className='left-column'>
-              <div className='panel frame-view-panel'>
-                <img id="image" alt='' src='' />
-              </div>
+              <StackedImageView stackedImageHash={store.stackedImageHash} />
             </div>
             <div className='right-column'>
                 <StackControl />

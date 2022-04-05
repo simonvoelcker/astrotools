@@ -70,6 +70,10 @@ export default {
     })
   },
 
+  getStackedImagePreview (stackedImageHash) {
+    return $axios.get('/stacking/preview/' + stackedImageHash)
+  },
+
   queryTarget (query) {
     return $axios.get('/info/target/' + query)
   },

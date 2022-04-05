@@ -7,6 +7,7 @@ from hti.server.capture.camera_controller import CameraController, SimCameraCont
 from hti.server.guiding.periodic_error import PeriodicErrorManager
 from hti.server.catalog import Catalog
 from hti.server.axes.axis_control import AxisControl
+from hti.server.stacking.image_stacker import ImageStacker
 
 _app_state = AppState()
 _app_state.axes_sim = os.environ.get('SIM_AXES', 'false').lower() == 'true'
@@ -16,6 +17,7 @@ _cam_controller = None
 _axis_control = None
 _frame_manager = None
 _pec_manager = None
+_image_stacker = None
 
 
 def get_app_state():
@@ -74,3 +76,10 @@ def get_pec_manager():
     if _pec_manager is None:
         _pec_manager = PeriodicErrorManager(get_app_state().pec_state)
     return _pec_manager
+
+
+def get_image_stacker():
+    global _image_stacker
+    if _image_stacker is None:
+        _image_stacker = ImageStacker()
+    return _image_stacker

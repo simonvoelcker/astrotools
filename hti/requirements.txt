@@ -5,7 +5,7 @@ flask-restplus==0.13.0
 werkzeug==0.16.1
 
 pyserial==3.4
-numpy==1.16.3
+numpy==1.22.0
 astropy==4.0.1.post1
 Pillow==6.0.0
 pyindi-client==0.2.5  # also requires libindi-dev (apt)

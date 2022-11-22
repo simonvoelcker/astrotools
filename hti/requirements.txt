@@ -7,7 +7,7 @@ werkzeug==0.16.1
 pyserial==3.4
 numpy==1.16.3
 astropy==4.0.1.post1
-Pillow==6.0.0
+Pillow==9.3.0
 pyindi-client==0.2.5  # also requires libindi-dev (apt)
 influxdb==5.2.3
 simple-pid==0.2.3

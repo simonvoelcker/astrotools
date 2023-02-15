@@ -2,7 +2,7 @@ flask==1.1.2
 Flask-Cors==3.0.8
 flask-swagger-ui==3.25.0
 flask-restplus==0.13.0
-werkzeug==0.16.1
+werkzeug==2.2.3
 
 pyserial==3.4
 numpy==1.16.3
